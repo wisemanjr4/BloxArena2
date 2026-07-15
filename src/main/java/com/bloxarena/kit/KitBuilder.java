@@ -233,7 +233,8 @@ public class KitBuilder {
                 list.add(new ItemStack(Material.NETHER_STAR));
             }
             case PHANTOM -> {
-                list.add(new ItemStack(Material.IRON_SWORD));
+                list.add(new ItemStack(Material.STONE_SWORD));
+                list.add(new ItemStack(Material.CHAINMAIL_CHESTPLATE));
                 list.add(new ItemStack(Material.NETHER_STAR));
             }
             case ANCHOR -> {
