@@ -152,14 +152,14 @@ public class MapWizard {
         }
         if (!mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
             if (mc.getRedFlagLocation() == null) {
-                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §c赤旗 §6初期位置");
-                p.sendMessage("§7§c赤チーム§7が奪いに行く旗です。原則§9青陣地側§7に設置します。");
+                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §c赤旗 §6初期位置（自陣）");
+                p.sendMessage("§7自陣に置く旗です。§9青チーム§7が奪いに来ます。");
                 p.sendMessage("§7設置したい場所に立って §f/ba admin next　§f/ba admin skip §7= CTFを飛ばす");
                 footer(p); return;
             }
             if (mc.getBlueFlagLocation() == null) {
-                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §9青旗 §6初期位置");
-                p.sendMessage("§7§9青チーム§7が奪いに行く旗です。原則§c赤陣地側§7に設置します。");
+                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §9青旗 §6初期位置（自陣）");
+                p.sendMessage("§7自陣に置く旗です。§c赤チーム§7が奪いに来ます。");
                 p.sendMessage("§7設置したい場所に立って §f/ba admin next");
                 footer(p); return;
             }
@@ -272,8 +272,8 @@ public class MapWizard {
                 if (mc.getDefusePoint() == null) { mc.setDefusePoint(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ 爆弾解除地点を設定しました"); return true; }
             }
             if (!mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
-                if (mc.getRedFlagLocation() == null) { mc.setRedFlagLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §c赤旗§a地点を設定しました（§9青陣地側§aに置いてください）"); return true; }
-                if (mc.getBlueFlagLocation() == null) { mc.setBlueFlagLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §9青旗§a地点を設定しました（§c赤陣地側§aに置いてください）"); return true; }
+                if (mc.getRedFlagLocation() == null) { mc.setRedFlagLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §c赤旗§a地点を設定しました（§c自陣§aに置いてください）"); return true; }
+                if (mc.getBlueFlagLocation() == null) { mc.setBlueFlagLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §9青旗§a地点を設定しました（§9自陣§aに置いてください）"); return true; }
                 if (mc.getRedReturnLocation() == null) { mc.setRedReturnLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §c赤§a持ち帰り地点を設定しました"); return true; }
                 if (mc.getBlueReturnLocation() == null) { mc.setBlueReturnLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §9青§a持ち帰り地点を設定しました"); return true; }
             }

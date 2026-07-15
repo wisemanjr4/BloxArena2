@@ -420,8 +420,8 @@ public class BloxArenaCommand implements CommandExecutor, TabCompleter {
                 if (!(sender instanceof Player p)) { sender.sendMessage("§cプレイヤーのみ使用可能です。"); return true; }
                 if (args.length < 2) {
                     sender.sendMessage("§7使用法: /ba " + sub + " <mapId>");
-                    sender.sendMessage("§7  setredflag    → 相手陣地の赤旗初期位置を現在地に設定");
-                    sender.sendMessage("§7  setblueflag   → 相手陣地の青旗初期位置を現在地に設定");
+                    sender.sendMessage("§7  setredflag    → 自陣の赤旗初期位置を現在地に設定");
+                    sender.sendMessage("§7  setblueflag   → 自陣の青旗初期位置を現在地に設定");
                     sender.sendMessage("§7  setredreturn  → 赤チームの旗持ち帰り地点を現在地に設定");
                     sender.sendMessage("§7  setbluereturn → 青チームの旗持ち帰り地点を現在地に設定");
                     return true;
@@ -430,8 +430,8 @@ public class BloxArenaCommand implements CommandExecutor, TabCompleter {
                 if (fc == null) { sender.sendMessage("§cマップ '" + args[1] + "' が見つかりません。"); return true; }
                 Location loc = p.getLocation().getBlock().getLocation().add(0.5, 0, 0.5);
                 switch (sub) {
-                    case "setredflag" -> { fc.setRedFlagLocation(loc); sender.sendMessage("§a✔ 赤旗地点を設定しました（相手陣地に設置してください）。"); }
-                    case "setblueflag" -> { fc.setBlueFlagLocation(loc); sender.sendMessage("§a✔ 青旗地点を設定しました（相手陣地に設置してください）。"); }
+                    case "setredflag" -> { fc.setRedFlagLocation(loc); sender.sendMessage("§a✔ 自陣の赤旗地点を設定しました（敵が奪いに来ます）。"); }
+                    case "setblueflag" -> { fc.setBlueFlagLocation(loc); sender.sendMessage("§a✔ 自陣の青旗地点を設定しました（敵が奪いに来ます）。"); }
                     case "setredreturn" -> { fc.setRedReturnLocation(loc); sender.sendMessage("§a✔ 赤持ち帰り地点を設定しました。"); }
                     case "setbluereturn" -> { fc.setBlueReturnLocation(loc); sender.sendMessage("§a✔ 青持ち帰り地点を設定しました。"); }
                 }
@@ -672,8 +672,8 @@ public class BloxArenaCommand implements CommandExecutor, TabCompleter {
         s.sendMessage("§e/ba setmapname <mapId> <名前> §7- マップの表示名を設定");
         s.sendMessage("§e/ba upgrade <mapId> §7- 既存マップを新モード対応にアップグレード");
         s.sendMessage("§e/ba convert §7- 旧configを新形式に自動変換");
-        s.sendMessage("§e/ba setredflag <mapId> §7- CTF赤旗初期位置を現在地に設定（相手陣地側）");
-        s.sendMessage("§e/ba setblueflag <mapId> §7- CTF青旗初期位置を現在地に設定（相手陣地側）");
+        s.sendMessage("§e/ba setredflag <mapId> §7- CTF赤旗初期位置を現在地に設定（自陣側）");
+        s.sendMessage("§e/ba setblueflag <mapId> §7- CTF青旗初期位置を現在地に設定（自陣側）");
         s.sendMessage("§e/ba setredreturn <mapId> §7- CTF赤持ち帰り地点を現在地に設定");
         s.sendMessage("§e/ba setbluereturn <mapId> §7- CTF青持ち帰り地点を現在地に設定");
         s.sendMessage("§e/ba setbombplant <mapId> §7- 爆破設置地点を現在地に設定");
