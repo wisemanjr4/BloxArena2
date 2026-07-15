@@ -708,7 +708,7 @@ public class SkillManager {
 
     private void rocketerFire(Player p) { if (p.isSneaking()) rocketerSkill(p); else rocketerMicro(p); }
 
-    private void rocketerMicro(Player p) { setCooldown(p.getUniqueId(), 8_000L); Snowball rocket = p.launchProjectile(Snowball.class); rocket.setVelocity(p.getLocation().getDirection().normalize().multiply(2.0)); rocket.setCustomName("microRocket"); rocket.setGravity(false); rocket.setGlowing(true); p.sendMessage("§e§lマイクロロケット！"); new BukkitRunnable(){int ticks=0;@Override public void run(){if(ticks++>30||!rocket.isValid()){cancel();return;}rocket.getWorld().spawnParticle(Particle.FLAME,rocket.getLocation(),1,0.1,0.1,0.1,0.01);}}.runTaskTimer(plugin,0L,1L); Bukkit.getScheduler().runTaskLater(plugin,()->{if(rocket.isValid()){rocket.getWorld().createExplosion(rocket.getLocation(),1.5f,false,false,Bukkit.getPlayer(p.getUniqueId()));rocket.remove();}},30L); }
+    private void rocketerMicro(Player p) { setCooldown(p.getUniqueId(), 8_000L); Snowball rocket = p.launchProjectile(Snowball.class); rocket.setVelocity(p.getLocation().getDirection().normalize().multiply(2.0)); rocket.setCustomName("microRocket"); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "micro_rocket"), PersistentDataType.BYTE, (byte)1); rocket.setGravity(false); rocket.setGlowing(true); p.sendMessage("§e§lマイクロロケット！"); new BukkitRunnable(){int ticks=0;@Override public void run(){if(ticks++>30||!rocket.isValid()){cancel();return;}rocket.getWorld().spawnParticle(Particle.FLAME,rocket.getLocation(),1,0.1,0.1,0.1,0.01);}}.runTaskTimer(plugin,0L,1L); Bukkit.getScheduler().runTaskLater(plugin,()->{if(rocket.isValid()){rocket.getWorld().createExplosion(rocket.getLocation(),1.5f,false,false,Bukkit.getPlayer(p.getUniqueId()));rocket.remove();}},30L); }
 
     private void alchemistSkill(Player p) { setCooldown(p.getUniqueId(), 10_000L); KitBuilder.refillAlchemistPotions(p); p.sendMessage("§d§l再調合！"); }
 
@@ -806,37 +806,40 @@ public class SkillManager {
     }
 
     private void cookSkill(Player p) {
-        ItemStack food = findCookFood(p);
-        if (food == null) { p.sendMessage("§c食材を持っていません！剣を右クリックで入手"); return; }
-        Material mat = food.getType();
-        food.setAmount(food.getAmount() - 1);
+        java.util.List<Material> foods = findAllCookFoods(p);
+        if (foods.isEmpty()) { p.sendMessage("§c食材を持っていません！剣を右クリックで入手"); return; }
         setCooldown(p.getUniqueId(), 1_000L);
-        applyCookBuff(p, mat);
-        p.sendMessage("§6" + getCookLabel(mat) + " §6を使用！（自分）");
+        for (Material mat : foods) { applyCookBuff(p, mat); }
+        p.sendMessage("§6§l食材" + foods.size() + "種を一気に使用！（自分）");
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_BURP, 1f, 1.2f);
     }
 
     private void cookThrowFood(Player p) {
-        ItemStack food = findCookFood(p);
-        if (food == null) { p.sendMessage("§c食材を持っていません！剣を右クリックで入手"); return; }
-        Material mat = food.getType();
-        food.setAmount(food.getAmount() - 1);
+        java.util.List<Material> foods = findAllCookFoods(p);
+        if (foods.isEmpty()) { p.sendMessage("§c食材を持っていません！剣を右クリックで入手"); return; }
         setCooldown(p.getUniqueId(), 1_000L);
-        Snowball ball = p.launchProjectile(Snowball.class);
-        ball.setVelocity(p.getLocation().getDirection().normalize().multiply(1.5));
-        ball.setCustomName("cookThrow");
-        ball.getPersistentDataContainer().set(KEY_COOK, PersistentDataType.STRING, mat.name());
-        p.sendMessage("§6" + getCookLabel(mat) + " §6を投げた！");
+        // Throw all as a cluster
+        int count = foods.size();
+        for (Material mat : foods) {
+            Snowball ball = p.launchProjectile(Snowball.class);
+            ball.setVelocity(p.getLocation().getDirection().normalize().multiply(1.5).add(new Vector(Math.random()*0.4-0.2, Math.random()*0.2, Math.random()*0.4-0.2)));
+            ball.setCustomName("cookThrow");
+            ball.getPersistentDataContainer().set(KEY_COOK, PersistentDataType.STRING, mat.name());
+        }
+        p.sendMessage("§6§l食材" + count + "種をまとめて投げた！");
     }
 
-    private ItemStack findCookFood(Player p) {
+    private java.util.List<Material> findAllCookFoods(Player p) {
+        java.util.List<Material> foods = new java.util.ArrayList<>();
         for (ItemStack item : p.getInventory().getContents()) {
             if (item != null && item.getItemMeta() != null
                     && item.getItemMeta().getPersistentDataContainer().has(KEY_COOK, PersistentDataType.STRING)) {
-                return item;
+                String matName = item.getItemMeta().getPersistentDataContainer().get(KEY_COOK, PersistentDataType.STRING);
+                foods.add(Material.valueOf(matName));
+                item.setAmount(0); // Remove all at once
             }
         }
-        return null;
+        return foods;
     }
 
     private String getCookLabel(Material mat) { return switch(mat){ case COOKED_BEEF->"§6ステーキ §7[§c力I 10s§7]"; case COOKED_CHICKEN->"§f鶏肉 §7[§b速度I 10s§7]"; case GOLDEN_CARROT->"§e金ニンジン §7[§d再生I 8s§7]"; case COOKED_PORKCHOP->"§d豚肉 §7[§7耐性I 10s§7]"; case PUMPKIN_PIE->"§6パンプキンパイ §7[§e吸収I 20s§7]"; case BREAD->"§eパン §7[§6満腹回復§7]"; case HONEY_BOTTLE->"§6ハチミツ §7[§a跳躍II 8s§7]"; case BEETROOT_SOUP->"§cビートルートスープ §7[§7耐火 20s§7]"; case ROTTEN_FLESH->"§8腐肉 §7[§c空腹II 10s§7]"; case SPIDER_EYE->"§5蜘蛛の目 §7[§2毒I 8s§7]"; case POISONOUS_POTATO->"§a青くなったジャガイモ §7[§d吐気 5s§7]"; case PUFFERFISH->"§eフグ §7[§8衰弱+吐気 5s§7]"; case CHICKEN->"§f生鶏肉 §7[§7弱体化I 10s§7]"; case PORKCHOP->"§d生豚肉 §7[§7鈍足I 10s§7]"; case BEEF->"§c生牛肉 §7[§8採掘低下I 15s§7]"; case MUTTON->"§5生羊肉 §7[§0盲目 3s§7]"; case COD->"§b生鱈 §7[§4即時ダメ 2❤§7]"; case SALMON->"§d生鮭 §7[§f浮遊 3s§7]"; default->"§7料理"; }; }

@@ -509,6 +509,11 @@ public class GameListeners implements Listener {
             plugin.getSkillManager().onMegaRocketHit(e.getEntity().getLocation(), shooter);
             e.getEntity().remove();
         }
+        // Micro rocket
+        if (ball.getPersistentDataContainer().has(new NamespacedKey(plugin, "micro_rocket"), org.bukkit.persistence.PersistentDataType.BYTE)) {
+            e.getEntity().getLocation().getWorld().createExplosion(e.getEntity().getLocation(), 1.5f, false, false, shooter);
+            e.getEntity().remove();
+        }
         // Theos Pada (vampire)
         else if (ball.getPersistentDataContainer().has(new NamespacedKey(plugin, "theos_pada"), org.bukkit.persistence.PersistentDataType.BYTE)) {
             if (e.getHitEntity() != null) {
