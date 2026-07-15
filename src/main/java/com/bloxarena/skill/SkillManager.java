@@ -213,8 +213,8 @@ public class SkillManager {
     public void onSniperAimTick(Player p) {
         if (gm.getPlayerKitType(p.getUniqueId()) != KitType.SNIPER) return;
         if (p.getInventory().getItemInMainHand().getType() != Material.CROSSBOW) { sniperAimTick.remove(p.getUniqueId()); sniperTracker.remove(p.getUniqueId()); return; }
-        Player target = getTargetInSight(p, 50);
-        if (target == null) { sniperAimTick.remove(p.getUniqueId()); sniperTracker.remove(p.getUniqueId()); return; }
+        Player target = getTargetInSight(p, 50); UUID oldTarget = sniperTracker.get(p.getUniqueId());
+        if (target == null) { if (oldTarget != null) p.sendMessage("§7狙撃を中止しました"); sniperAimTick.remove(p.getUniqueId()); sniperTracker.remove(p.getUniqueId()); return; }
         UUID prevTarget = sniperTracker.get(p.getUniqueId());
         if (prevTarget == null || !prevTarget.equals(target.getUniqueId())) { sniperTracker.put(p.getUniqueId(), target.getUniqueId()); sniperAimTick.put(p.getUniqueId(), 1); return; }
         int ticks = sniperAimTick.merge(p.getUniqueId(), 1, Integer::sum);
@@ -241,7 +241,7 @@ public class SkillManager {
         if (!p.isSneaking()) return;
         if (isOnCooldown(p.getUniqueId())) return;
         parryActive.add(p.getUniqueId());
-        new BukkitRunnable() { @Override public void run() { parryActive.remove(p.getUniqueId()); } }.runTaskLater(plugin, 10L);
+        new BukkitRunnable() { @Override public void run() { parryActive.remove(p.getUniqueId()); } }.runTaskLater(plugin, 20L);
     }
 
     public boolean tryParryCounter(Player attacker, Player counter) {
@@ -343,7 +343,7 @@ public class SkillManager {
     }
 
     public void onMegaRocketHit(Location loc, Player shooter, Snowball rocket) {
-        float power = rocketHitPower(rocket, loc, 3f);
+        float power = rocketHitPower(rocket, loc, 2f);
         loc.getWorld().createExplosion(loc, power, false, false, shooter);
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.6f);
     }
@@ -723,7 +723,7 @@ public class SkillManager {
         Bukkit.getScheduler().runTaskLater(plugin,()->{if(rocket.isValid()){megaRocketExplode(rocket.getLocation(),p);rocket.remove();}},50L);
     }
 
-    private void megaRocketExplode(Location loc, Player shooter) { World w = loc.getWorld(); w.createExplosion(loc, 3f, false, false, shooter); w.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.6f); }
+    private void megaRocketExplode(Location loc, Player shooter) { World w = loc.getWorld(); w.createExplosion(loc, 2f, false, false, shooter); w.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.6f); }
 
     private float rocketPower(Location launch, Location explode, float maxPower) {
         double dist = launch.distance(explode);

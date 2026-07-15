@@ -407,6 +407,7 @@ public class GameListeners implements Listener {
         // Sniper mark kill check (for arrow projectiles)
         if (e.getDamager() instanceof Arrow arrow && arrow.getShooter() instanceof Player shooter) {
             if (plugin.getSkillManager().onSniperHit(shooter, victim)) {
+                lastDamager.put(victim.getUniqueId(), shooter.getUniqueId());
                 e.setCancelled(true);
                 return;
             }
