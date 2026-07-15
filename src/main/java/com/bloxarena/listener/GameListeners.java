@@ -506,12 +506,13 @@ public class GameListeners implements Listener {
         }
         // Mega rocket
         if (ball.getPersistentDataContainer().has(new NamespacedKey(plugin, "mega_rocket"), org.bukkit.persistence.PersistentDataType.BYTE)) {
-            plugin.getSkillManager().onMegaRocketHit(e.getEntity().getLocation(), shooter);
+            plugin.getSkillManager().onMegaRocketHit(e.getEntity().getLocation(), shooter, ball);
             e.getEntity().remove();
         }
         // Micro rocket
         if (ball.getPersistentDataContainer().has(new NamespacedKey(plugin, "micro_rocket"), org.bukkit.persistence.PersistentDataType.BYTE)) {
-            e.getEntity().getLocation().getWorld().createExplosion(e.getEntity().getLocation(), 1.5f, false, false, shooter);
+            float power = plugin.getSkillManager().rocketHitPower(ball, e.getEntity().getLocation(), 1.5f);
+            e.getEntity().getLocation().getWorld().createExplosion(e.getEntity().getLocation(), power, false, false, shooter);
             e.getEntity().remove();
         }
         // Theos Pada (vampire)
