@@ -151,9 +151,8 @@ public class LobbyManager {
     }
 
     private int getCountdownTime(int count) {
-        // 4人以上は30秒（それ以上人が増えても30秒より短くしない）
         if (count >= THRESHOLD_4) return 30;
-        return 120;
+        return 45;
     }
 
     private void startCountdown(int seconds) {

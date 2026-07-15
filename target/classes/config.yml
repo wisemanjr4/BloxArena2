@@ -1,0 +1,74 @@
+lobby:
+  waiting_area:
+    world: "world"
+    min: { x: -10, y: 63, z: -10 }
+    max: { x: 10,  y: 70, z: 10  }
+  spawn: { x: 0, y: 64, z: 0 }
+
+map_selection: random     # random | fixed
+fixed_map_id: ""
+
+maps:
+  - id: "arena_auto"
+    world: "bloxarena_world"
+    auto_generate: true
+    generate_origin: { x: 0, y: 60, z: 0 }
+    generate_size: { width: 50, depth: 50 }
+    wall_height: 8
+    floor_material: STONE
+    wall_material: STONE_BRICKS
+
+  - id: "arena_manual"
+    world: "bloxarena_world"
+    auto_generate: false
+    red_spawn_zone:
+      min: { x: -3, y: 80, z: -20 }
+      max: { x: 3,  y: 83, z: -17 }
+    blue_spawn_zone:
+      min: { x: -3, y: 80, z: 17  }
+      max: { x: 3,  y: 83, z: 20  }
+    center: { x: -1, y: 64, z: -1 }
+    lobby:  { x: 0,  y: 64, z: 0  }
+
+kit_select:
+  timeout_seconds: 30
+
+game_modes:
+  enabled:
+    - BATTLE_ARENA
+    - TEAM_DEATHMATCH
+    - BOMB_MISSION
+    - DOMINATION
+    - CAPTURE_THE_FLAG
+
+team_deathmatch:
+  time_limit_seconds: 300
+  target_kills: 30
+
+bomb_mission:
+  time_limit_seconds: 180
+  plant_time_seconds: 5
+  defuse_time_seconds: 7
+  bomb_fuse_seconds: 45
+
+domination:
+  time_limit_seconds: 120
+  target_points: 100
+  points_per_second: 2
+
+capture_the_flag:
+  time_limit_seconds: 300
+  captures_to_win: 3
+
+test_field:
+  spawn:
+    world: "world"
+    x: 0
+    y: 64
+    z: 0
+  dummy_count: 3
+
+teams:
+  red_concrete: RED
+  blue_concrete: CYAN
+  base_concrete: LIME

@@ -1,0 +1,24 @@
+name: BloxArenaII
+version: 2.0.0
+main: com.bloxarena.BloxArenaPlugin
+api-version: '1.19'
+description: 5v5 PvP ゲームモード - BloxArena II Warriors of NextGen
+authors: [BloxArenaII]
+prefix: BAII
+
+commands:
+  bloxarena:
+    description: BloxArenaII メインコマンド
+    usage: /bloxarena <start|stop|setspawnzone|setcenter|setlobby|setmap|generate|join|spectate>
+    aliases: [ba]
+    permission: bloxarena.play
+
+permissions:
+  bloxarena.admin:
+    description: 管理者権限
+    default: op
+  bloxarena.play:
+    description: プレイ権限
+    default: true
+
+softdepend: [Citizens]

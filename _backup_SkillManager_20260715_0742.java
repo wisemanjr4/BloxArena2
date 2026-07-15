@@ -536,12 +536,6 @@ public class SkillManager {
     }
 
     private void updateKitActionBars() {
-        // Suppress kit action bars during Domination/CTF/TDM (game-mode info takes priority)
-        var mode = gm.getCurrentGameMode();
-        if (mode == com.bloxarena.game.GameMode.DOMINATION
-                || mode == com.bloxarena.game.GameMode.CAPTURE_THE_FLAG
-                || mode == com.bloxarena.game.GameMode.TEAM_DEATHMATCH) return;
-
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (!gm.isParticipant(p) || gm.isSpectator(p)) continue;
             KitType kit = gm.getPlayerKitType(p.getUniqueId()); if (kit == null) continue;

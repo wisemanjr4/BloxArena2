@@ -198,6 +198,12 @@ public class ScoreboardManager {
         boolean isDom = plugin.getGameManager().getCurrentGameMode() == com.bloxarena.game.GameMode.DOMINATION;
         int line = 16;
         score(board, obj, "§r§f ", line--);
+        // Map name
+        var currentMap = plugin.getGameManager().getCurrentMap();
+        if (currentMap != null) {
+            String mapName = currentMap.getDisplayName() != null ? currentMap.getDisplayName() : currentMap.getId();
+            score(board, obj, "§eMAP: §f" + mapName, line--);
+        }
         if (!isTDM) {
             score(board, obj, "§6ラウンド §f" + round, line--);
         }
