@@ -298,10 +298,7 @@ public class KitBuilder {
             case GRANG         -> giveGrang(player, plugin);
             case NECRO         -> giveNecro(player, plugin);
         }
-        // RELEASER doesn't get burst - has own burst skills
-        if (plugin != null && kit != KitType.RELEASER) {
-            player.getInventory().addItem(makeBurstItem());
-        }
+        // Burst is given by refreshBurst() at game start / respawn — not from kit
     }
 
     private static void giveBaseItems(Player player, TeamColor team) {
