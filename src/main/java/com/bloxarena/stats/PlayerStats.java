@@ -1,5 +1,7 @@
 package com.bloxarena.stats;
 
+import java.util.*;
+
 /** プレイヤー1人分の累計統計 */
 public class PlayerStats {
     public int kills;
@@ -7,6 +9,7 @@ public class PlayerStats {
     public int wins;
     public int losses;
     public double damage;  // 与えたダメージ合計
+    public final Map<String, Integer> kitCounts = new HashMap<>();  // キット選択回数
 
     public double getKD()      { return deaths == 0 ? kills : (double) kills / deaths; }
     public int    getGames()   { return wins + losses; }

@@ -117,6 +117,7 @@ public class KitSelectGUI {
 
         // 確定
         gm.setPlayerKit(p.getUniqueId(), kit.name());
+        plugin.getStatsManager().addKitPick(p.getUniqueId(), kit.name());
         confirmed.add(p.getUniqueId());
         TeamColor team = gm.getTeamOf(p);
         if (team != null) KitBuilder.giveKit(p, kit, team, plugin);

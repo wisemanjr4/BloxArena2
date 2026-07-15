@@ -36,6 +36,12 @@ public class StatsManager {
                 s.wins    = cfg.getInt(key + ".wins");
                 s.losses  = cfg.getInt(key + ".losses");
                 s.damage  = cfg.getDouble(key + ".damage");
+                // Load kit counts
+                if (cfg.isConfigurationSection(key + ".kits")) {
+                    for (String kitName : cfg.getConfigurationSection(key + ".kits").getKeys(false)) {
+                        s.kitCounts.put(kitName, cfg.getInt(key + ".kits." + kitName));
+                    }
+                }
                 cache.put(uuid, s);
             } catch (IllegalArgumentException ignored) {}
         }
@@ -51,6 +57,11 @@ public class StatsManager {
             cfg.set(k + ".wins",    s.wins);
             cfg.set(k + ".losses",  s.losses);
             cfg.set(k + ".damage",  s.damage);
+            // Save kit counts
+            cfg.set(k + ".kits", null);
+            for (var entry : s.kitCounts.entrySet()) {
+                cfg.set(k + ".kits." + entry.getKey(), entry.getValue());
+            }
             // 名前キャッシュ（表示用）
             var p = Bukkit.getOfflinePlayer(uuid);
             if (p.getName() != null) cfg.set(k + ".name", p.getName());
@@ -67,6 +78,7 @@ public class StatsManager {
     public void addWin(UUID uuid)                { get(uuid).wins++; }
     public void addLoss(UUID uuid)               { get(uuid).losses++; }
     public void addDamage(UUID uuid, double dmg) { get(uuid).damage += dmg; }
+    public void addKitPick(UUID uuid, String kitName) { get(uuid).kitCounts.merge(kitName, 1, Integer::sum); }
 
     // ─── 参照 ───
 
@@ -81,6 +93,19 @@ public class StatsManager {
             default       -> Comparator.comparingInt(e -> -e.getValue().kills);
         };
         return cache.entrySet().stream().sorted(cmp).limit(limit).collect(Collectors.toList());
+    }
+
+    /** /ba top kits 用: 全プレイヤーのキット使用回数集計 */
+    public List<Map.Entry<String, Integer>> getKitTop(int limit) {
+        Map<String, Integer> total = new HashMap<>();
+        for (PlayerStats s : cache.values()) {
+            for (var e : s.kitCounts.entrySet()) {
+                total.merge(e.getKey(), e.getValue(), Integer::sum);
+            }
+        }
+        return total.entrySet().stream()
+            .sorted(Map.Entry.<String,Integer>comparingByValue().reversed())
+            .limit(limit).collect(Collectors.toList());
     }
 
     public String getName(UUID uuid) {

@@ -275,15 +275,33 @@ public class BloxArenaCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("§7勝利: §f" + s.wins + "  敗北: §f" + s.losses
                     + "  §7勝率: §f" + String.format("%.1f", s.getWinRate()) + "%");
                 sender.sendMessage("§7総ダメージ: §f" + String.format("%.1f", s.damage));
+                // Top 5 most used kits
+                if (!s.kitCounts.isEmpty()) {
+                    var topKits = s.kitCounts.entrySet().stream()
+                        .sorted(Map.Entry.<String,Integer>comparingByValue().reversed())
+                        .limit(5).toList();
+                    var parts = new java.util.ArrayList<String>();
+                    for (var e2 : topKits) parts.add("§e" + e2.getKey() + "§7:§f" + e2.getValue());
+                    sender.sendMessage("§7よく使うキット: " + String.join("  ", parts));
+                }
             }
 
             // ─── ランキング ───
             case "top" -> {
                 String field = args.length >= 2 ? args[1].toLowerCase() : "kills";
-                if (!java.util.List.of("kills","wins","kd","damage").contains(field)) {
-                    sender.sendMessage("§7使用法: /ba top [kills|wins|kd|damage]"); return true;
+                if (!java.util.List.of("kills","wins","kd","damage","kits").contains(field)) {
+                    sender.sendMessage("§7使用法: /ba top [kills|wins|kd|damage|kits]"); return true;
                 }
-                var sm  = plugin.getStatsManager();
+                var sm = plugin.getStatsManager();
+                if ("kits".equals(field)) {
+                    var kitTop = sm.getKitTop(15);
+                    sender.sendMessage("§6§l=== キット使用率 Top 15 ===");
+                    int rank = 1;
+                    for (var e2 : kitTop) {
+                        sender.sendMessage("§7#" + rank++ + " §e" + e2.getKey() + " §f" + e2.getValue() + "回");
+                    }
+                    return true;
+                }
                 var top = sm.getTop(field, 10);
                 sender.sendMessage("§6§l=== Top 10: " + field + " ===");
                 int rank = 1;
@@ -649,7 +667,7 @@ public class BloxArenaCommand implements CommandExecutor, TabCompleter {
         s.sendMessage("§e/ba bot add [n] §7- テスト用BOTを追加（試合開始前）");
         s.sendMessage("§e/ba bot clear §7- BOTをすべて削除");
         s.sendMessage("§e/ba stats [player] §7- 統計を表示");
-        s.sendMessage("§e/ba top [kills|wins|kd|damage] §7- ランキング表示");
+        s.sendMessage("§e/ba top [kills|wins|kd|damage|kits] §7- ランキング表示");
         s.sendMessage("§e/ba continuous <on|off> §7- 連続試合モード切り替え");
         s.sendMessage("§e/ba setmapname <mapId> <名前> §7- マップの表示名を設定");
         s.sendMessage("§e/ba upgrade <mapId> §7- 既存マップを新モード対応にアップグレード");
