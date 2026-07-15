@@ -212,7 +212,7 @@ public class SkillManager {
             if ("WHIRLWIND".equals(kitName) && gm.getPlayerKitType(p.getUniqueId()) == KitType.WHIRLWIND) { whirlwindBall(p); }
         }
         if (meta.getPersistentDataContainer().has(KEY_VAMPIRE_SKILL, PersistentDataType.STRING) && gm.getPlayerKitType(p.getUniqueId()) == KitType.VAMPIRE) {
-            theosPadaAction(p, false);
+            if (p.isSneaking()) theosPadaAction(p, false);
         }
     }
 
