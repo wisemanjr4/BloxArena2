@@ -28,7 +28,6 @@ com\bloxarena\skill\SkillManager$8.class
 com\bloxarena\command\SetupWizard$State.class
 com\bloxarena\scoreboard\ScoreboardManager.class
 com\bloxarena\stats\StatsManager.class
-com\bloxarena\map\ArenaGenerator.class
 com\bloxarena\skill\SkillManager$5.class
 com\bloxarena\skill\SkillManager.class
 com\bloxarena\command\MapWizard$State.class

@@ -64,7 +64,6 @@ public class SkillManager {
     private final Map<UUID, Long> grangChargeStart = new HashMap<>();
     private final Map<UUID, Boolean> grangCharging = new HashMap<>();
     private final Map<UUID, List<Skeleton>> necroArmy = new HashMap<>();
-    private final Map<UUID, Long> necroRespawnTimers = new HashMap<>();
     private final Set<UUID> deadlockedPlayers = new HashSet<>();
     private final Map<UUID, Long> portalCooldowns = new HashMap<>();
     private final Map<UUID, Location> portalLastUsed = new HashMap<>();
@@ -133,7 +132,7 @@ public class SkillManager {
         guardianEndTime.clear(); gliderInAir.clear(); releaserMegaUsed.clear();
         portalCooldowns.clear(); grangChargeStart.clear(); grangCharging.clear();
         necroArmy.values().forEach(list -> list.forEach(s -> { if (s.isValid()) s.remove(); }));
-        necroArmy.clear(); necroRespawnTimers.clear();
+        necroArmy.clear();
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (p.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null)
                 p.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(20.0);
