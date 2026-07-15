@@ -479,6 +479,11 @@ public class SkillManager {
         }
         for (TrapData t : activeTraps) {
             TeamColor ownerTeam = gm.getTeam(t.owner);
+            Player owner = Bukkit.getPlayer(t.owner);
+            // Show particles to trap owner
+            if (owner != null && t.loc.getWorld() != null) {
+                owner.spawnParticle(Particle.ENCHANTMENT_TABLE, t.loc.clone().add(0.5, 0.2, 0.5), 3, 0.2, 0.1, 0.2, 0.02);
+            }
             for (Player p : t.loc.getWorld().getPlayers()) {
                 if (p.getLocation().distance(t.loc) <= 3 && gm.isParticipant(p) && gm.getTeamOf(p) != ownerTeam && !t.triggered) { triggerTrap(t, p); break; }
             }
