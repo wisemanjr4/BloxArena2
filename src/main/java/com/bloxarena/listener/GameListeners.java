@@ -302,7 +302,12 @@ public class GameListeners implements Listener {
             }
             // CTF flag pickup
             if (gm.getCurrentGameMode() == com.bloxarena.game.GameMode.CAPTURE_THE_FLAG) {
-                if (isRight) e.setCancelled(true);
+                if (e.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK
+                        && e.getClickedBlock() != null
+                        && (e.getClickedBlock().getType() == Material.RED_BANNER
+                         || e.getClickedBlock().getType() == Material.CYAN_BANNER)) {
+                    e.setCancelled(true);
+                }
                 gm.tryPickupFlag(p);
                 gm.tryPickupDroppedFlag(p);
             }
