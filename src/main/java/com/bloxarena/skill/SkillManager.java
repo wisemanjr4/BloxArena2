@@ -241,7 +241,7 @@ public class SkillManager {
         if (!p.isSneaking()) return;
         if (isOnCooldown(p.getUniqueId())) return;
         parryActive.add(p.getUniqueId());
-        new BukkitRunnable() { @Override public void run() { parryActive.remove(p.getUniqueId()); } }.runTaskLater(plugin, 20L);
+        new BukkitRunnable() { @Override public void run() { parryActive.remove(p.getUniqueId()); } }.runTaskLater(plugin, 10L);
     }
 
     public boolean tryParryCounter(Player attacker, Player counter) {
@@ -630,6 +630,14 @@ public class SkillManager {
             case GRANG -> {}
             case NECRO -> necroSkill(p);
             default -> {}
+        }
+    }
+
+    public void clearSniperMarkOnShoot(Player p) {
+        if (!markedForDeath.isEmpty() && gm.getPlayerKitType(p.getUniqueId()) == KitType.SNIPER) {
+            markedForDeath.clear();
+            sniperAimTick.remove(p.getUniqueId());
+            sniperTracker.remove(p.getUniqueId());
         }
     }
 
