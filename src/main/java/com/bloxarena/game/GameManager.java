@@ -1588,19 +1588,7 @@ public class GameManager {
         Long pickupCd = ctfPickupCooldown.get(p.getUniqueId());
         if (pickupCd != null && System.currentTimeMillis() - pickupCd < 5_000) return;
 
-        if (team == TeamColor.RED && !redFlagTaken && currentMap.getRedFlagLocation() != null) {
-            if (p.getLocation().distance(currentMap.getRedFlagLocation()) < 2) {
-                redFlagTaken = true;
-                redFlagCarrier = p.getUniqueId();
-                redFlagDropTime = -1;
-                if (currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
-                    currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
-                }
-                p.sendMessage("§9\uD83C\uDFF4 青の旗を奪取！自陣に持ち帰れ！");
-                p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
-            }
-        }
-        if (team == TeamColor.BLUE && !blueFlagTaken && currentMap.getBlueFlagLocation() != null) {
+        if (team == TeamColor.RED && !blueFlagTaken && currentMap.getBlueFlagLocation() != null) {
             if (p.getLocation().distance(currentMap.getBlueFlagLocation()) < 2) {
                 blueFlagTaken = true;
                 blueFlagCarrier = p.getUniqueId();
@@ -1608,18 +1596,30 @@ public class GameManager {
                 if (currentMap.getBlueFlagLocation().getBlock().getType() == Material.CYAN_BANNER) {
                     currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
                 }
+                p.sendMessage("§9\uD83C\uDFF4 青の旗を奪取！自陣に持ち帰れ！");
+                p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
+            }
+        }
+        if (team == TeamColor.BLUE && !redFlagTaken && currentMap.getRedFlagLocation() != null) {
+            if (p.getLocation().distance(currentMap.getRedFlagLocation()) < 2) {
+                redFlagTaken = true;
+                redFlagCarrier = p.getUniqueId();
+                redFlagDropTime = -1;
+                if (currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
+                    currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
+                }
                 p.sendMessage("§c\uD83C\uDFF4 赤の旗を奪取！自陣に持ち帰れ！");
                 p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
             }
         }
 
-        if (team == TeamColor.RED && redFlagCarrier != null && redFlagCarrier.equals(p.getUniqueId())
+        if (team == TeamColor.RED && blueFlagCarrier != null && blueFlagCarrier.equals(p.getUniqueId())
                 && currentMap.getRedReturnLocation() != null
                 && p.getLocation().distance(currentMap.getRedReturnLocation()) < 3) {
             captureFlag(TeamColor.RED);
             return;
         }
-        if (team == TeamColor.BLUE && blueFlagCarrier != null && blueFlagCarrier.equals(p.getUniqueId())
+        if (team == TeamColor.BLUE && redFlagCarrier != null && redFlagCarrier.equals(p.getUniqueId())
                 && currentMap.getBlueReturnLocation() != null
                 && p.getLocation().distance(currentMap.getBlueReturnLocation()) < 3) {
             captureFlag(TeamColor.BLUE);
