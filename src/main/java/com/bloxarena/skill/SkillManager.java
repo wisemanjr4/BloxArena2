@@ -471,7 +471,7 @@ public class SkillManager {
     // ─── Update loop ───
 
     public void update() {
-        if (antiBetrayalTask == null) antiBetrayalTask = Bukkit.getScheduler().runTaskTimer(plugin, this::forceTargetEnemies, 0L, 5L);
+        if (antiBetrayalTask == null) antiBetrayalTask = Bukkit.getScheduler().runTaskTimer(plugin, this::forceTargetEnemies, 0L, 1L);
         for (Player p : Bukkit.getOnlinePlayers()) { if (gm.getPlayerKitType(p.getUniqueId()) == KitType.SNIPER && gm.isParticipant(p)) onSniperAimTick(p); }
         for (UUID uid : new HashSet<>(gliderInAir)) { Player p = Bukkit.getPlayer(uid); if (p == null || !gm.isParticipant(p)) { gliderInAir.remove(uid); continue; } if (p.isOnGround()) { gliderInAir.remove(uid); setCooldown(uid, 12_000L); p.sendMessage("§a着地！クールタイム開始（12秒）"); } }
         for (ReconData r : new ArrayList<>(activeRecons)) {
