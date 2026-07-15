@@ -492,9 +492,10 @@ public class SkillManager {
         for (Map.Entry<UUID, Location> e : anchorFields.entrySet()) {
             Location loc = e.getValue(); if (loc == null || loc.getWorld() == null) continue;
             for (Player p : loc.getWorld().getPlayers()) {
-                if (p.getLocation().distance(loc) <= 8 && gm.isParticipant(p) && !gm.isSpectator(p) && gm.getTeamOf(p) != gm.getTeam(e.getKey())) {
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 30, 4, false, true));
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 30, -1, false, true));
+                if (p.getLocation().distance(loc) <= 12 && gm.isParticipant(p) && !gm.isSpectator(p) && gm.getTeamOf(p) != gm.getTeam(e.getKey())) {
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 30, 8, false, true));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 30, -10, false, true));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 30, 2, false, true));
                 }
             }
         }
@@ -560,7 +561,7 @@ public class SkillManager {
                 case GUARDIAN -> { Long end = guardianEndTime.get(p.getUniqueId()); if (end != null && System.currentTimeMillis() < end) { long rem = (end - System.currentTimeMillis()) / 1000; p.sendActionBar(Component.text("§f🛡 鉄壁 §e残り " + rem + "秒")); } }
                 case TRAPPER -> { long traps = activeTraps.stream().filter(t -> t.owner.equals(p.getUniqueId()) && !t.triggered).count(); if (traps > 0) p.sendActionBar(Component.text("§3🪤 罠 x" + traps + "/2")); }
                 case PHANTOM -> { Long end = phantomEnd.get(p.getUniqueId()); if (end != null && System.currentTimeMillis() < end) { long rem = (end - System.currentTimeMillis()) / 1000; p.sendActionBar(Component.text("§7👻 霊体化 §e残り " + rem + "秒")); } }
-                case ANCHOR -> { if (anchorFields.containsKey(p.getUniqueId())) p.sendActionBar(Component.text("§9⚓ 磁場展開中 §7| 半径8mの敵を減速＋持続ダメージ")); }
+                case ANCHOR -> { if (anchorFields.containsKey(p.getUniqueId())) p.sendActionBar(Component.text("§9⚓ 磁場展開中 §7| 半径12m完全拘束＋継続ダメ")); }
                 case ENGINEER -> { long turrets = activeTurrets.stream().filter(t -> t.owner.equals(p.getUniqueId())).count(); if (turrets > 0) p.sendActionBar(Component.text("§6🔧 タレット x" + turrets)); }
                 case SCOUT -> { long recons = activeRecons.stream().filter(r -> r.ownerTeam == gm.getTeamOf(p)).count(); if (recons > 0) p.sendActionBar(Component.text("§a📡 リコン x" + recons)); }
                 case COUNTER -> { if (parryActive.contains(p.getUniqueId())) p.sendActionBar(Component.text("§9🛡 パリィ受付中！")); }
@@ -772,7 +773,7 @@ public class SkillManager {
 
     private void phantomSkill(Player p) { setCooldown(p.getUniqueId(),22_000L); p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,120,0,false,false)); p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,125,255,true,false)); long endTime=System.currentTimeMillis()+6_000L; phantomEnd.put(p.getUniqueId(),endTime); p.sendMessage("§7§l霊体化！6秒間透明＋無敵"); p.getWorld().playSound(p.getLocation(),Sound.ENTITY_PHANTOM_AMBIENT,1f,0.5f); hideArmor(p); UUID uid=p.getUniqueId(); Bukkit.getScheduler().runTaskLater(plugin,()->{Player pl=Bukkit.getPlayer(uid);if(pl!=null&&phantomEnd.containsKey(uid)&&System.currentTimeMillis()>=phantomEnd.get(uid)){pl.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);pl.removePotionEffect(PotionEffectType.INVISIBILITY);showArmor(pl);phantomEnd.remove(uid);pl.sendMessage("§7霊体化の効果が切れました");}},120L); }
 
-    private void anchorSkill(Player p) { setCooldown(p.getUniqueId(),20_000L); anchorFields.put(p.getUniqueId(),p.getLocation().clone()); p.sendMessage("§9§l磁場展開！20秒間周囲の敵を減速＋持続ダメージ"); p.getWorld().playSound(p.getLocation(),Sound.BLOCK_BEACON_ACTIVATE,1f,0.5f); UUID uid=p.getUniqueId(); new BukkitRunnable(){int count=0;@Override public void run(){if(count++>10||!anchorFields.containsKey(uid)){cancel();return;}Location loc=anchorFields.get(uid);if(loc==null||loc.getWorld()==null){cancel();return;}for(Player t:loc.getWorld().getPlayers()){if(t.getLocation().distance(loc)<=8&&gm.isParticipant(t)&&!gm.isSpectator(t)&&gm.getTeamOf(t)!=gm.getTeam(uid)){t.damage(1.0,Bukkit.getPlayer(uid));}}loc.getWorld().spawnParticle(Particle.PORTAL,loc,30,8,1,8,0.02);}}.runTaskTimer(plugin,40L,40L); Bukkit.getScheduler().runTaskLater(plugin,()->{anchorFields.remove(p.getUniqueId());p.sendMessage("§7磁場終了");},400L); }
+    private void anchorSkill(Player p) { setCooldown(p.getUniqueId(),25_000L); anchorFields.put(p.getUniqueId(),p.getLocation().clone()); p.sendMessage("§9§l磁場展開！25秒間 半径12mの敵を完全拘束＋持続ダメージ"); p.getWorld().playSound(p.getLocation(),Sound.BLOCK_BEACON_ACTIVATE,1f,0.5f); UUID uid=p.getUniqueId(); new BukkitRunnable(){int count=0;@Override public void run(){if(count++>12||!anchorFields.containsKey(uid)){cancel();return;}Location loc=anchorFields.get(uid);if(loc==null||loc.getWorld()==null){cancel();return;}for(Player t:loc.getWorld().getPlayers()){if(t.getLocation().distance(loc)<=12&&gm.isParticipant(t)&&!gm.isSpectator(t)&&gm.getTeamOf(t)!=gm.getTeam(uid)){t.damage(3.0,Bukkit.getPlayer(uid));}}loc.getWorld().spawnParticle(Particle.PORTAL,loc,40,12,1,12,0.02);}}.runTaskTimer(plugin,40L,40L); Bukkit.getScheduler().runTaskLater(plugin,()->{anchorFields.remove(p.getUniqueId());p.sendMessage("§7磁場終了");},500L); }
 
     private void whirlwindGust(Player p) { setCooldown(p.getUniqueId(),12_000L); Vector dir=p.getLocation().getDirection().normalize(); Location start=p.getEyeLocation().add(dir.clone().multiply(2)); p.sendMessage("§f§l気流砲！"); new BukkitRunnable(){int ticks=0;Location cur=start.clone();@Override public void run(){if(ticks++>140){cancel();return;}cur.add(dir.clone().multiply(0.5));cur.getWorld().spawnParticle(Particle.CLOUD,cur,8,1.5,1,1.5,0.02);for(Entity e:cur.getWorld().getNearbyEntities(cur,2,2,2)){if(!(e instanceof LivingEntity le)||!le.isValid())continue;if(e instanceof Player tp&&!gm.isParticipant(tp))continue;Vector push=dir.clone().multiply(0.12);push.setY(Math.min(push.getY(),0.08));le.setVelocity(push);}}}.runTaskTimer(plugin,0L,2L); }
 
