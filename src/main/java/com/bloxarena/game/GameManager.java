@@ -1652,14 +1652,20 @@ public class GameManager {
     private void captureFlag(TeamColor team) {
         if (team == TeamColor.RED) {
             ctfRedCaptures++;
-            resetRedFlag();
-            if (redFlagCarrier != null) ctfPickupCooldown.put(redFlagCarrier, System.currentTimeMillis());
-            Bukkit.broadcastMessage("§c§l🚩 赤チームが旗を奪取！ §8(" + ctfRedCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
+            // Red captured Blue's flag - reset BLUE flag
+            if (blueFlagCarrier != null) ctfPickupCooldown.put(blueFlagCarrier, System.currentTimeMillis());
+            blueFlagCarrier = null;
+            blueFlagTaken = false;
+            resetBlueFlag();
+            Bukkit.broadcastMessage("§c§l🚩 赤チームが青旗を奪取！ §8(" + ctfRedCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
         } else {
             ctfBlueCaptures++;
-            resetBlueFlag();
-            if (blueFlagCarrier != null) ctfPickupCooldown.put(blueFlagCarrier, System.currentTimeMillis());
-            Bukkit.broadcastMessage("§9§l🚩 青チームが旗を奪取！ §8(" + ctfBlueCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
+            // Blue captured Red's flag - reset RED flag
+            if (redFlagCarrier != null) ctfPickupCooldown.put(redFlagCarrier, System.currentTimeMillis());
+            redFlagCarrier = null;
+            redFlagTaken = false;
+            resetRedFlag();
+            Bukkit.broadcastMessage("§9§l🚩 青チームが赤旗を奪取！ §8(" + ctfBlueCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
         }
         int toWin = plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3);
         if (ctfRedCaptures >= toWin) { endGame(TeamColor.RED, WinCondition.OBJECTIVE); }
