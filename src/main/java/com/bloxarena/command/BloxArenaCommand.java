@@ -420,8 +420,8 @@ public class BloxArenaCommand implements CommandExecutor, TabCompleter {
                 if (!(sender instanceof Player p)) { sender.sendMessage("§cプレイヤーのみ使用可能です。"); return true; }
                 if (args.length < 2) {
                     sender.sendMessage("§7使用法: /ba " + sub + " <mapId>");
-                    sender.sendMessage("§7  setredflag    → 自陣の赤旗初期位置を現在地に設定");
-                    sender.sendMessage("§7  setblueflag   → 自陣の青旗初期位置を現在地に設定");
+                    sender.sendMessage("§7  setredflag    → 相手陣地の赤旗初期位置を現在地に設定");
+                    sender.sendMessage("§7  setblueflag   → 相手陣地の青旗初期位置を現在地に設定");
                     sender.sendMessage("§7  setredreturn  → 赤チームの旗持ち帰り地点を現在地に設定");
                     sender.sendMessage("§7  setbluereturn → 青チームの旗持ち帰り地点を現在地に設定");
                     return true;

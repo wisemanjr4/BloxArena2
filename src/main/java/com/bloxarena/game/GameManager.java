@@ -1591,19 +1591,7 @@ public class GameManager {
         Long pickupCd = ctfPickupCooldown.get(p.getUniqueId());
         if (pickupCd != null && System.currentTimeMillis() - pickupCd < 5_000) return;
 
-        if (team == TeamColor.RED && !blueFlagTaken && currentMap.getBlueFlagLocation() != null) {
-            if (p.getLocation().distance(currentMap.getBlueFlagLocation()) < 2) {
-                blueFlagTaken = true;
-                blueFlagCarrier = p.getUniqueId();
-                blueFlagDropTime = -1;
-                if (currentMap.getBlueFlagLocation().getBlock().getType() == Material.CYAN_BANNER) {
-                    currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
-                }
-                p.sendMessage("§9\uD83C\uDFF4 青の旗を奪取！自陣に持ち帰れ！");
-                p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
-            }
-        }
-        if (team == TeamColor.BLUE && !redFlagTaken && currentMap.getRedFlagLocation() != null) {
+        if (team == TeamColor.RED && !redFlagTaken && currentMap.getRedFlagLocation() != null) {
             if (p.getLocation().distance(currentMap.getRedFlagLocation()) < 2) {
                 redFlagTaken = true;
                 redFlagCarrier = p.getUniqueId();
@@ -1615,14 +1603,26 @@ public class GameManager {
                 p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
             }
         }
+        if (team == TeamColor.BLUE && !blueFlagTaken && currentMap.getBlueFlagLocation() != null) {
+            if (p.getLocation().distance(currentMap.getBlueFlagLocation()) < 2) {
+                blueFlagTaken = true;
+                blueFlagCarrier = p.getUniqueId();
+                blueFlagDropTime = -1;
+                if (currentMap.getBlueFlagLocation().getBlock().getType() == Material.CYAN_BANNER) {
+                    currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
+                }
+                p.sendMessage("§9\uD83C\uDFF4 青の旗を奪取！自陣に持ち帰れ！");
+                p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
+            }
+        }
 
-        if (team == TeamColor.RED && blueFlagCarrier != null && blueFlagCarrier.equals(p.getUniqueId())
+        if (team == TeamColor.RED && redFlagCarrier != null && redFlagCarrier.equals(p.getUniqueId())
                 && currentMap.getRedReturnLocation() != null
                 && p.getLocation().distance(currentMap.getRedReturnLocation()) < 3) {
             captureFlag(TeamColor.RED);
             return;
         }
-        if (team == TeamColor.BLUE && redFlagCarrier != null && redFlagCarrier.equals(p.getUniqueId())
+        if (team == TeamColor.BLUE && blueFlagCarrier != null && blueFlagCarrier.equals(p.getUniqueId())
                 && currentMap.getBlueReturnLocation() != null
                 && p.getLocation().distance(currentMap.getBlueReturnLocation()) < 3) {
             captureFlag(TeamColor.BLUE);
@@ -1652,20 +1652,18 @@ public class GameManager {
     private void captureFlag(TeamColor team) {
         if (team == TeamColor.RED) {
             ctfRedCaptures++;
-            // Red captured Blue's flag - reset BLUE flag
-            if (blueFlagCarrier != null) ctfPickupCooldown.put(blueFlagCarrier, System.currentTimeMillis());
-            blueFlagCarrier = null;
-            blueFlagTaken = false;
-            resetBlueFlag();
-            Bukkit.broadcastMessage("§c§l🚩 赤チームが青旗を奪取！ §8(" + ctfRedCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
-        } else {
-            ctfBlueCaptures++;
-            // Blue captured Red's flag - reset RED flag
             if (redFlagCarrier != null) ctfPickupCooldown.put(redFlagCarrier, System.currentTimeMillis());
             redFlagCarrier = null;
             redFlagTaken = false;
             resetRedFlag();
-            Bukkit.broadcastMessage("§9§l🚩 青チームが赤旗を奪取！ §8(" + ctfBlueCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
+            Bukkit.broadcastMessage("§c§l🚩 赤チームが赤旗を奪取！ §8(" + ctfRedCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
+        } else {
+            ctfBlueCaptures++;
+            if (blueFlagCarrier != null) ctfPickupCooldown.put(blueFlagCarrier, System.currentTimeMillis());
+            blueFlagCarrier = null;
+            blueFlagTaken = false;
+            resetBlueFlag();
+            Bukkit.broadcastMessage("§9§l🚩 青チームが青旗を奪取！ §8(" + ctfBlueCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
         }
         int toWin = plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3);
         if (ctfRedCaptures >= toWin) { endGame(TeamColor.RED, WinCondition.OBJECTIVE); }
