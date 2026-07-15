@@ -152,8 +152,8 @@ public class MapWizard {
         }
         if (!mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
             if (mc.getRedFlagLocation() == null) {
-                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §c赤旗 §6初期位置（自陣）");
-                p.sendMessage("§7自陣に置く旗です。§9青チーム§7が奪いに来ます。");
+                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §c赤旗 §6初期位置（相手陣地）");
+                p.sendMessage("§7§c赤チーム§7が奪いに行く旗です。§9青陣地側§7に設置します。");
                 p.sendMessage("§7設置したい場所に立って §f/ba admin next　§f/ba admin skip §7= CTFを飛ばす");
                 footer(p); return;
             }
