@@ -231,6 +231,7 @@ public class KitSelectGUI {
         meta.setDisplayName(taken ? "§c§m" + kit.getName() + " §c(選択済み)" : kit.getDisplayName());
         meta.setLore(Arrays.asList(
             "§7" + kit.getDescription(),
+            "§f" + kit.getLore(),
             taken ? "§c選択不可" : "§a► 右クリックで選択"
         ));
         if (!taken) {
