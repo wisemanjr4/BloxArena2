@@ -1436,6 +1436,9 @@ public class GameManager {
     }
 
     private void bombCleanup() {
+        if (bombLoc != null && bombLoc.getWorld() != null) {
+            bombLoc.getBlock().setType(Material.AIR);
+        }
         bombPlanted = false;
         bombLoc = null;
         bombDefusing = false;
