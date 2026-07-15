@@ -343,7 +343,7 @@ public class SkillManager {
     }
 
     public void onMegaRocketHit(Location loc, Player shooter, Snowball rocket) {
-        float power = rocketDistancePower(rocket, loc, 3f);
+        float power = rocketHitPower(rocket, loc, 3f);
         loc.getWorld().createExplosion(loc, power, false, false, shooter);
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.6f);
     }
