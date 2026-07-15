@@ -181,10 +181,9 @@ public class SkillManager {
         if (held == null || held.getItemMeta() == null) return;
         ItemMeta meta = held.getItemMeta();
         if (meta.getPersistentDataContainer().has(KEY_BURST, PersistentDataType.BYTE)) { useBurst(p); return; }
-        if (meta.getPersistentDataContainer().has(KEY_COOK, PersistentDataType.STRING)) {
-            String foodType = meta.getPersistentDataContainer().get(KEY_COOK, PersistentDataType.STRING);
-            if (foodType != null) cookUseSelf(p, Material.valueOf(foodType));
-            return;
+        // COOK: sword right-click = generate food
+        if (gm.getPlayerKitType(p.getUniqueId()) == KitType.COOK && isSword(held)) {
+            cookGenerateFood(p); return;
         }
         if (meta.getPersistentDataContainer().has(KEY_SKILL, PersistentDataType.STRING)) {
             String kitName = meta.getPersistentDataContainer().get(KEY_SKILL, PersistentDataType.STRING);
@@ -200,15 +199,11 @@ public class SkillManager {
     public void onClick(Player p, ItemStack held, boolean isLeft) {
         if (!isLeft || held == null || held.getItemMeta() == null) return;
         ItemMeta meta = held.getItemMeta();
-        if (meta.getPersistentDataContainer().has(KEY_COOK, PersistentDataType.STRING)) {
-            String foodType = meta.getPersistentDataContainer().get(KEY_COOK, PersistentDataType.STRING);
-            if (foodType != null) cookThrow(p, Material.valueOf(foodType));
-            return;
-        }
         if (meta.getPersistentDataContainer().has(KEY_SKILL, PersistentDataType.STRING)) {
             String kitName = meta.getPersistentDataContainer().get(KEY_SKILL, PersistentDataType.STRING);
             if ("TRANSPORTER".equals(kitName) && gm.getPlayerKitType(p.getUniqueId()) == KitType.TRANSPORTER) { placePortalA(p); }
             if ("WHIRLWIND".equals(kitName) && gm.getPlayerKitType(p.getUniqueId()) == KitType.WHIRLWIND) { whirlwindBall(p); }
+            if ("COOK".equals(kitName) && gm.getPlayerKitType(p.getUniqueId()) == KitType.COOK) { cookThrowFood(p); }
         }
         if (meta.getPersistentDataContainer().has(KEY_VAMPIRE_SKILL, PersistentDataType.STRING) && gm.getPlayerKitType(p.getUniqueId()) == KitType.VAMPIRE) {
             if (p.isSneaking()) theosPadaAction(p, false);
@@ -783,30 +778,66 @@ public class SkillManager {
 
     public void theosPadaAction(Player p, boolean isRightClick) { if(gm.getPlayerKitType(p.getUniqueId())!=KitType.VAMPIRE)return; double gauge=vampireGauge.getOrDefault(p.getUniqueId(),0.0); if(isRightClick){if(isOnCooldown(p.getUniqueId()))return;setCooldown(p.getUniqueId(),10_000L);Snowball ball=p.launchProjectile(Snowball.class);ball.setVelocity(p.getLocation().getDirection().normalize().multiply(0.5));ball.setCustomName("theos_pada");ball.getPersistentDataContainer().set(new NamespacedKey(plugin,"theos_pada"),PersistentDataType.BYTE,(byte)1);p.sendMessage("§4§lテオスパーダ（吸収弾）！");}else{if(gauge<5){p.sendMessage("§c吸血ゲージが足りません（必要:5）");return;}vampireGauge.put(p.getUniqueId(),gauge-5);Player target=getTargetInSight(p,30);if(target==null){p.sendMessage("§c射程内にターゲットがいません。");return;}target.damage(5.0,p);target.getWorld().spawnParticle(Particle.SWEEP_ATTACK,target.getLocation().add(0,1,0),10,0.3,0.3,0.3,0.1);p.sendMessage("§4§lテオスパーダ（破壊光線）！§7ゲージ-5");target.sendMessage("§4§lテオスパーダが直撃！");} }
 
-    // ─── COOK ───
+    private boolean isSword(ItemStack item) {
+        if (item == null) return false;
+        return item.getType() == Material.WOODEN_SWORD || item.getType() == Material.STONE_SWORD
+            || item.getType() == Material.IRON_SWORD || item.getType() == Material.DIAMOND_SWORD;
+    }
+
+    private void cookGenerateFood(Player p) {
+        if (isOnCooldown(p.getUniqueId())) return;
+        setCooldown(p.getUniqueId(), 1_000L);
+        Material[] all = {Material.COOKED_BEEF, Material.COOKED_CHICKEN, Material.GOLDEN_CARROT,
+                Material.COOKED_PORKCHOP, Material.PUMPKIN_PIE, Material.BREAD, Material.HONEY_BOTTLE,
+                Material.BEETROOT_SOUP, Material.ROTTEN_FLESH, Material.SPIDER_EYE, Material.POISONOUS_POTATO,
+                Material.PUFFERFISH, Material.CHICKEN, Material.PORKCHOP, Material.BEEF, Material.MUTTON,
+                Material.COD, Material.SALMON};
+        Material mat = all[new java.util.Random().nextInt(all.length)];
+        ItemStack food = new ItemStack(mat); ItemMeta meta = food.getItemMeta();
+        meta.getPersistentDataContainer().set(KEY_COOK, PersistentDataType.STRING, mat.name());
+        meta.setDisplayName(getCookLabel(mat)); meta.setLore(List.of("§7スキル星で使用"));
+        food.setItemMeta(meta); p.getInventory().addItem(food);
+        p.sendMessage("§6" + getCookLabel(mat) + " §6を手に入れた！");
+    }
 
     private void cookSkill(Player p) {
-        setCooldown(p.getUniqueId(), 10_000L); java.util.Random rnd = new java.util.Random();
-        for (int i = 0; i < 3; i++) {
-            boolean good = rnd.nextBoolean();
-            Material mat = good
-                ? new Material[]{Material.COOKED_BEEF, Material.COOKED_CHICKEN, Material.GOLDEN_CARROT, Material.COOKED_PORKCHOP, Material.PUMPKIN_PIE, Material.BREAD, Material.HONEY_BOTTLE, Material.BEETROOT_SOUP}[rnd.nextInt(8)]
-                : new Material[]{Material.ROTTEN_FLESH, Material.SPIDER_EYE, Material.POISONOUS_POTATO, Material.PUFFERFISH, Material.CHICKEN, Material.PORKCHOP, Material.BEEF, Material.MUTTON, Material.COD, Material.SALMON}[rnd.nextInt(10)];
-            ItemStack food = new ItemStack(mat); ItemMeta meta = food.getItemMeta();
-            meta.getPersistentDataContainer().set(KEY_COOK, PersistentDataType.STRING, mat.name());
-            meta.setDisplayName(getCookLabel(mat)); meta.setLore(List.of("§7右クリで使用 / 左クリで投擲"));
-            food.setItemMeta(meta); p.getInventory().addItem(food);
+        ItemStack food = findCookFood(p);
+        if (food == null) { p.sendMessage("§c食材を持っていません！剣を右クリックで入手"); return; }
+        Material mat = food.getType();
+        food.setAmount(food.getAmount() - 1);
+        setCooldown(p.getUniqueId(), 1_000L);
+        applyCookBuff(p, mat);
+        p.sendMessage("§6" + getCookLabel(mat) + " §6を使用！（自分）");
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_BURP, 1f, 1.2f);
+    }
+
+    private void cookThrowFood(Player p) {
+        ItemStack food = findCookFood(p);
+        if (food == null) { p.sendMessage("§c食材を持っていません！剣を右クリックで入手"); return; }
+        Material mat = food.getType();
+        food.setAmount(food.getAmount() - 1);
+        setCooldown(p.getUniqueId(), 1_000L);
+        Snowball ball = p.launchProjectile(Snowball.class);
+        ball.setVelocity(p.getLocation().getDirection().normalize().multiply(1.5));
+        ball.setCustomName("cookThrow");
+        ball.getPersistentDataContainer().set(KEY_COOK, PersistentDataType.STRING, mat.name());
+        p.sendMessage("§6" + getCookLabel(mat) + " §6を投げた！");
+    }
+
+    private ItemStack findCookFood(Player p) {
+        for (ItemStack item : p.getInventory().getContents()) {
+            if (item != null && item.getItemMeta() != null
+                    && item.getItemMeta().getPersistentDataContainer().has(KEY_COOK, PersistentDataType.STRING)) {
+                return item;
+            }
         }
-        p.sendMessage("§6§l食材を3つ獲得！§e右クリで食べる / 左クリで投げる");
+        return null;
     }
 
     private String getCookLabel(Material mat) { return switch(mat){ case COOKED_BEEF->"§6ステーキ §7[§c力I 10s§7]"; case COOKED_CHICKEN->"§f鶏肉 §7[§b速度I 10s§7]"; case GOLDEN_CARROT->"§e金ニンジン §7[§d再生I 8s§7]"; case COOKED_PORKCHOP->"§d豚肉 §7[§7耐性I 10s§7]"; case PUMPKIN_PIE->"§6パンプキンパイ §7[§e吸収I 20s§7]"; case BREAD->"§eパン §7[§6満腹回復§7]"; case HONEY_BOTTLE->"§6ハチミツ §7[§a跳躍II 8s§7]"; case BEETROOT_SOUP->"§cビートルートスープ §7[§7耐火 20s§7]"; case ROTTEN_FLESH->"§8腐肉 §7[§c空腹II 10s§7]"; case SPIDER_EYE->"§5蜘蛛の目 §7[§2毒I 8s§7]"; case POISONOUS_POTATO->"§a青くなったジャガイモ §7[§d吐気 5s§7]"; case PUFFERFISH->"§eフグ §7[§8衰弱+吐気 5s§7]"; case CHICKEN->"§f生鶏肉 §7[§7弱体化I 10s§7]"; case PORKCHOP->"§d生豚肉 §7[§7鈍足I 10s§7]"; case BEEF->"§c生牛肉 §7[§8採掘低下I 15s§7]"; case MUTTON->"§5生羊肉 §7[§0盲目 3s§7]"; case COD->"§b生鱈 §7[§4即時ダメ 2❤§7]"; case SALMON->"§d生鮭 §7[§f浮遊 3s§7]"; default->"§7料理"; }; }
 
-    public void cookUseSelf(Player p, Material mat) { if(gm.getPlayerKitType(p.getUniqueId())!=KitType.COOK)return; p.getInventory().getItemInMainHand().setAmount(p.getInventory().getItemInMainHand().getAmount()-1); applyCookBuff(p,mat); p.sendMessage("§6料理を使用！"); p.getWorld().playSound(p.getLocation(),Sound.ENTITY_PLAYER_BURP,1f,1.2f); }
-
-    public void cookThrow(Player p, Material mat) { if(gm.getPlayerKitType(p.getUniqueId())!=KitType.COOK)return; p.getInventory().getItemInMainHand().setAmount(p.getInventory().getItemInMainHand().getAmount()-1); Snowball ball=p.launchProjectile(Snowball.class);ball.setVelocity(p.getLocation().getDirection().normalize().multiply(1.5));ball.setCustomName("cookThrow");ball.getPersistentDataContainer().set(KEY_COOK,PersistentDataType.STRING,mat.name());p.sendMessage("§6料理を投げた！"); }
-
     private void applyCookBuff(Player p, Material mat) { switch(mat){ case COOKED_BEEF->p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE,200,0,false,true)); case COOKED_CHICKEN->p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,200,0,false,true)); case GOLDEN_CARROT->p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION,160,0,false,true)); case COOKED_PORKCHOP->p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,200,0,false,true)); case PUMPKIN_PIE->p.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION,400,0,false,true)); case BREAD->{p.setFoodLevel(20);p.setSaturation(10f);} case HONEY_BOTTLE->p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP,160,1,false,true)); case BEETROOT_SOUP->p.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE,400,0,false,true)); case ROTTEN_FLESH->p.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER,200,1,false,true)); case SPIDER_EYE->p.addPotionEffect(new PotionEffect(PotionEffectType.POISON,160,0,false,true)); case POISONOUS_POTATO->p.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION,100,0,false,true)); case PUFFERFISH->{p.addPotionEffect(new PotionEffect(PotionEffectType.WITHER,100,0,false,true));p.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION,100,0,false,true));} case CHICKEN->p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,200,0,false,true)); case PORKCHOP->p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,200,0,false,true)); case BEEF->p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING,300,0,false,true)); case MUTTON->p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS,60,0,false,true)); case COD->p.damage(4.0); case SALMON->p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION,60,0,false,true)); } }
+
 
     // ─── Vampire Stage System ───
 

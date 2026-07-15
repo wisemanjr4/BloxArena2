@@ -302,6 +302,7 @@ public class GameListeners implements Listener {
             }
             // CTF flag pickup
             if (gm.getCurrentGameMode() == com.bloxarena.game.GameMode.CAPTURE_THE_FLAG) {
+                if (isRight) e.setCancelled(true);
                 gm.tryPickupFlag(p);
                 gm.tryPickupDroppedFlag(p);
             }
