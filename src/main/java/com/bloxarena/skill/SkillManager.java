@@ -429,8 +429,9 @@ public class SkillManager {
     public void initVampireDebuffs(Player p) { if (gm.getPlayerKitType(p.getUniqueId()) == KitType.VAMPIRE) applyVampireStage(p, 0); }
     public void cookHit(Location loc, Player thrower, Material mat) {
         for (Entity e : loc.getWorld().getNearbyEntities(loc, 2, 2, 2)) {
-            if (e instanceof Player t && gm.isParticipant(t) && gm.getTeamOf(t) != gm.getTeamOf(thrower)) {
-                applyCookBuff(t, mat); t.sendMessage("§c料理が命中！");
+            if (e instanceof Player t && gm.isParticipant(t) && t != thrower) {
+                applyCookBuff(t, mat);
+                t.sendMessage(gm.getTeamOf(t) == gm.getTeamOf(thrower) ? "§a味方から料理が命中！" : "§c料理が命中！");
             }
         }
     }
