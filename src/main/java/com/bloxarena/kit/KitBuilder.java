@@ -109,8 +109,6 @@ public class KitBuilder {
                 ItemStack wws = new ItemStack(Material.IRON_SWORD);
                 wws.addEnchantment(Enchantment.KNOCKBACK, 1);
                 list.add(wws);
-                list.add(new ItemStack(Material.BOW));
-                list.add(new ItemStack(Material.ARROW, 16));
                 list.add(new ItemStack(Material.NETHER_STAR));
             }
             case RELEASER -> {
@@ -635,8 +633,6 @@ public class KitBuilder {
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
         sword.addEnchantment(Enchantment.KNOCKBACK, 1);
         player.getInventory().addItem(sword);
-        player.getInventory().addItem(new ItemStack(Material.BOW));
-        player.getInventory().addItem(new ItemStack(Material.ARROW, 16));
         if (plugin != null) {
             player.getInventory().addItem(makeSkillItem(plugin, KitType.WHIRLWIND, "§f§l🏷 スキル: 気流砲+旋風弾"));
         }
