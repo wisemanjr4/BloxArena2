@@ -193,10 +193,11 @@ public class KitBuilder {
                 list.add(new ItemStack(Material.NETHER_STAR));
             }
             case SUNDANCE -> {
-                list.add(new ItemStack(Material.CROSSBOW));
+                ItemStack sundx = new ItemStack(Material.CROSSBOW);
+                sundx.addEnchantment(Enchantment.QUICK_CHARGE, 2);
+                list.add(sundx);
                 list.add(new ItemStack(Material.ARROW, 16));
                 list.add(new ItemStack(Material.WOODEN_SWORD));
-                list.add(new ItemStack(Material.NETHER_STAR));
             }
             case RESTRICTIONER -> {
                 list.add(new ItemStack(Material.STONE_SWORD));
@@ -500,12 +501,11 @@ public class KitBuilder {
     }
 
     private static void giveSundance(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().addItem(new ItemStack(Material.CROSSBOW));
+        ItemStack xbow = new ItemStack(Material.CROSSBOW);
+        xbow.addEnchantment(Enchantment.QUICK_CHARGE, 2);
+        player.getInventory().addItem(xbow);
         player.getInventory().addItem(new ItemStack(Material.ARROW, 16));
         player.getInventory().addItem(new ItemStack(Material.WOODEN_SWORD));
-        if (plugin != null) {
-            player.getInventory().addItem(makeSkillItem(plugin, KitType.SUNDANCE, "§b§l🏷 スキル: リボルビング"));
-        }
         giveLeatherArmor(player);
     }
 
