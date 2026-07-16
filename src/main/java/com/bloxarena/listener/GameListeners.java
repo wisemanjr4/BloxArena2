@@ -11,6 +11,7 @@ import com.bloxarena.map.MapConfig;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.*;
@@ -517,7 +518,7 @@ public class GameListeners implements Listener {
         // Micro rocket
         if (ball.getPersistentDataContainer().has(new NamespacedKey(plugin, "micro_rocket"), org.bukkit.persistence.PersistentDataType.BYTE)) {
             float power = plugin.getSkillManager().rocketHitPower(ball, e.getEntity().getLocation(), 1.5f);
-            e.getEntity().getLocation().getWorld().createExplosion(e.getEntity().getLocation(), power, false, false, shooter);
+            e.getEntity().getLocation().getWorld().createExplosion(e.getEntity().getLocation(), 0f, false, false, shooter);for(Entity e2:e.getEntity().getLocation().getWorld().getNearbyEntities(e.getEntity().getLocation(),3,2,3)){if(e2 instanceof Player t&&gm.isParticipant(t)&&gm.getTeamOf(t)!=gm.getTeamOf(shooter)){t.damage(power*3,shooter);}}
             e.getEntity().remove();
         }
         // Theos Pada (vampire)

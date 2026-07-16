@@ -185,6 +185,11 @@ public class SkillManager {
         if (gm.getPlayerKitType(p.getUniqueId()) == KitType.COOK && isSword(held)) {
             cookGenerateFood(p); return;
         }
+        // SUNDANCE: sneak + right-click crossbow = activate revolver
+        if (gm.getPlayerKitType(p.getUniqueId()) == KitType.SUNDANCE && p.isSneaking()
+                && held.getType() == Material.CROSSBOW) {
+            sundanceSkill(p); return;
+        }
         if (meta.getPersistentDataContainer().has(KEY_SKILL, PersistentDataType.STRING)) {
             String kitName = meta.getPersistentDataContainer().get(KEY_SKILL, PersistentDataType.STRING);
             if ("TRANSPORTER".equals(kitName) && gm.getPlayerKitType(p.getUniqueId()) == KitType.TRANSPORTER) { placePortalB(p); return; }
@@ -344,7 +349,7 @@ public class SkillManager {
 
     public void onMegaRocketHit(Location loc, Player shooter, Snowball rocket) {
         float power = rocketHitPower(rocket, loc, 2f);
-        loc.getWorld().createExplosion(loc, power, false, false, shooter);
+        loc.getWorld().createExplosion(loc, 0f, false, false, shooter);for(Entity e2:loc.getWorld().getNearbyEntities(loc,4,3,4)){if(e2 instanceof Player t&&gm.isParticipant(t)&&gm.getTeamOf(t)!=gm.getTeamOf(shooter)){t.damage(power*4,shooter);t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(2.0).setY(0.5));}}
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.6f);
     }
 
@@ -612,7 +617,7 @@ public class SkillManager {
             case WHIRLWIND -> whirlwindGust(p);
             case FLASHER -> flasherSkill(p);
             case MARKSMAN -> marksmanSkill(p);
-            case SUNDANCE -> sundanceSkill(p);
+            case SUNDANCE -> {} // activated via sneak+right-click crossbow
             case ROCKETER -> rocketerFire(p);
             case ALCHEMIST -> alchemistSkill(p);
             case ENGINEER -> engineerSkill(p);
@@ -756,7 +761,7 @@ public class SkillManager {
 
     private void rocketerFire(Player p) { if (p.isSneaking()) rocketerSkill(p); else rocketerMicro(p); }
 
-    private void rocketerMicro(Player p) { setCooldown(p.getUniqueId(), 8_000L); Snowball rocket = p.launchProjectile(Snowball.class); rocket.setVelocity(p.getLocation().getDirection().normalize().multiply(2.0)); rocket.setCustomName("microRocket"); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "micro_rocket"), PersistentDataType.BYTE, (byte)1); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "rocket_origin_x"), PersistentDataType.DOUBLE, p.getLocation().getX()); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "rocket_origin_y"), PersistentDataType.DOUBLE, p.getLocation().getY()); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "rocket_origin_z"), PersistentDataType.DOUBLE, p.getLocation().getZ()); rocket.setGravity(false); rocket.setGlowing(true); p.sendMessage("§e§lマイクロロケット！"); new BukkitRunnable(){int ticks=0;@Override public void run(){if(ticks++>30||!rocket.isValid()){cancel();return;}rocket.getWorld().spawnParticle(Particle.FLAME,rocket.getLocation(),1,0.1,0.1,0.1,0.01);}}.runTaskTimer(plugin,0L,1L); Bukkit.getScheduler().runTaskLater(plugin,()->{if(rocket.isValid()){float power = rocketHitPower(rocket, rocket.getLocation(), 1.5f); rocket.getWorld().createExplosion(rocket.getLocation(), power, false, false, Bukkit.getPlayer(p.getUniqueId())); rocket.remove();}},30L); }
+    private void rocketerMicro(Player p) { setCooldown(p.getUniqueId(), 8_000L); Snowball rocket = p.launchProjectile(Snowball.class); rocket.setVelocity(p.getLocation().getDirection().normalize().multiply(2.0)); rocket.setCustomName("microRocket"); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "micro_rocket"), PersistentDataType.BYTE, (byte)1); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "rocket_origin_x"), PersistentDataType.DOUBLE, p.getLocation().getX()); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "rocket_origin_y"), PersistentDataType.DOUBLE, p.getLocation().getY()); rocket.getPersistentDataContainer().set(new NamespacedKey(plugin, "rocket_origin_z"), PersistentDataType.DOUBLE, p.getLocation().getZ()); rocket.setGravity(false); rocket.setGlowing(true); p.sendMessage("§e§lマイクロロケット！"); new BukkitRunnable(){int ticks=0;@Override public void run(){if(ticks++>30||!rocket.isValid()){cancel();return;}rocket.getWorld().spawnParticle(Particle.FLAME,rocket.getLocation(),1,0.1,0.1,0.1,0.01);}}.runTaskTimer(plugin,0L,1L); Bukkit.getScheduler().runTaskLater(plugin,()->{if(rocket.isValid()){float power = rocketHitPower(rocket, rocket.getLocation(), 1.5f); rocket.getWorld().createExplosion(rocket.getLocation(), 0f, false, false, p);for(Entity e2:rocket.getLocation().getWorld().getNearbyEntities(rocket.getLocation(),3,2,3)){if(e2 instanceof Player t&&gm.isParticipant(t)&&gm.getTeamOf(t)!=gm.getTeamOf(p)){t.damage(power*3,p);t.setVelocity(t.getLocation().toVector().subtract(rocket.getLocation().toVector()).normalize().multiply(1.5).setY(0.3));}} rocket.remove();}},30L); }
 
     private void alchemistSkill(Player p) { setCooldown(p.getUniqueId(), 10_000L); KitBuilder.refillAlchemistPotions(p); p.sendMessage("§d§l再調合！"); }
 

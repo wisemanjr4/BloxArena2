@@ -59,6 +59,7 @@ public enum KitType {
                "君は「拘束者」だ。敵を縛り上げ、勝機を創り出せ。"),
     TRANSPORTER("トランスポーター","§3🌀 トランスポーター §7(Controller)","双方向ポータルを設置する移動型", KitRole.CONTROLLER,
                "君は「境界渡り」だ。空間を繋ぎ、新たな戦場を切り拓け。"),
+    // MIMIC retired - keep code
     MIMIC     ("ミミック",    "§5🔄 ミミック §7(Controller)",  "敵のスキルをコピーする模倣型", KitRole.CONTROLLER,
                "君は「模倣者」だ。敵の力を奪い、その牙を敵へ返せ。"),
     NECRO     ("ネクロ",       "§8💀 ネクロ §7(Controller)",   "スケルトン3部隊を召喚・指揮する屍体舞踏者", KitRole.CONTROLLER,
