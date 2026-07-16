@@ -508,7 +508,7 @@ public class SkillManager {
             for (Player p : loc.getWorld().getPlayers()) {
                 if (p.getLocation().distance(loc) <= 12 && gm.isParticipant(p) && !gm.isSpectator(p) && gm.getTeamOf(p) != gm.getTeam(e.getKey())) {
                     p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 30, 8, false, true));
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 30, -10, false, true));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 30, -20, false, true));
                     p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 30, 2, false, true));
                 }
             }
@@ -646,15 +646,30 @@ public class SkillManager {
         if (burstUsed.contains(p.getUniqueId())) { p.sendMessage("§cバーストはこのラウンドでは使用済みです。"); return; }
         burstUsed.add(p.getUniqueId()); p.getInventory().setItem(8, null);
         Location loc = p.getLocation(); World w = p.getWorld();
-        w.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.8f);
-        w.spawnParticle(Particle.EXPLOSION_LARGE, loc, 8, 1.5, 1, 1.5, 0.1);
-        w.spawnParticle(Particle.CLOUD, loc.clone().add(0, 1, 0), 30, 2, 1, 2, 0.05);
-        p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1, false, true));
-        for (Entity e : w.getNearbyEntities(loc, 4, 3, 4)) {
-            if (!(e instanceof Player target) || !gm.isParticipant(target) || gm.getTeamOf(target) == gm.getTeamOf(p)) continue;
-            target.damage(3.0, p); target.setVelocity(target.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(1.5).setY(0.5));
-            target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 1, false, true));
-        }
+        // Float up + invincible
+        p.setInvulnerable(true);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 10, 1, false, true));
+        w.playSound(loc, Sound.BLOCK_BEACON_DEACTIVATE, 2f, 2f);
+        p.sendMessage("§c§lバースト発動！");
+        // Delayed burst after 0.5s
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            p.removePotionEffect(PotionEffectType.LEVITATION);
+            p.setInvulnerable(false);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1, false, true));
+            Location loc2 = p.getLocation();
+            w.createExplosion(loc2, 0f, false, false, p);
+            w.spawnParticle(Particle.EXPLOSION_LARGE, loc2, 8, 1.5, 1, 1.5, 0.1);
+            w.spawnParticle(Particle.CLOUD, loc2.clone().add(0, 1, 0), 30, 2, 1, 2, 0.05);
+            w.playSound(loc2, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.8f);
+            for (Entity e : w.getNearbyEntities(loc2, 4, 3, 4)) {
+                if (!(e instanceof Player target) || !gm.isParticipant(target) || gm.getTeamOf(target) == gm.getTeamOf(p)) continue;
+                target.damage(3.0, p); target.setVelocity(target.getLocation().toVector().subtract(loc2.toVector()).normalize().multiply(1.5).setY(0.5));
+                target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 1, false, true));
+            }
+            // No fall damage
+            gm.setNoFallDamage(p.getUniqueId());
+            Bukkit.getScheduler().runTaskLater(plugin, () -> gm.clearNoFallDamage(p.getUniqueId()), 100L);
+        }, 10L);
     }
 
     // ─── Kit Skills (abbreviated - keeping full implementations) ───
@@ -748,7 +763,7 @@ public class SkillManager {
 
     private void trapperSkill(Player p) { setCooldown(p.getUniqueId(), 8_000L); if (activeTraps.stream().filter(t->t.owner.equals(p.getUniqueId())).count()>=2) { TrapData oldest = activeTraps.stream().filter(t->t.owner.equals(p.getUniqueId())).findFirst().orElse(null); if(oldest!=null) activeTraps.remove(oldest); } Location loc = p.getLocation().getBlock().getLocation().add(0.5,0,0.5); activeTraps.add(new TrapData(p.getUniqueId(), loc)); p.sendMessage("§3§l罠設置！最大2個"); }
 
-    private void triggerTrap(TrapData t, Player victim) { t.triggered = true; t.loc.getWorld().createExplosion(t.loc, 2f, false, false, null); if (victim != null) { victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0, false, false)); victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 1, false, false)); victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 1, false, false)); } Bukkit.getScheduler().runTaskLater(plugin, ()-> activeTraps.remove(t), 1L); }
+    private void triggerTrap(TrapData t, Player victim) { t.triggered = true; t.loc.getWorld().playSound(t.loc, Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 2f); t.loc.getWorld().spawnParticle(Particle.WAX_ON, t.loc.clone().add(0.5, 0.2, 0.5), 15, 0.5, 0.2, 0.5, 0.1); Bukkit.getScheduler().runTaskLater(plugin, () -> { t.loc.getWorld().createExplosion(t.loc, 2f, false, false, null); if (victim != null && victim.isOnline()) { victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0, false, false)); victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 1, false, false)); victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 1, false, false)); victim.sendMessage("§c罠が爆発した！"); } activeTraps.remove(t); }, 16L); }
 
     private void guardianSkill(Player p) { setCooldown(p.getUniqueId(), 30_000L); p.setInvulnerable(true); guardianEndTime.put(p.getUniqueId(), System.currentTimeMillis()+7_000L); p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 140, 1, false, false)); p.sendMessage("§f§l鉄壁！7秒間無敵"); Bukkit.getScheduler().runTaskLater(plugin, ()->{ p.setInvulnerable(false); guardianEndTime.remove(p.getUniqueId()); p.sendMessage("§7鉄壁終了"); }, 140L); }
 
@@ -811,7 +826,7 @@ public class SkillManager {
 
     public void releaserMegaBurst(Player p) { if(gm.getPlayerKitType(p.getUniqueId())!=KitType.RELEASER)return; if(releaserMegaUsed.contains(p.getUniqueId())){p.sendMessage("§c超大解放はこのラウンド使用済みです。");return;} releaserMegaUsed.add(p.getUniqueId()); Location loc=p.getLocation();World w=p.getWorld();w.playSound(loc,Sound.ENTITY_GENERIC_EXPLODE,2f,0.5f);w.spawnParticle(Particle.EXPLOSION_HUGE,loc,8,2,2,2,0);for(Entity e:w.getNearbyEntities(loc,6,3,6)){if(!(e instanceof Player t)||!gm.isParticipant(t)||gm.getTeamOf(t)==gm.getTeamOf(p))continue;t.damage(8.0,p);t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(2.5).setY(1.0));t.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,120,2,false,true));t.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,100,2,false,true));}p.sendMessage("§e§l💢 超大解放！"); }
 
-    private void releaseSkill(Player p) { if(isOnCooldown(p.getUniqueId())){Long cd=skillCooldowns.get(p.getUniqueId());long remain=cd!=null?(cd-System.currentTimeMillis())/1000:0;p.sendMessage("§cリリースCT中！ §7残り§f"+remain+"§7秒");return;} setCooldown(p.getUniqueId(),12_000L);Location loc=p.getLocation();World w=p.getWorld();w.playSound(loc,Sound.ENTITY_GENERIC_EXPLODE,1f,0.7f);w.spawnParticle(Particle.EXPLOSION_LARGE,loc,5,1.5,1,1.5,0.05);p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,40,0,false,true));for(Entity e:w.getNearbyEntities(loc,4,2,4)){if(!(e instanceof Player t)||!gm.isParticipant(t)||gm.getTeamOf(t)==gm.getTeamOf(p))continue;t.damage(4.0,p);t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(1.5).setY(0.4));t.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,60,1,false,true));}p.sendMessage("§eリリース！"); }
+    private void releaseSkill(Player p) { if(isOnCooldown(p.getUniqueId())){Long cd=skillCooldowns.get(p.getUniqueId());long remain=cd!=null?(cd-System.currentTimeMillis())/1000:0;p.sendMessage("§cリリースCT中！ §7残り§f"+remain+"§7秒");return;} setCooldown(p.getUniqueId(),8_000L);Location loc=p.getLocation();World w=p.getWorld();w.playSound(loc,Sound.ENTITY_GENERIC_EXPLODE,1f,0.7f);w.spawnParticle(Particle.EXPLOSION_LARGE,loc,5,1.5,1,1.5,0.05);p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,40,0,false,true));for(Entity e:w.getNearbyEntities(loc,4,2,4)){if(!(e instanceof Player t)||!gm.isParticipant(t)||gm.getTeamOf(t)==gm.getTeamOf(p))continue;t.damage(4.0,p);t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(1.5).setY(0.4));t.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,60,1,false,true));}p.sendMessage("§eリリース！"); }
 
     public void theosPadaAction(Player p, boolean isRightClick) { if(gm.getPlayerKitType(p.getUniqueId())!=KitType.VAMPIRE)return; double gauge=vampireGauge.getOrDefault(p.getUniqueId(),0.0); if(isRightClick){if(isOnCooldown(p.getUniqueId()))return;setCooldown(p.getUniqueId(),10_000L);Snowball ball=p.launchProjectile(Snowball.class);ball.setVelocity(p.getLocation().getDirection().normalize().multiply(0.5));ball.setCustomName("theos_pada");ball.getPersistentDataContainer().set(new NamespacedKey(plugin,"theos_pada"),PersistentDataType.BYTE,(byte)1);p.sendMessage("§4§lテオスパーダ（吸収弾）！");}else{if(gauge<5){p.sendMessage("§c吸血ゲージが足りません（必要:5）");return;}vampireGauge.put(p.getUniqueId(),gauge-5);Player target=getTargetInSight(p,30);if(target==null){p.sendMessage("§c射程内にターゲットがいません。");return;}target.damage(5.0,p);target.getWorld().spawnParticle(Particle.SWEEP_ATTACK,target.getLocation().add(0,1,0),10,0.3,0.3,0.3,0.1);p.sendMessage("§4§lテオスパーダ（破壊光線）！§7ゲージ-5");target.sendMessage("§4§lテオスパーダが直撃！");} }
 

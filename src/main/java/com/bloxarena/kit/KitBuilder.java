@@ -115,7 +115,6 @@ public class KitBuilder {
                 ItemStack rs = new ItemStack(Material.IRON_SWORD);
                 rs.addEnchantment(Enchantment.DAMAGE_ALL, 1);
                 list.add(rs);
-                list.add(new ItemStack(Material.SHIELD));
                 list.add(new ItemStack(Material.NETHER_STAR));
             }
             case SCOUT -> {
@@ -643,7 +642,6 @@ public class KitBuilder {
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
         sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().addItem(sword);
-        player.getInventory().addItem(new ItemStack(Material.SHIELD));
         if (plugin != null) {
             player.getInventory().addItem(makeSkillItem(plugin, KitType.RELEASER, "§e§l🏷 スキル: 解放(リリース)"));
         }

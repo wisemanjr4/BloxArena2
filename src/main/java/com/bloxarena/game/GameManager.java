@@ -112,7 +112,7 @@ public class GameManager {
         }
         Bukkit.broadcastMessage("§d§l[ゲームモード] §f" + currentGameMode.getDisplayName() + " §7- " + currentGameMode.getDescription());
         for (Player pl : Bukkit.getOnlinePlayers()) {
-            pl.playSound(pl.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.5f);
+            pl.playSound(pl.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.8f, 2.0f);
         }
         for (UUID uid : participants) {
             Player pl = Bukkit.getPlayer(uid);
@@ -1506,8 +1506,11 @@ public class GameManager {
     }
 
     public boolean hasNoFallDamage(Player p) {
-        return noFallDamage.remove(p.getUniqueId()); // 消費型
+        return noFallDamage.remove(p.getUniqueId());
     }
+
+    public void setNoFallDamage(UUID uid) { noFallDamage.add(uid); }
+    public void clearNoFallDamage(UUID uid) { noFallDamage.remove(uid); }
 
     private List<UUID> getAllParticipants() {
         List<UUID> all = new ArrayList<>(redTeam);
