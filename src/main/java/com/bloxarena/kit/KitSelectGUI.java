@@ -135,7 +135,7 @@ public class KitSelectGUI {
 
     private void renderHotbar(Player p) {
         int page = pages.getOrDefault(p.getUniqueId(), 0);
-        KitType[] kits = KitType.values();
+        KitType[] kits = java.util.Arrays.stream(KitType.values()).filter(k -> k != KitType.MIMIC).toArray(KitType[]::new);
         int start = page * KITS_PER_PAGE;
         int maxPage = (kits.length - 1) / KITS_PER_PAGE;
 
@@ -207,6 +207,7 @@ public class KitSelectGUI {
     private void autoSelectKit(Player p) {
         if (confirmed.contains(p.getUniqueId())) return;
         for (KitType kit : KitType.values()) {
+            if (kit == KitType.MIMIC) continue;
             if (!gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) {
                 gm.setPlayerKit(p.getUniqueId(), kit.name());
                 confirmed.add(p.getUniqueId());
