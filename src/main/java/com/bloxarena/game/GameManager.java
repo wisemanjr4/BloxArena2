@@ -95,6 +95,8 @@ public class GameManager {
     private int ctfBlueCaptures = 0;
     private final Map<Integer, Material> ctfOriginalBlocks = new HashMap<>();
     private final Map<UUID, Long> ctfPickupCooldown = new HashMap<>();
+    private Location ctfRedFlagSpawn = null;
+    private Location ctfBlueFlagSpawn = null;
 
     public GameManager(BloxArenaPlugin plugin) {
         this.plugin = plugin;
@@ -303,11 +305,13 @@ public class GameManager {
             if (currentMap != null) {
                 if (currentMap.getRedFlagLocation() != null) {
                     Location rloc = currentMap.getRedFlagLocation();
+                    ctfRedFlagSpawn = rloc.clone();
                     ctfOriginalBlocks.put(0, rloc.getBlock().getType());
                     rloc.getBlock().setType(Material.RED_BANNER);
                 }
                 if (currentMap.getBlueFlagLocation() != null) {
                     Location bloc = currentMap.getBlueFlagLocation();
+                    ctfBlueFlagSpawn = bloc.clone();
                     ctfOriginalBlocks.put(1, bloc.getBlock().getType());
                     bloc.getBlock().setType(Material.CYAN_BANNER);
                 }
@@ -1684,7 +1688,6 @@ public class GameManager {
             Player p = Bukkit.getPlayer(carrierUuid);
             if (p != null && currentMap != null) {
                 Location dropLoc = findAirAbove(p.getLocation());
-                currentMap.setRedFlagLocation(dropLoc);
                 dropLoc.getBlock().setType(Material.RED_BANNER);
                 p.sendMessage("§c赤の旗を落としました！");
             }
@@ -1696,7 +1699,6 @@ public class GameManager {
             Player p = Bukkit.getPlayer(carrierUuid);
             if (p != null && currentMap != null) {
                 Location dropLoc = findAirAbove(p.getLocation());
-                currentMap.setBlueFlagLocation(dropLoc);
                 dropLoc.getBlock().setType(Material.CYAN_BANNER);
                 p.sendMessage("§9青の旗を落としました！");
             }
@@ -1715,7 +1717,9 @@ public class GameManager {
         redFlagTaken = false;
         redFlagCarrier = null;
         redFlagDropTime = -1;
-        if (currentMap != null && currentMap.getRedFlagLocation() != null) {
+        if (ctfRedFlagSpawn != null) {
+            ctfRedFlagSpawn.getBlock().setType(Material.RED_BANNER);
+        } else if (currentMap != null && currentMap.getRedFlagLocation() != null) {
             currentMap.getRedFlagLocation().getBlock().setType(Material.RED_BANNER);
         }
     }
@@ -1724,11 +1728,10 @@ public class GameManager {
         blueFlagTaken = false;
         blueFlagCarrier = null;
         blueFlagDropTime = -1;
-        if (currentMap != null && currentMap.getBlueFlagLocation() != null) {
+        if (ctfBlueFlagSpawn != null) {
+            ctfBlueFlagSpawn.getBlock().setType(Material.CYAN_BANNER);
+        } else if (currentMap != null && currentMap.getBlueFlagLocation() != null) {
             currentMap.getBlueFlagLocation().getBlock().setType(Material.CYAN_BANNER);
-            if (currentMap.getBlueFlagLocation().getBlock().getType() == Material.AIR) {
-                currentMap.getBlueFlagLocation().getBlock().setType(Material.CYAN_BANNER);
-            }
         }
     }
 
