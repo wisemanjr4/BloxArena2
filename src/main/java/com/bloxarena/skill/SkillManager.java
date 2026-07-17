@@ -852,7 +852,20 @@ public class SkillManager {
 
     private void stickerSkill(Player p) { setCooldown(p.getUniqueId(),14_000L); Snowball ball = p.launchProjectile(Snowball.class); ball.setVelocity(p.getLocation().getDirection().normalize().multiply(1.5)); ball.getPersistentDataContainer().set(new NamespacedKey(plugin,"grapple"),PersistentDataType.BYTE,(byte)1); p.sendMessage("§3§lグラップル！"); }
 
-    private void decoySkill(Player p) { setCooldown(p.getUniqueId(),18_000L); Location center=p.getLocation(); p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,160,0,false,false)); hideArmor(p); Bukkit.getScheduler().runTaskLater(plugin,()->showArmor(p),160L); for(int i=0;i<8;i++){double angle=i*Math.PI/4; Location sl=center.clone().add(Math.cos(angle)*2,0,Math.sin(angle)*2); Skeleton skel=center.getWorld().spawn(sl,Skeleton.class,s->{s.setAI(false);s.setRemoveWhenFarAway(false);s.setSilent(true);s.setCustomName(p.getName());s.setCustomNameVisible(true);s.getEquipment().setHelmet(p.getInventory().getHelmet());s.getEquipment().setChestplate(p.getInventory().getChestplate());s.getEquipment().setLeggings(p.getInventory().getLeggings());s.getEquipment().setBoots(p.getInventory().getBoots());s.getEquipment().setHelmetDropChance(0f);s.getEquipment().setChestplateDropChance(0f);s.getEquipment().setLeggingsDropChance(0f);s.getEquipment().setBootsDropChance(0f);}); skel.getPersistentDataContainer().set(new NamespacedKey(plugin,"decoy"),PersistentDataType.BYTE,(byte)1); Bukkit.getScheduler().runTaskLater(plugin,()->skel.remove(),160L); } p.sendMessage("§8§lデコイ展開！"); }
+    private void decoySkill(Player p) { setCooldown(p.getUniqueId(),18_000L); Location center=p.getLocation(); 
+        ItemStack[] decoyArmor = new ItemStack[]{p.getInventory().getHelmet(), p.getInventory().getChestplate(), p.getInventory().getLeggings(), p.getInventory().getBoots()};
+        hideArmor(p); Bukkit.getScheduler().runTaskLater(plugin,()->showArmor(p),160L); 
+        p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,160,0,false,false)); 
+        for(int i=0;i<8;i++){double angle=i*Math.PI/4; Location sl=center.clone().add(Math.cos(angle)*2,0,Math.sin(angle)*2); 
+        Skeleton skel=center.getWorld().spawn(sl,Skeleton.class,s->{s.setAI(false);s.setRemoveWhenFarAway(false);s.setSilent(true);s.setCustomName(p.getName());s.setCustomNameVisible(true);
+        s.getEquipment().setHelmet(decoyArmor[0]);s.getEquipment().setChestplate(decoyArmor[1]);s.getEquipment().setLeggings(decoyArmor[2]);s.getEquipment().setBoots(decoyArmor[3]);
+        s.getEquipment().setHelmetDropChance(0f);s.getEquipment().setChestplateDropChance(0f);s.getEquipment().setLeggingsDropChance(0f);s.getEquipment().setBootsDropChance(0f);
+        s.getEquipment().setItemInMainHand(new ItemStack(Material.WOODEN_SWORD));});
+        skel.getPersistentDataContainer().set(new NamespacedKey(plugin,"decoy"),PersistentDataType.BYTE,(byte)1); 
+        // Enable AI after 2 ticks so they walk around
+        Skeleton finalSkel = skel;
+        Bukkit.getScheduler().runTaskLater(plugin,()->{if(finalSkel.isValid()){finalSkel.setAI(true);}},2L);
+        Bukkit.getScheduler().runTaskLater(plugin,()->skel.remove(),160L); } p.sendMessage("§8§lデコイ展開！"); }
 
     private void phantomSkill(Player p) { setCooldown(p.getUniqueId(),22_000L); p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,120,0,false,false)); p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,125,255,true,false)); long endTime=System.currentTimeMillis()+6_000L; phantomEnd.put(p.getUniqueId(),endTime); p.sendMessage("§7§l霊体化！6秒間透明＋無敵"); p.getWorld().playSound(p.getLocation(),Sound.ENTITY_PHANTOM_AMBIENT,1f,0.5f); hideArmor(p); UUID uid=p.getUniqueId(); Bukkit.getScheduler().runTaskLater(plugin,()->{Player pl=Bukkit.getPlayer(uid);if(pl!=null&&phantomEnd.containsKey(uid)&&System.currentTimeMillis()>=phantomEnd.get(uid)){pl.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);pl.removePotionEffect(PotionEffectType.INVISIBILITY);showArmor(pl);phantomEnd.remove(uid);pl.sendMessage("§7霊体化の効果が切れました");}},120L); }
 

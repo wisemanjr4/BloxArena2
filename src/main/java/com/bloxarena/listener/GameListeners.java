@@ -472,10 +472,6 @@ public class GameListeners implements Listener {
         if (!(e.getEntity() instanceof Arrow arrow)) return;
         if (!(arrow.getShooter() instanceof Player shooter)) return;
         if (!gm.isParticipant(shooter)) return;
-        // Clear sniper mark on shot (miss or not)
-        plugin.getSkillManager().clearSniperMarkOnShoot(shooter);
-        // Clear marksman heavy bolt on shot
-        shooter.getPersistentDataContainer().remove(new NamespacedKey(plugin, "heavy_bolt"));
     }
 
     @EventHandler
@@ -489,6 +485,9 @@ public class GameListeners implements Listener {
         if (e.getHitBlock() != null) {
             plugin.getSkillManager().scoutReconShot(shooter, e.getHitBlock().getLocation().add(0, 1, 0));
             plugin.getSkillManager().scoutPulseShot(shooter, e.getHitBlock().getLocation().add(0, 1, 0));
+            // Clear sniper mark + marksman bolt on miss
+            plugin.getSkillManager().clearSniperMarkOnShoot(shooter);
+            shooter.getPersistentDataContainer().remove(new NamespacedKey(plugin, "heavy_bolt"));
         }
         // Marksman heavy bolt
         if (e.getHitEntity() instanceof Player victim && gm.isParticipant(victim)) {
