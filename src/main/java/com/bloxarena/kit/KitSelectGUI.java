@@ -278,11 +278,13 @@ public class KitSelectGUI {
             case BOMBER    -> Material.TNT;
             case COOK      -> Material.COOKED_BEEF;
             case WHIRLWIND -> Material.FEATHER;
+            case NILGIRITAR -> Material.TRIDENT;
             case SWAPPER   -> Material.ENDER_PEARL;
             case STICKER   -> Material.FISHING_ROD;
             case DECOY     -> Material.SKELETON_SKULL;
             case RESTRICTIONER -> Material.CHAIN;
             case TRANSPORTER -> Material.ENDER_EYE;
+            case KREUTZ    -> Material.BOOK;
             case MIMIC     -> Material.ECHO_SHARD;
             case PHANTOM   -> Material.PHANTOM_MEMBRANE;
             case ANCHOR    -> Material.LODESTONE;

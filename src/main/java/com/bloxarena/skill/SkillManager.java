@@ -615,6 +615,7 @@ public class SkillManager {
             case COOK -> cookSkill(p);
             case SCOUT -> scoutSkill(p);
             case WHIRLWIND -> whirlwindGust(p);
+            case NILGIRITAR -> {}
             case FLASHER -> flasherSkill(p);
             case MARKSMAN -> marksmanSkill(p);
             case SUNDANCE -> {} // activated via sneak+right-click crossbow
@@ -626,6 +627,7 @@ public class SkillManager {
             case MEDIC -> medicSkill(p);
             case SUPPORTER -> supporterSkill(p);
             case RESTRICTIONER -> restrictionerSkill(p);
+            case KREUTZ -> kreutzSkill(p);
             case MIMIC -> mimicSkill(p);
             case SWAPPER -> swapperSkill(p);
             case STICKER -> stickerSkill(p);
@@ -693,6 +695,35 @@ public class SkillManager {
     private void jesterSkill(Player p) { setCooldown(p.getUniqueId(), 12_000L); p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 160, 1, false, false)); p.sendMessage("§e§l道化の疾走！"); }
 
     private void theosPadaSkill(Player p) { theosPadaAction(p, true); }
+
+    // ─── KREUTZ ───
+    private final Map<UUID, String> kreutzCard = new HashMap<>();
+    private final String[] KREUTZ_CARDS = {"ファイアボール","アイスランス","サンダー","シールド","ヒール","カース","グラビティ","チェイン","ポイズンクラウド","スピードブースト","リープ","ウィークネス","マインド","チェインライトニング","テレポートトラップ"};
+    private void kreutzSkill(Player p) {
+        if (p.isSneaking()) { if (isOnCooldown(p.getUniqueId())) return; setCooldown(p.getUniqueId(), 3_000L); String card = KREUTZ_CARDS[new java.util.Random().nextInt(KREUTZ_CARDS.length)]; kreutzCard.put(p.getUniqueId(), card); p.sendMessage("§5§l🃏 " + card + " §7を引いた！"); return; }
+        String card = kreutzCard.remove(p.getUniqueId());
+        if (card == null) { p.sendMessage("§cカードを引いていません！しゃがみ右クリでドロー"); return; }
+        Player target = getTargetInSight(p, 20);
+        p.sendMessage("§5§l🃏 " + card + " §7を唱えた！");
+        switch (card) {
+            case "ファイアボール" -> { Snowball b = p.launchProjectile(Snowball.class); b.setVelocity(p.getLocation().getDirection().normalize().multiply(1.5)); b.setGlowing(true); }
+            case "アイスランス" -> { if(target!=null){target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,100,3,false,true));target.damage(4.0,p);} }
+            case "サンダー" -> { if(target!=null){target.getWorld().strikeLightning(target.getLocation());target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING,60,10,false,true));} }
+            case "シールド" -> { p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,60,4,false,true)); }
+            case "ヒール" -> { if(p.getAttribute(Attribute.GENERIC_MAX_HEALTH)!=null)p.setHealth(Math.min(p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue(),p.getHealth()+8)); }
+            case "カース" -> { if(target!=null)target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,200,2,false,true)); }
+            case "グラビティ" -> { for(Entity e2:p.getWorld().getNearbyEntities(p.getLocation(),6,3,6)){if(e2 instanceof Player t2&&gm.isParticipant(t2)&&gm.getTeamOf(t2)!=gm.getTeamOf(p)){t2.setVelocity(p.getLocation().toVector().subtract(t2.getLocation().toVector()).normalize().multiply(2.0).setY(0.5));}} }
+            case "チェイン" -> { if(target!=null){target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,100,10,false,true));target.addPotionEffect(new PotionEffect(PotionEffectType.JUMP,100,-10,false,true));} }
+            case "ポイズンクラウド" -> { Location cl=p.getLocation(); for(Entity e2:cl.getWorld().getNearbyEntities(cl,4,2,4)){if(e2 instanceof Player t2&&gm.isParticipant(t2)&&gm.getTeamOf(t2)!=gm.getTeamOf(p)){t2.addPotionEffect(new PotionEffect(PotionEffectType.POISON,100,1,false,true));}} cl.getWorld().spawnParticle(Particle.SPELL_MOB,cl,30,4,1,4,0); }
+            case "スピードブースト" -> { p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,200,2,false,true)); }
+            case "リープ" -> { Vector ld=p.getLocation().getDirection().normalize().multiply(3.0).setY(0.5); p.setVelocity(ld); }
+            case "ウィークネス" -> { if(target!=null)target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,100,3,false,true)); }
+            case "マインド" -> { if(target!=null){target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS,100,0,false,true));target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING,100,100,false,true));} }
+            case "チェインライトニング" -> { for(Entity e2:p.getWorld().getNearbyEntities(p.getLocation(),10,3,10)){if(e2 instanceof Player t2&&gm.isParticipant(t2)&&gm.getTeamOf(t2)!=gm.getTeamOf(p)){t2.getWorld().strikeLightningEffect(t2.getLocation());t2.damage(3.0,p);}} }
+            case "テレポートトラップ" -> { Location tl=p.getLocation(); activeTraps.add(new TrapData(p.getUniqueId(),tl)); p.sendMessage("§5§lテレポートトラップ設置！"); }
+            default -> p.sendMessage("§c§lエラー：無効なカード");
+        }
+    }
 
     private void vampireToggle(Player p) { boolean inBlood = !vampireBloodMode.getOrDefault(p.getUniqueId(), false); vampireBloodMode.put(p.getUniqueId(), inBlood); double gauge = vampireGauge.getOrDefault(p.getUniqueId(), 0.0); applyVampireStage(p, gauge>=55?4:gauge>=40?3:gauge>=25?2:gauge>=10?1:0); p.sendMessage(inBlood ? "§4§lブラッドモード起動！" : "§7ドレインモードに戻りました"); }
 

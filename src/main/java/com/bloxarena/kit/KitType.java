@@ -47,6 +47,8 @@ public enum KitType {
                "君は「攪乱者」だ。敵を惑わせ、戦場を支配せよ。"),
     WHIRLWIND ("ワールウィンド","§f🌪 ワールウィンド §7(Initiator)","気流で敵を押し出し＋追尾球で打ち上げる風使い", KitRole.INITIATOR,
                "君は「旋風」だ。風を纏い、敵を空へ舞い上げろ。"),
+    NILGIRITAR("ニルギリタール","§f🌀 ニルギリタール §7(Initiator)","クロスボウ＋近接で盾貫通ダメージを与える風穴使い", KitRole.INITIATOR,
+               "君は「風穴を開ける者」だ。防御を貫き、敵を穿て。"),
 
     // === Controller ===
     ROCKETER  ("ロケッター",  "§e🚀 ロケッター §7(Controller)","メガロケットで大爆発を起こすエリア制圧役", KitRole.CONTROLLER,
@@ -59,6 +61,8 @@ public enum KitType {
                "君は「拘束者」だ。敵を縛り上げ、勝機を創り出せ。"),
     TRANSPORTER("トランスポーター","§3🌀 トランスポーター §7(Controller)","双方向ポータルを設置する移動型", KitRole.CONTROLLER,
                "君は「境界渡り」だ。空間を繋ぎ、新たな戦場を切り拓け。"),
+    KREUTZ    ("クロイツ",    "§5🃏 クロイツ §7(Controller)",  "魔法カードを引き様々な効果を発動する魔術師", KitRole.CONTROLLER,
+               "君は「魔法使い」だ。運命のカードを引き、戦場を掌握せよ。"),
     // MIMIC retired - keep code
     MIMIC     ("ミミック",    "§5🔄 ミミック §7(Controller)",  "敵のスキルをコピーする模倣型", KitRole.CONTROLLER,
                "君は「模倣者」だ。敵の力を奪い、その牙を敵へ返せ。"),

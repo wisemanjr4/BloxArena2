@@ -275,6 +275,8 @@ public class KitBuilder {
             case COOK          -> giveCook(player, plugin);
             case SCOUT         -> giveScout(player, plugin);
             case WHIRLWIND     -> giveWhirlwind(player, plugin);
+            case NILGIRITAR    -> giveNilgiritar(player, plugin);
+            case DECOY         -> giveDecoy(player, plugin);
             case FLASHER       -> giveFlasher(player, plugin);
             case ROCKETER      -> giveRocketer(player, plugin);
             case ALCHEMIST     -> giveAlchemist(player, plugin);
@@ -288,10 +290,10 @@ public class KitBuilder {
             case SUNDANCE      -> giveSundance(player, plugin);
             case RESTRICTIONER -> giveRestrictioner(player, plugin);
             case TRANSPORTER   -> giveTransporter(player, plugin);
+            case KREUTZ        -> giveKreutz(player, plugin);
             case MIMIC         -> giveMimic(player, plugin);
             case SWAPPER       -> giveSwapper(player, plugin);
             case STICKER       -> giveSticker(player, plugin);
-            case DECOY         -> giveDecoy(player, plugin);
             case PHANTOM       -> givePhantom(player, plugin);
             case ANCHOR        -> giveAnchor(player, plugin);
             case GRANG         -> giveGrang(player, plugin);
@@ -646,6 +648,26 @@ public class KitBuilder {
             player.getInventory().addItem(makeSkillItem(plugin, KitType.RELEASER, "§e§l🏷 スキル: 解放(リリース)"));
         }
         giveIronArmor(player);
+    }
+
+    private static void giveNilgiritar(Player player, BloxArenaPlugin plugin) {
+        ItemStack xbow = new ItemStack(Material.CROSSBOW);
+        xbow.addEnchantment(Enchantment.PIERCING, 1);
+        xbow.addEnchantment(Enchantment.QUICK_CHARGE, 1);
+        player.getInventory().addItem(xbow);
+        player.getInventory().addItem(new ItemStack(Material.ARROW, 12));
+        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+        player.getInventory().addItem(sword);
+        giveIronArmor(player);
+    }
+
+    private static void giveKreutz(Player player, BloxArenaPlugin plugin) {
+        player.getInventory().addItem(new ItemStack(Material.WOODEN_SWORD));
+        if (plugin != null) {
+            player.getInventory().addItem(makeSkillItem(plugin, KitType.KREUTZ, "§5§l🏷 スキル: 魔法カード"));
+        }
+        giveLeatherArmor(player);
     }
 
     // ─── Sentinel kits ───
@@ -1008,6 +1030,7 @@ public class KitBuilder {
             case COOK -> "調理 - 食材獲得+調理でバフ/料理投擲でデバフ";
             case SCOUT -> "リコンボルト+パルスボルト - 索敵+範囲継続ダメ";
             case WHIRLWIND -> "気流砲+旋風弾 - 押出気流+追尾打上球";
+            case NILGIRITAR -> "盾貫通 - クロスボウ命中後近接で盾貫通ダメ";
             case FLASHER -> "フラッシュバン - 着弾半径4m盲目+鈍足";
             case MARKSMAN -> "ヘヴィーボルト - 被弾者HP上限-10永続";
             case SUNDANCE -> "リボルビング - 8発高速自動装填 18sCD";
@@ -1021,6 +1044,7 @@ public class KitBuilder {
             case SUPPORTER -> "再調達 - 全バフポーション補充 10sCD";
             case RESTRICTIONER -> "デッドロック - 5m射程 相互拘束5秒";
             case TRANSPORTER -> "ワープゲート - 2点間ポータル設置";
+            case KREUTZ -> "魔法カード - 右ドロー/左詠唱 15種";
             case MIMIC -> "スキルコピー - 20m射程 相手に5sCD付与";
             case SWAPPER -> "瞬間交差 - 10m射程 相手と位置入替";
             case STICKER -> "グラップル - 球投射 命中で引寄/接近";
@@ -1034,9 +1058,9 @@ public class KitBuilder {
 
     private static String getGearSummary(KitType kit) {
         return switch (kit) {
-            case BLADE, BREAKER, COUNTER, PYRO, FLASHER, ROCKETER, ALCHEMIST, TRAPPER, GUARDIAN, MEDIC, BOMBER, SWAPPER, STICKER, ANCHOR, COOK, RELEASER -> "鉄装備";
+            case BLADE, BREAKER, COUNTER, PYRO, FLASHER, ROCKETER, ALCHEMIST, TRAPPER, GUARDIAN, MEDIC, BOMBER, SWAPPER, STICKER, ANCHOR, COOK, RELEASER, NILGIRITAR -> "鉄装備";
             case NINJA, SCOUT, ENGINEER, PHANTOM, DECOY, TRANSPORTER, RESTRICTIONER, WHIRLWIND -> "鎖装備";
-            case BERSERKER, SNIPER, MARKSMAN, JESTER, SUNDANCE, MIMIC, NECRO -> "皮装備";
+            case BERSERKER, SNIPER, MARKSMAN, JESTER, SUNDANCE, MIMIC, NECRO, KREUTZ -> "皮装備";
             case GRANG -> "皮装備＋盾";
             case VAMPIRE -> "鉄装備(HP変動)";
             case SUPPORTER -> "鉄装備";
