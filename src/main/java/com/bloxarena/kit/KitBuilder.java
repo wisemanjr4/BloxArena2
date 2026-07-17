@@ -615,15 +615,6 @@ public class KitBuilder {
     private static void giveCook(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
         player.getInventory().addItem(sword);
-        // Random food items (3-5 types)
-        Material[] foods = {Material.COOKED_BEEF, Material.COOKED_CHICKEN, Material.COOKED_PORKCHOP,
-                Material.COOKED_MUTTON, Material.COOKED_RABBIT, Material.COOKED_COD, Material.COOKED_SALMON,
-                Material.BAKED_POTATO, Material.BREAD, Material.PUMPKIN_PIE, Material.GOLDEN_CARROT};
-        java.util.Random rnd = new java.util.Random();
-        int count = 3 + rnd.nextInt(3);
-        for (int i = 0; i < count; i++) {
-            player.getInventory().addItem(new ItemStack(foods[rnd.nextInt(foods.length)]));
-        }
         if (plugin != null) {
             player.getInventory().addItem(makeSkillItem(plugin, KitType.COOK, "§6§l🏷 スキル: 調理"));
         }
