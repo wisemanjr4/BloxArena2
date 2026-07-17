@@ -111,6 +111,15 @@ public class KitBuilder {
                 list.add(wws);
                 list.add(new ItemStack(Material.NETHER_STAR));
             }
+            case NILGIRITAR -> {
+                ItemStack nx = new ItemStack(Material.CROSSBOW);
+                nx.addEnchantment(Enchantment.QUICK_CHARGE, 1);
+                list.add(nx);
+                list.add(new ItemStack(Material.ARROW, 12));
+                ItemStack nsword = new ItemStack(Material.IRON_SWORD);
+                nsword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+                list.add(nsword);
+            }
             case RELEASER -> {
                 ItemStack rs = new ItemStack(Material.IRON_SWORD);
                 rs.addEnchantment(Enchantment.DAMAGE_ALL, 1);
@@ -205,6 +214,10 @@ public class KitBuilder {
             }
             case TRANSPORTER -> {
                 list.add(new ItemStack(Material.STONE_SWORD));
+                list.add(new ItemStack(Material.NETHER_STAR));
+            }
+            case KREUTZ -> {
+                list.add(new ItemStack(Material.WOODEN_SWORD));
                 list.add(new ItemStack(Material.NETHER_STAR));
             }
             case MIMIC -> {
