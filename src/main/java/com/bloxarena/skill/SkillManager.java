@@ -484,7 +484,6 @@ public class SkillManager {
             for (Player p : r.entity.getWorld().getPlayers()) {
                 if (p.getLocation().distance(r.entity.getLocation()) <= 7 && gm.isParticipant(p) && gm.getTeamOf(p) != r.ownerTeam) {
                     p.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, false, false));
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0, false, false));
                 }
             }
         }
@@ -889,6 +888,15 @@ public class SkillManager {
 
     private void cookGenerateFood(Player p) {
         if (isOnCooldown(p.getUniqueId())) return;
+        // Limit to 3 food items at a time
+        int existing = 0;
+        for (ItemStack item : p.getInventory().getContents()) {
+            if (item != null && item.getItemMeta() != null
+                    && item.getItemMeta().getPersistentDataContainer().has(KEY_COOK, PersistentDataType.STRING)) {
+                existing += item.getAmount();
+            }
+        }
+        if (existing >= 3) { p.sendMessage("§c食材は最大3個までしか持てません！スキル星で消費してください"); return; }
         setCooldown(p.getUniqueId(), 1_000L);
         Material[] all = {Material.COOKED_BEEF, Material.COOKED_CHICKEN, Material.GOLDEN_CARROT,
                 Material.COOKED_PORKCHOP, Material.PUMPKIN_PIE, Material.BREAD, Material.HONEY_BOTTLE,
