@@ -294,6 +294,15 @@ public class GameManager {
                 }
             }
             broadcastBombRoundInfo();
+            // Round timer: defenders win if bomb not planted before time runs out
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (state != GameState.IN_GAME) return;
+                if (!bombPlanted) {
+                    TeamColor defender = bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
+                    Bukkit.broadcastMessage("§e⏱ 制限時間切れ！ " + defender.getDisplayName() + "チームの勝利！");
+                    endGame(defender, WinCondition.OBJECTIVE);
+                }
+            }, plugin.getConfig().getInt("bomb_mission.time_limit_seconds", 180) * 20L);
         }
 
         // CTF flag init
@@ -618,7 +627,7 @@ public class GameManager {
 
     public void checkObjectiveWin(Location placedBlock) {
         if (state != GameState.IN_GAME) return;
-        if (currentGameMode != GameMode.BATTLE_ARENA) return;
+        if (currentGameMode != GameMode.BATTLE_ARENA && currentGameMode != GameMode.TEAM_DEATHMATCH) return;
         if (currentMap == null) return;
 
         Location center = currentMap.getCenter();
