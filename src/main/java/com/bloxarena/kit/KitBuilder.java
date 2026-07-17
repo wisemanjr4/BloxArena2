@@ -604,7 +604,7 @@ public class KitBuilder {
     }
 
     private static void giveNecro(Player player, BloxArenaPlugin plugin) {
-        ItemStack sword = new ItemStack(Material.WOODEN_SWORD);
+        ItemStack sword = new ItemStack(Material.STONE_SWORD);
         player.getInventory().addItem(sword);
         giveLeatherArmor(player);
         if (plugin != null) {

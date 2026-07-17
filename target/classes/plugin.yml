@@ -1,5 +1,5 @@
 name: BloxArenaII
-version: 2.2.0
+version: 2.2.1
 main: com.bloxarena.BloxArenaPlugin
 api-version: '1.19'
 description: 5v5 PvP ゲームモード - BloxArena II Warriors of NextGen
