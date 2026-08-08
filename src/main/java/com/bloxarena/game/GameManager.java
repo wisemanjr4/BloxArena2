@@ -200,6 +200,13 @@ public class GameManager {
         int timeoutSeconds = plugin.getConfig().getInt("kit_select.timeout_seconds", 30);
         KitSelectGUI gui = new KitSelectGUI(plugin, this);
         plugin.getGameListeners().setActiveGUI(gui);
+        for (UUID uid : participants) {
+            Player pl = Bukkit.getPlayer(uid);
+            if (pl != null) {
+                pl.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SATURATION, 999999, 255, false, false));
+                pl.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.REGENERATION, 999999, 255, false, false));
+            }
+        }
         gui.openForAll(redTeam, blueTeam, timeoutSeconds);
     }
 
@@ -207,6 +214,16 @@ public class GameManager {
     public void onKitSelectDone() {
         state = GameState.IN_GAME;
         inGameStartTime = System.currentTimeMillis();
+        for (UUID uid : getAllParticipants()) {
+            Player p = Bukkit.getPlayer(uid);
+            if (p != null) {
+                p.removePotionEffect(org.bukkit.potion.PotionEffectType.SATURATION);
+                p.removePotionEffect(org.bukkit.potion.PotionEffectType.REGENERATION);
+                p.setHealth(p.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getBaseValue());
+                p.setFoodLevel(20);
+                p.setSaturation(20f);
+            }
+        }
         plugin.getScoreboardManager().start(this);
         // Distribute burst skill items
         for (UUID uid : redTeam) {
@@ -1208,6 +1225,14 @@ public class GameManager {
             Bukkit.broadcastMessage("§c解除が中断されました！（解除者が死亡）");
         }
 
+        if (currentGameMode == GameMode.BOMB_MISSION && !bombPlanted) {
+            TeamColor attacker = bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
+            if (getAliveCount(attacker) == 0) {
+                TeamColor defender = bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
+                endGame(defender, WinCondition.OBJECTIVE);
+                return;
+            }
+        }
         if (currentGameMode != GameMode.BOMB_MISSION || !bombPlanted) {
             if (currentGameMode != GameMode.DOMINATION && currentGameMode != GameMode.CAPTURE_THE_FLAG) {
                 Bukkit.getScheduler().runTaskLater(plugin, this::checkEliminationWin, 1L);
@@ -1754,6 +1779,7 @@ public class GameManager {
         if (currentMap == null || currentMap.getCenter() == null) return 0;
         return currentMap.getCenter().getBlockY();
     }
+    public long getInGameStartTime() { return inGameStartTime; }
     public List<UUID> getRedTeam() { return redTeam; }
     public List<UUID> getBlueTeam() { return blueTeam; }
     public Set<UUID> getSpectators() { return spectators; }

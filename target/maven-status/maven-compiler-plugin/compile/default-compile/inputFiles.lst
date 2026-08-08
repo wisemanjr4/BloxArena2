@@ -12,10 +12,12 @@ E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\kit\KitType.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\command\BloxArenaCommand.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\scoreboard\ScoreboardManager.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\game\GameManager.java
+E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\song\NbsPlayer.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\stats\MatchStats.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\command\MapWizard.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\kit\KitInfoGUI.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\kit\KitEditorGUI.java
+E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\tutorial\TutorialManager.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\BloxArenaPlugin.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\game\GameState.java
 E:\Music\plugins\BloxArena2\src\main\java\com\bloxarena\game\GameMode.java

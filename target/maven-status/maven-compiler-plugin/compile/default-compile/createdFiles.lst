@@ -39,6 +39,7 @@ com\bloxarena\stats\MatchStats.class
 com\bloxarena\game\GameManager$3.class
 com\bloxarena\skill\SkillManager$PulseData.class
 com\bloxarena\skill\SkillManager$4.class
+com\bloxarena\tutorial\TutorialManager$1.class
 com\bloxarena\util\Effects$4.class
 com\bloxarena\command\MapWizard.class
 com\bloxarena\kit\KitSelectGUI$1.class
@@ -54,6 +55,7 @@ com\bloxarena\game\GameManager$10.class
 com\bloxarena\lobby\LobbyManager$2.class
 com\bloxarena\util\Effects$1.class
 com\bloxarena\game\GameState.class
+com\bloxarena\tutorial\TutorialManager.class
 com\bloxarena\map\MapManager.class
 com\bloxarena\command\SetupWizard.class
 com\bloxarena\skill\SkillManager$3.class

@@ -48,7 +48,7 @@ public class KitBuilder {
                 list.add(new ItemStack(Material.NETHER_STAR));
             }
             case BERSERKER -> {
-                ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
+                ItemStack axe = new ItemStack(Material.DIAMOND_SWORD);
                 axe.addEnchantment(Enchantment.DAMAGE_ALL, 5);
                 list.add(axe);
                 list.add(new ItemStack(Material.NETHER_STAR));
@@ -365,7 +365,7 @@ public class KitBuilder {
     }
 
     private static void giveBerserker(Player player, BloxArenaPlugin plugin) {
-        ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
+        ItemStack axe = new ItemStack(Material.DIAMOND_SWORD);
         axe.addEnchantment(Enchantment.DAMAGE_ALL, 5);
         ItemMeta bm = axe.getItemMeta();
         if (bm != null) {

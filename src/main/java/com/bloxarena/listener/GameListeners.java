@@ -378,6 +378,23 @@ public class GameListeners implements Listener {
             }
         }
 
+        if (plugin.getSkillManager().isGuardBroken(victim.getUniqueId()) && victim.isBlocking()) {
+            victim.setCooldown(Material.SHIELD, 60);
+        }
+
+        if (e.getDamager() instanceof Player attacker && victimTeam != null
+                && gm.getTeamOf(attacker) != victimTeam) {
+            plugin.getSkillManager().tryUniversalGuardBreak(attacker, victim);
+        }
+
+        if (e.getDamager() instanceof Player attacker && victimTeam != null
+                && gm.getPlayerKitType(attacker.getUniqueId()) == KitType.NILGIRITAR) {
+            if (plugin.getSkillManager().tryPierceShield(attacker, victim)) {
+                victim.setCooldown(Material.SHIELD, 20);
+                victim.damage(3.0, attacker);
+            }
+        }
+
         // デコイ攻撃検知
         if (e.getDamager() instanceof Player damager && e.getEntity() instanceof org.bukkit.entity.Skeleton skeleton
                 && skeleton.getPersistentDataContainer().has(new NamespacedKey(plugin, "decoy"), org.bukkit.persistence.PersistentDataType.BYTE)) {
@@ -396,6 +413,11 @@ public class GameListeners implements Listener {
         }
         plugin.getSkillManager().onVampireDamaged(victim, e.getFinalDamage());
 
+        if (e.getDamager() instanceof Player attacker && victimTeam != null
+                && gm.getTeamOf(attacker) != victimTeam) {
+            plugin.getSkillManager().onComboHit(attacker, victim);
+        }
+
         // VAMPIRE Stage 4 lifesteal: heal on damage dealt
         if (e.getDamager() instanceof Player damager && gm.getPlayerKitType(damager.getUniqueId()) == KitType.VAMPIRE) {
             boolean inBlood = plugin.getSkillManager().isVampireBloodMode(damager.getUniqueId());
@@ -412,6 +434,16 @@ public class GameListeners implements Listener {
                 e.setCancelled(true);
                 return;
             }
+        }
+
+        if (e.getDamager() instanceof Player attacker && gm.getPlayerKitType(attacker.getUniqueId()) == KitType.KREUTZ
+                && victim.getPersistentDataContainer().has(new NamespacedKey(plugin, "kreutz_pierced"), org.bukkit.persistence.PersistentDataType.BYTE)) {
+            java.util.UUID attackerUid = attacker.getUniqueId();
+            if (plugin.getSkillManager().getPiercingRecently().contains(attackerUid)) return;
+            plugin.getSkillManager().getPiercingRecently().add(attackerUid);
+            victim.damage(2.0, attacker);
+            victim.getPersistentDataContainer().remove(new NamespacedKey(plugin, "kreutz_pierced"));
+            org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> plugin.getSkillManager().getPiercingRecently().remove(attackerUid), 2L);
         }
     }
 
@@ -583,7 +615,8 @@ public class GameListeners implements Listener {
                 return;
             }
             // 再接続: キットを再支給
-            if (gm.getState() == GameState.IN_GAME && gm.isParticipant(p) && !gm.isSpectator(p)) {
+        if (gm.getState() == GameState.IN_GAME && gm.isParticipant(p) && !gm.isSpectator(p)) {
+            if (System.currentTimeMillis() - gm.getInGameStartTime() < 2000) return;
                 com.bloxarena.kit.KitType kit = gm.getPlayerKits().get(p.getUniqueId());
                 com.bloxarena.game.TeamColor team = gm.getTeam(p.getUniqueId());
                 if (kit != null && team != null) {

@@ -81,6 +81,7 @@ public class TestFieldManager {
     }
 
     public boolean isActive() { return testSpawn != null; }
+    public Location getSpawn() { return testSpawn; }
 
     public void enter(Player p) {
         if (testSpawn == null) {

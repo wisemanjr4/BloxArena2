@@ -70,6 +70,14 @@ public class SkillManager {
     private final Map<UUID, ItemStack[]> storedArmor = new HashMap<>();
     private final Set<UUID> gliderInAir = new HashSet<>();
     private final Set<UUID> releaserMegaUsed = new HashSet<>();
+    private final Set<UUID> guardBroken = new HashSet<>();
+    private final Map<UUID, Boolean> universalCharged = new HashMap<>();
+    private final Map<UUID, Integer> sneakChargeTicks = new HashMap<>();
+    private final Map<UUID, Long> nilgiritarMarks = new HashMap<>();
+    private final Set<UUID> piercingRecently = new HashSet<>();
+    private final Map<UUID, Integer> comboCount = new HashMap<>();
+    private final Map<UUID, Long> comboLastHit = new HashMap<>();
+    private static final long NILGIRITAR_MARK_DURATION = 5_000L;
 
     static class ReconData {
         final ArmorStand entity;
@@ -130,6 +138,9 @@ public class SkillManager {
         }
         phantomEnd.clear(); anchorFields.clear(); deadlockedPlayers.clear();
         guardianEndTime.clear(); gliderInAir.clear(); releaserMegaUsed.clear();
+        guardBroken.clear(); universalCharged.clear(); sneakChargeTicks.clear();
+        nilgiritarMarks.clear(); piercingRecently.clear();
+        comboCount.clear(); comboLastHit.clear();
         portalCooldowns.clear(); grangChargeStart.clear(); grangCharging.clear();
         necroArmy.values().forEach(list -> list.forEach(s -> { if (s.isValid()) s.remove(); }));
         necroArmy.clear();
@@ -152,6 +163,9 @@ public class SkillManager {
         activeRecons.forEach(r -> r.entity.remove()); activeRecons.clear();
         activePulsers.clear(); guardianEndTime.clear(); gliderInAir.clear();
         releaserMegaUsed.clear(); deadlockedPlayers.clear(); portalCooldowns.clear();
+        guardBroken.clear(); universalCharged.clear(); sneakChargeTicks.clear();
+        nilgiritarMarks.clear(); piercingRecently.clear();
+        comboCount.clear(); comboLastHit.clear();
         portalA.clear(); portalB.clear(); portalBlocks.clear();
         grangChargeStart.clear(); grangCharging.clear();
         necroArmy.values().forEach(list -> list.forEach(s -> { if (s.isValid()) s.remove(); }));
@@ -251,6 +265,7 @@ public class SkillManager {
 
     public boolean tryParryCounter(Player attacker, Player counter) {
         if (!parryActive.contains(counter.getUniqueId())) return false;
+        if (guardBroken.contains(counter.getUniqueId())) { counter.sendMessage("§cガードブレイク中！"); return false; }
         if (!counter.isBlocking()) return false;
         Vector dirToAttacker = attacker.getLocation().toVector().subtract(counter.getLocation().toVector()).setY(0).normalize();
         Vector facing = counter.getLocation().getDirection().setY(0).normalize();
@@ -445,6 +460,40 @@ public class SkillManager {
     public boolean isVampireBloodMode(UUID uid) { return vampireBloodMode.getOrDefault(uid, false); }
     public double getVampireGauge(UUID uid) { return vampireGauge.getOrDefault(uid, 0.0); }
     public boolean isDeadlocked(UUID uid) { return deadlockedPlayers.contains(uid); }
+    public boolean isGuardBroken(UUID uid) { return guardBroken.contains(uid); }
+    public Set<UUID> getPiercingRecently() { return piercingRecently; }
+    public boolean tryPierceShield(Player attacker, Player victim) {
+        Long mark = nilgiritarMarks.get(victim.getUniqueId());
+        if (mark == null || System.currentTimeMillis() > mark) {
+            nilgiritarMarks.remove(victim.getUniqueId());
+            return false;
+        }
+        nilgiritarMarks.remove(victim.getUniqueId());
+        victim.getWorld().playSound(victim.getLocation(), Sound.ITEM_SHIELD_BREAK, 1f, 0.8f);
+        victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3, 0.1);
+        victim.sendActionBar(Component.text("§c盾貫通！"));
+        attacker.sendActionBar(Component.text("§f風穴貫通！"));
+        return true;
+    }
+    public void tryUniversalGuardBreak(Player attacker, Player victim) {
+        if (universalCharged.remove(attacker.getUniqueId()) == null) return;
+        sneakChargeTicks.remove(attacker.getUniqueId());
+        guardBroken.add(victim.getUniqueId());
+        victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.1);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> guardBroken.remove(victim.getUniqueId()), 60L);
+        victim.getWorld().playSound(victim.getLocation(), Sound.ITEM_SHIELD_BREAK, 1f, 0.8f);
+        victim.sendMessage("§c§lガードブレイク！3秒間防具無効");
+        attacker.sendMessage("§e§lガードブレイク成功！");
+        attacker.getWorld().playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 1.5f);
+    }
+    public void markWithWindHole(Player victim) {
+        nilgiritarMarks.put(victim.getUniqueId(), System.currentTimeMillis() + NILGIRITAR_MARK_DURATION);
+        victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 2f);
+        victim.getWorld().playSound(victim.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.8f, 1.8f);
+        victim.getWorld().spawnParticle(Particle.SWEEP_ATTACK, victim.getLocation().add(0, 1, 0), 3, 0.5, 0.5, 0.5, 0);
+        victim.getWorld().spawnParticle(Particle.ENCHANTMENT_TABLE, victim.getLocation().add(0, 1.5, 0), 20, 0.3, 0.3, 0.3, 0.1);
+        victim.sendActionBar(Component.text("§f風穴マーク！（盾貫通可能）"));
+    }
     public void initVampireDebuffs(Player p) { if (gm.getPlayerKitType(p.getUniqueId()) == KitType.VAMPIRE) applyVampireStage(p, 0); }
     public void cookHit(Location loc, Player thrower, Material mat) {
         for (Entity e : loc.getWorld().getNearbyEntities(loc, 2, 2, 2)) {
@@ -524,7 +573,30 @@ public class SkillManager {
             if (gauge <= 0) { vampireBloodMode.put(uid, false); applyVampireStage(Bukkit.getPlayer(uid), 0); continue; }
             vampireGauge.put(uid, gauge); Player p = Bukkit.getPlayer(uid); if (p != null) updateVampireStage(p, gauge);
         }
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!gm.isParticipant(p) || gm.isSpectator(p)) continue;
+            if (guardBroken.contains(p.getUniqueId())) { sneakChargeTicks.remove(p.getUniqueId()); universalCharged.remove(p.getUniqueId()); continue; }
+            if (p.isSneaking()) {
+                int ticks = sneakChargeTicks.merge(p.getUniqueId(), 1, Integer::sum);
+                if (ticks >= 20 && ticks < 21) {
+                    universalCharged.put(p.getUniqueId(), true);
+                    p.sendMessage("§eガードブレイクチャージ完了！次の攻撃で相手の盾を破壊");
+                    p.getWorld().playSound(p.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.5f, 1.5f);
+                } else if (ticks < 20) {
+                    if (ticks % 5 == 0) p.sendActionBar(Component.text("§eチャージ中... " + (20 - ticks) + "/20 ticks"));
+                }
+            } else {
+                Integer prev = sneakChargeTicks.remove(p.getUniqueId());
+                if (prev != null && prev < 20) {
+                    universalCharged.remove(p.getUniqueId());
+                }
+            }
+        }
         updateKitActionBars();
+        long now = System.currentTimeMillis();
+        new ArrayList<>(comboLastHit.entrySet()).forEach(e2 -> {
+            if (now - e2.getValue() > 3000) { comboCount.remove(e2.getKey()); comboLastHit.remove(e2.getKey()); }
+        });
     }
 
     private void forceTargetEnemies() {
@@ -681,7 +753,7 @@ public class SkillManager {
 
     // ─── Kit Skills (abbreviated - keeping full implementations) ───
 
-    private void bladeSkill(Player p) { if (!p.isSneaking()) { p.sendMessage("§cしゃがみながら使用してください"); return; } setCooldown(p.getUniqueId(), 10_000L); World w = p.getWorld(); Location loc = p.getLocation(); w.playSound(loc, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 0.7f); w.spawnParticle(Particle.SWEEP_ATTACK, loc.clone().add(0, 1, 0), 5, 2, 0.5, 2, 0); for (Entity e : w.getNearbyEntities(loc, 3, 2, 3)) { if (!(e instanceof Player t) || !gm.isParticipant(t) || gm.getTeamOf(t) == gm.getTeamOf(p)) continue; t.damage(3.0, p); t.setVelocity(new Vector(0, 0.8, 0)); t.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 40, 1, false, true)); t.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 1, false, true)); } }
+    private void bladeSkill(Player p) { if (!p.isSneaking()) { p.sendMessage("§cしゃがみながら使用してください"); return; } setCooldown(p.getUniqueId(), 10_000L); World w = p.getWorld(); Location loc = p.getLocation(); w.playSound(loc, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 0.7f); w.spawnParticle(Particle.SWEEP_ATTACK, loc.clone().add(0, 1, 0), 5, 2, 0.5, 2, 0); for (Entity e : w.getNearbyEntities(loc, 3, 2, 3)) { if (!(e instanceof Player t) || !gm.isParticipant(t) || gm.getTeamOf(t) == gm.getTeamOf(p)) continue; t.damage(3.0, p); t.setVelocity(new Vector(0, 0.8, 0)); t.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 40, 1, false, true)); t.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 1, false, true)); guardBroken.add(t.getUniqueId()); t.getWorld().spawnParticle(Particle.CRIT, t.getLocation().add(0,1,0), 10, 0.3, 0.5, 0.3, 0.1); Bukkit.getScheduler().runTaskLater(plugin, () -> guardBroken.remove(t.getUniqueId()), 60L); } }
 
     private void breakerSkill(Player p) { setCooldown(p.getUniqueId(), 14_000L); Vector dir = p.getLocation().getDirection().normalize().multiply(2.0).setY(0.3); p.setVelocity(dir); p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 0.6f); new BukkitRunnable() { int t=0; @Override public void run() { if (t++>10 || !p.isOnline()) { cancel(); return; } Location cur = p.getLocation(); p.getWorld().spawnParticle(Particle.CRIT, cur, 5, 0.3, 0.3, 0.3, 0); for (Entity e : cur.getWorld().getNearbyEntities(cur, 2, 2, 2)) { if (!(e instanceof Player target) || !gm.isParticipant(target) || gm.getTeamOf(target)==gm.getTeamOf(p)) continue; target.damage(4.0, p); target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 1, false, true)); } } }.runTaskTimer(plugin, 0L, 2L); }
 
@@ -706,7 +778,7 @@ public class SkillManager {
         p.sendMessage("§5§l🃏 " + card + " §7を唱えた！");
         switch (card) {
             case "ファイアボール" -> { Snowball b = p.launchProjectile(Snowball.class); b.setVelocity(p.getLocation().getDirection().normalize().multiply(1.5)); b.setGlowing(true); }
-            case "アイスランス" -> { if(target!=null){target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,100,3,false,true));target.damage(4.0,p);} }
+            case "アイスランス" -> { if(target!=null){target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,100,3,false,true));if(target.isBlocking()){target.setCooldown(Material.SHIELD,10);target.damage(3.0,p);}else{target.damage(4.0,p);}} }
             case "サンダー" -> { if(target!=null){target.getWorld().strikeLightning(target.getLocation());target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING,60,10,false,true));} }
             case "シールド" -> { p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,60,4,false,true)); }
             case "ヒール" -> { if(p.getAttribute(Attribute.GENERIC_MAX_HEALTH)!=null)p.setHealth(Math.min(p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue(),p.getHealth()+8)); }
@@ -984,5 +1056,17 @@ public class SkillManager {
 
     private boolean hasLineOfSight(Location from, Location to) { Vector dir = to.toVector().subtract(from.toVector()); int dist = (int) dir.length(); dir.normalize(); for (int i = 0; i < dist; i++) { Location check = from.clone().add(dir.clone().multiply(i)); if (check.getBlock().getType().isOccluding()) return false; } return true; }
 
-    public void clearPlayerPlacements(UUID uid) { for(MineData m:new ArrayList<>(activeMines)){if(m.owner.equals(uid)){m.entity.remove();activeMines.remove(m);}} for(TurretData t:new ArrayList<>(activeTurrets)){if(t.owner.equals(uid)){t.entity.remove();activeTurrets.remove(t);}} activeTraps.removeIf(t->t.owner.equals(uid)); TeamColor team=gm.getTeam(uid); if(team!=null){activeRecons.removeIf(r->{if(r.ownerTeam==team){r.entity.remove();return true;}return false;});} Location a=portalA.remove(uid);Location b=portalB.remove(uid);if(a!=null)portalBlocks.remove(a);if(b!=null)portalBlocks.remove(b); List<Skeleton> army=necroArmy.remove(uid);if(army!=null){for(Skeleton s:army){if(s.isValid())s.remove();}} storedArmor.remove(uid);phantomEnd.remove(uid); }
+    public void clearPlayerPlacements(UUID uid) { for(MineData m:new ArrayList<>(activeMines)){if(m.owner.equals(uid)){m.entity.remove();activeMines.remove(m);}} for(TurretData t:new ArrayList<>(activeTurrets)){if(t.owner.equals(uid)){t.entity.remove();activeTurrets.remove(t);}} activeTraps.removeIf(t->t.owner.equals(uid)); TeamColor team=gm.getTeam(uid); if(team!=null){activeRecons.removeIf(r->{if(r.ownerTeam==team){r.entity.remove();return true;}return false;});} Location a=portalA.remove(uid);Location b=portalB.remove(uid);if(a!=null)portalBlocks.remove(a);if(b!=null)portalBlocks.remove(b); List<Skeleton> army=necroArmy.remove(uid);if(army!=null){for(Skeleton s:army){if(s.isValid())s.remove();}} storedArmor.remove(uid);phantomEnd.remove(uid); nilgiritarMarks.remove(uid); }
+
+    public void onComboHit(Player attacker, Player victim) {
+        if (victim.isBlocking()) return;
+        if (comboCount.getOrDefault(victim.getUniqueId(), 0) > 0) {
+            comboCount.remove(victim.getUniqueId());
+            comboLastHit.remove(victim.getUniqueId());
+            attacker.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, attacker.getLocation().add(0, 1, 0), 3, 0.5, 0.5, 0.5, 0.1);
+            attacker.getWorld().playSound(attacker.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1f, 2f);
+        }
+        comboLastHit.put(attacker.getUniqueId(), System.currentTimeMillis());
+        comboCount.merge(attacker.getUniqueId(), 1, Integer::sum);
+    }
 }
