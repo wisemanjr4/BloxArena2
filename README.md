@@ -65,4 +65,4 @@ mvn package -DskipTests
 
 ## ライセンス
 
-不明。作者に問い合わせてください。
+All Rights Reserved.
