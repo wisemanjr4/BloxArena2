@@ -178,6 +178,7 @@ public class KitBuilder {
             case MISTRAL: {
                 ItemStack ms = new ItemStack(Material.IRON_SWORD);
                 ms.addEnchantment(Enchantment.KNOCKBACK, 1);
+                ms.addEnchantment(Enchantment.DAMAGE_ALL, 1);
                 list.add(ms);
                 list.add(new ItemStack(Material.NETHER_STAR));
                 break;
@@ -273,7 +274,6 @@ public class KitBuilder {
             case MARKSMAN: {
                 ItemStack bow = new ItemStack(Material.BOW);
                 bow.addEnchantment(Enchantment.ARROW_DAMAGE, 2);
-                bow.addEnchantment(Enchantment.ARROW_FIRE, 1);
                 list.add(bow);
                 list.add(new ItemStack(Material.ARROW, 12));
                 list.add(new ItemStack(Material.STONE_SWORD));
@@ -312,6 +312,7 @@ public class KitBuilder {
             case STICKER: {
                 ItemStack sword = new ItemStack(Material.IRON_SWORD);
                 sword.addEnchantment(Enchantment.KNOCKBACK, 1);
+                sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
                 list.add(sword);
                 list.add(new ItemStack(Material.NETHER_STAR));
                 break;
@@ -727,7 +728,6 @@ public class KitBuilder {
     private static void giveMarksman(Player player, BloxArenaPlugin plugin) {
         ItemStack bow = new ItemStack(Material.BOW);
         bow.addEnchantment(Enchantment.ARROW_DAMAGE, 2);
-        bow.addEnchantment(Enchantment.ARROW_FIRE, 1);
         player.getInventory().addItem(new ItemStack[]{bow});
         player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.ARROW, 12)});
         player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
@@ -763,6 +763,7 @@ public class KitBuilder {
     private static void giveSticker(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
         sword.addEnchantment(Enchantment.KNOCKBACK, 1);
+        sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().addItem(new ItemStack[]{sword});
         if (plugin != null) {
             player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.STICKER, "\u00a73\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30b0\u30e9\u30c3\u30d7\u30eb")});
@@ -906,6 +907,7 @@ public class KitBuilder {
     private static void giveMistral(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
         sword.addEnchantment(Enchantment.KNOCKBACK, 1);
+        sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().addItem(new ItemStack[]{sword});
         if (plugin != null) {
             player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.MISTRAL, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u70c8\u98a8\u7832")});

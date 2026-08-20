@@ -4,3 +4,6 @@ target/
 _backup_*
 rewrite_email.sh
 *.zip
+.idea/
+*.iml
+out/

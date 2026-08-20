@@ -1413,11 +1413,9 @@ public class GameManager {
                 if (kt2 == null) {
                     TeamColor vc = this.getTeamOf(victim);
                     if (vc == TeamColor.RED) {
-                        if (this.tdmKillsRed > 0) {
-                            --this.tdmKillsRed;
-                        }
-                    } else if (vc == TeamColor.BLUE && this.tdmKillsBlue > 0) {
-                        --this.tdmKillsBlue;
+                        ++this.tdmKillsBlue;
+                    } else if (vc == TeamColor.BLUE) {
+                        ++this.tdmKillsRed;
                     }
                 } else if (kt2 == TeamColor.RED) {
                     ++this.tdmKillsRed;

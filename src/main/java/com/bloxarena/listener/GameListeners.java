@@ -623,8 +623,11 @@ implements Listener {
             }
         }
         if ((entity = e.getDamager()) instanceof Player && this.gm.getPlayerKitType((attacker = (Player)entity).getUniqueId()) == KitType.KREUTZ && victim.getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "kreutz_pierced"), PersistentDataType.BYTE)) {
-            victim.damage(2.0, (Entity)attacker);
-            victim.getPersistentDataContainer().remove(new NamespacedKey((Plugin)this.plugin, "kreutz_pierced"));
+            if (this.plugin.getSkillManager().tryMarkPiercing(victim.getUniqueId())) {
+                victim.damage(2.0, (Entity)attacker);
+                victim.getPersistentDataContainer().remove(new NamespacedKey((Plugin)this.plugin, "kreutz_pierced"));
+                attacker.sendMessage("\u00a75\u00a7l\u30d4\u30a2\u30c3\u30b7\u30f3\u30b0\uff01\u00a77\u9632\u5177\u8cab\u901a+2\u30c0\u30e1\u30fc\u30b8\uff01");
+            }
         }
     }
 

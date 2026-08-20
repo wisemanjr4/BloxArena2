@@ -71,6 +71,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EvokerFangs;
@@ -145,6 +146,9 @@ public class SkillManager {
     private final Map<UUID, Integer> sneakChargeTicks = new HashMap<UUID, Integer>();
     private final Map<UUID, Boolean> universalCharged = new HashMap<UUID, Boolean>();
     private final Map<UUID, String> kreutzCard = new HashMap<UUID, String>();
+    private final Set<UUID> piercingRecently = new HashSet<UUID>();
+    private final Map<UUID, Integer> marksmanBoltCount = new HashMap<UUID, Integer>();
+    private final Map<UUID, Long> grangBurstCooldown = new HashMap<UUID, Long>();
     private final String[] KREUTZ_CARDS = new String[]{"\u30d5\u30a1\u30a4\u30a2\u30dc\u30fc\u30eb", "\u30a2\u30a4\u30b9\u30e9\u30f3\u30b9", "\u30b5\u30f3\u30c0\u30fc", "\u30b7\u30fc\u30eb\u30c9", "\u30d2\u30fc\u30eb", "\u30ab\u30fc\u30b9", "\u30b0\u30e9\u30d3\u30c6\u30a3", "\u30c1\u30a7\u30a4\u30f3", "\u30dd\u30a4\u30ba\u30f3\u30af\u30e9\u30a6\u30c9", "\u30b9\u30d4\u30fc\u30c9\u30d6\u30fc\u30b9\u30c8", "\u30ea\u30fc\u30d7", "\u30a6\u30a3\u30fc\u30af\u30cd\u30b9", "\u30de\u30a4\u30f3\u30c9", "\u30c1\u30a7\u30a4\u30f3\u30e9\u30a4\u30c8\u30cb\u30f3\u30b0", "\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7", "\u30d5\u30a1\u30f3\u30b0", "\u30d4\u30a2\u30c3\u30b7\u30f3\u30b0"};
 
     public SkillManager(BloxArenaPlugin plugin) {
@@ -206,6 +210,9 @@ public class SkillManager {
         this.portalCooldowns.clear();
         this.grangChargeStart.clear();
         this.grangCharging.clear();
+        this.piercingRecently.clear();
+        this.marksmanBoltCount.clear();
+        this.grangBurstCooldown.clear();
         this.necroArmy.values().forEach(list -> list.forEach(s -> {
             if (s.isValid()) {
                 s.remove();
@@ -263,6 +270,9 @@ public class SkillManager {
         this.portalBlocks.clear();
         this.grangChargeStart.clear();
         this.grangCharging.clear();
+        this.piercingRecently.clear();
+        this.marksmanBoltCount.clear();
+        this.grangBurstCooldown.clear();
         this.necroArmy.values().forEach(list -> list.forEach(s -> {
             if (s.isValid()) {
                 s.remove();
@@ -312,6 +322,10 @@ public class SkillManager {
         }
         if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.COOK && this.isSword(held)) {
             this.cookGenerateFood(p);
+            return;
+        }
+        if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.LANCER && this.isSword(held)) {
+            this.useKitSkill(p, KitType.LANCER.name());
             return;
         }
         if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.SUNDANCE && p.isSneaking() && held.getType() == Material.CROSSBOW) {
@@ -452,6 +466,7 @@ public class SkillManager {
         }
         this.sneakChargeTicks.remove(attacker.getUniqueId());
         this.guardBroken.add(victim.getUniqueId());
+        this.triggerGrangBurst(victim);
         victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.guardBroken.remove(victim.getUniqueId()), 60L);
         victim.getWorld().playSound(victim.getLocation(), Sound.ITEM_SHIELD_BREAK, 1.0f, 0.8f);
@@ -459,6 +474,30 @@ public class SkillManager {
         attacker.sendMessage("\u00a7e\u00a7l\u26a1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\u6210\u529f\uff01");
         attacker.getWorld().playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.5f);
         this.plugin.getTutorialManager().checkGuardBreakUsed(attacker);
+    }
+
+    public void triggerGrangBurst(Player p) {
+        if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.GRANG) {
+            return;
+        }
+        if (!this.grangCharging.getOrDefault(p.getUniqueId(), false).booleanValue()) {
+            return;
+        }
+        Long cd = this.grangBurstCooldown.get(p.getUniqueId());
+        if (cd != null && System.currentTimeMillis() < cd) {
+            return;
+        }
+        this.grangBurstCooldown.put(p.getUniqueId(), System.currentTimeMillis() + 15000L);
+        this.grangChargeStart.remove(p.getUniqueId());
+        this.grangCharging.put(p.getUniqueId(), false);
+        World w = p.getWorld();
+        w.createExplosion(p.getLocation(), 2.0f, false, false, (Entity)p);
+        for (Entity e : w.getNearbyEntities(p.getLocation(), 2.0, 2.0, 2.0)) {
+            Player target;
+            if (!(e instanceof Player) || !this.gm.isParticipant(target = (Player)e) || this.gm.getTeamOf(target) == this.gm.getTeamOf(p)) continue;
+            target.damage(5.0, (Entity)p);
+        }
+        p.sendMessage("\u00a77\u00a7l\u30b0\u30e9\u30f3\u30b0\u30d0\u30fc\u30b9\u30c8\uff01");
     }
 
     public boolean tryParryCounter(Player attacker, Player counter) {
@@ -524,7 +563,6 @@ public class SkillManager {
             }
             long chargeMs = Math.min(System.currentTimeMillis() - start, 7000L);
             double power = (double)chargeMs / 7000.0;
-            final double damage = 3.0 + power * 7.0;
             double distance = 3.0 + power * 10.0;
             int cd = (int)(5000.0 + power * 8000.0);
             this.setCooldown(p.getUniqueId(), cd);
@@ -533,13 +571,14 @@ public class SkillManager {
             p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 1.0f, 0.8f + (float)power * 0.4f);
             if (power >= 0.95) {
                 UUID uid = p.getUniqueId();
+                p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20, 4, false, false));
                 Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
                     Player pl = Bukkit.getPlayer((UUID)uid);
                     if (pl != null && pl.isOnline()) {
-                        pl.getWorld().createExplosion(pl.getLocation(), 2.0f, false, false, (Entity)pl);
+                        pl.getWorld().createExplosion(pl.getLocation(), 3.0f, false, false, (Entity)pl);
                         pl.sendMessage("\u00a77\u00a7l\u6700\u5927\u30c1\u30e3\u30fc\u30b8\u70b8\u88c2\uff01");
                     }
-                }, 40L);
+                }, 10L);
             }
             World w = p.getWorld();
             new BukkitRunnable(){
@@ -553,7 +592,8 @@ public class SkillManager {
                     for (Entity e : p.getWorld().getNearbyEntities(p.getLocation(), 2.0, 2.0, 2.0)) {
                         Player target;
                         if (!(e instanceof Player) || !SkillManager.this.gm.isParticipant(target = (Player)e) || SkillManager.this.gm.getTeamOf(target) == SkillManager.this.gm.getTeamOf(p)) continue;
-                        target.damage(damage * 0.1, (Entity)p);
+                        target.damage(7.0, (Entity)p);
+                        target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 9, false, false));
                         target.setVelocity(p.getLocation().getDirection().normalize().multiply(0.5).setY(0.3));
                     }
                 }
@@ -714,12 +754,17 @@ public class SkillManager {
         if (victim.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
             double currentMax = victim.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue();
             this.maxHpReduced.putIfAbsent(victim.getUniqueId(), currentMax);
-            victim.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(Math.max(1.0, currentMax - 10.0));
-            if (victim.getHealth() > currentMax - 10.0) {
-                victim.setHealth(currentMax - 10.0);
+            int applied = this.marksmanBoltCount.merge(victim.getUniqueId(), 3, Integer::sum);
+            applied = Math.min(applied, 12);
+            this.marksmanBoltCount.put(victim.getUniqueId(), applied);
+            double original = this.maxHpReduced.get(victim.getUniqueId()).doubleValue();
+            double newMax = Math.max(1.0, original - (double)applied);
+            victim.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(newMax);
+            if (victim.getHealth() > newMax) {
+                victim.setHealth(newMax);
             }
         }
-        victim.sendMessage("\u00a7c\u00a7lHP\u4e0a\u9650\u304c10\u4f4e\u4e0b\u3057\u307e\u3057\u305f\uff01\uff08\u30e9\u30a6\u30f3\u30c9\u7d42\u4e86\u307e\u3067\uff09");
+        victim.sendMessage("\u00a7c\u00a7lHP\u4e0a\u9650\u304c\u4f4e\u4e0b\u3057\u307e\u3057\u305f\uff01\uff08\u30e9\u30a6\u30f3\u30c9\u7d42\u4e86\u307e\u3067\uff09");
     }
 
     public void restoreMaxHp(Player p) {
@@ -780,6 +825,7 @@ public class SkillManager {
         attacker.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 200, 0, false, false));
         attacker.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 1, false, false));
         attacker.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 1, false, false));
+        attacker.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0, false, false));
         attacker.sendMessage("\u00a78\u00a7l\u7f60\u3060\uff01\u00a77\u56ee\u3092\u653b\u6483\u3057\u3066\u5f31\u4f53\u5316\uff0b\u767a\u5149\u3057\u305f\uff01");
     }
 
@@ -817,7 +863,7 @@ public class SkillManager {
                 this.portalLastUsed.put(p.getUniqueId(), b.clone());
                 p.getWorld().playSound(b, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
                 if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.TRANSPORTER && uid.equals(p.getUniqueId())) {
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, false, false));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, false, false));
                 }
                 return;
             }
@@ -830,7 +876,7 @@ public class SkillManager {
             this.portalLastUsed.put(p.getUniqueId(), a.clone());
             p.getWorld().playSound(a, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
             if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.TRANSPORTER && uid.equals(p.getUniqueId())) {
-                p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, false, false));
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, false, false));
             }
             return;
         }
@@ -838,6 +884,15 @@ public class SkillManager {
 
     public boolean isGuardBroken(UUID uid) {
         return this.guardBroken.contains(uid);
+    }
+
+    public boolean tryMarkPiercing(UUID uid) {
+        if (this.piercingRecently.contains(uid)) {
+            return false;
+        }
+        this.piercingRecently.add(uid);
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.piercingRecently.remove(uid), 20L);
+        return true;
     }
 
     public boolean isVampireBloodMode(UUID uid) {
@@ -1017,18 +1072,18 @@ public class SkillManager {
             }
             if (player.isSneaking()) {
                 int ticks = this.sneakChargeTicks.merge(player.getUniqueId(), 1, Integer::sum);
-                if (ticks >= 20 && ticks < 21) {
+                if (ticks >= 1 && ticks < 2) {
                     this.universalCharged.put(player.getUniqueId(), true);
                     player.sendMessage("\u00a7e\u00a7l\u26a1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\u30c1\u30e3\u30fc\u30b8\u5b8c\u4e86\uff01\u6b21\u306e\u653b\u6483\u3067\u76f8\u624b\u306e\u76fe\u3092\u7834\u58ca");
                     player.getWorld().playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.5f, 1.5f);
                     continue;
                 }
-                if (ticks >= 20 || ticks % 5 != 0) continue;
-                player.sendActionBar((Component)Component.text((String)("\u00a7e\u26a1 \u30c1\u30e3\u30fc\u30b8\u4e2d... \u00a77" + (20 - ticks) + "/20 ticks")));
+                if (ticks >= 1 || ticks % 5 != 0) continue;
+                player.sendActionBar((Component)Component.text((String)("\u00a7e\u26a1 \u30c1\u30e3\u30fc\u30b8\u4e2d... \u00a77" + (1 - ticks) + "/1\u79d2")));
                 continue;
             }
             Integer prev = this.sneakChargeTicks.remove(player.getUniqueId());
-            if (prev == null || prev >= 20) continue;
+            if (prev == null || prev >= 1) continue;
             this.universalCharged.remove(player.getUniqueId());
         }
         this.updateKitActionBars();
@@ -1506,6 +1561,7 @@ public class SkillManager {
                 this.skillCooldowns.put(t.getUniqueId(), base + 5000L);
             }
             this.guardBroken.add(t.getUniqueId());
+            this.triggerGrangBurst(t);
             t.getWorld().spawnParticle(Particle.CRIT, t.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.guardBroken.remove(t.getUniqueId()), 60L);
         }
@@ -1604,30 +1660,34 @@ public class SkillManager {
     }
 
     private void lancerSkill(Player p) {
-        this.setCooldown(p.getUniqueId(), 3000L);
+        this.setCooldown(p.getUniqueId(), 2000L);
         Vector dir = p.getLocation().getDirection().normalize();
         Location start = p.getEyeLocation();
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 0.5f);
         p.sendMessage("\u00a7b\u00a7l\u523a\u7a81\uff01");
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
-            Location end = start.clone().add(dir.clone().multiply(4.5));
+            Location end = start.clone().add(dir.clone().multiply(5.0));
             p.getWorld().spawnParticle(Particle.SWEEP_ATTACK, end, 3, 0.3, 0.3, 0.3, 0.0);
-            p.getWorld().spawnParticle(Particle.CRIT, start.clone().add(dir.clone().multiply(2.25)), 5, 0.1, 0.1, 0.1, 0.05);
+            p.getWorld().spawnParticle(Particle.CRIT, start.clone().add(dir.clone().multiply(2.5)), 5, 0.1, 0.1, 0.1, 0.05);
             p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.5f);
-            for (double d = 0.0; d <= 4.5; d += 0.3) {
+            for (double d = 0.0; d <= 5.0; d += 0.3) {
                 Location check = start.clone().add(dir.clone().multiply(d));
                 for (Entity e : check.getWorld().getNearbyEntities(check, 0.75, 0.75, 0.75)) {
                     Player t;
                     if (!(e instanceof Player) || !this.gm.isParticipant(t = (Player)e) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p)) continue;
                     if (t.isBlocking()) {
-                        t.damage(3.0, (Entity)p);
+                        t.damage(5.0, (Entity)p);
                         t.setCooldown(Material.SHIELD, 20);
                         t.getWorld().playSound(t.getLocation(), Sound.ITEM_SHIELD_BREAK, 1.0f, 0.8f);
-                        t.sendMessage("\u00a7c\u76fe\u8d8a\u3057\u306b3\u30c0\u30e1\u30fc\u30b8\u8cab\u901a\uff01");
+                        t.sendMessage("\u00a7c\u76fe\u8d8a\u3057\u306b5\u30c0\u30e1\u30fc\u30b8\u8cab\u901a\uff01");
                     } else {
-                        t.damage(7.0, (Entity)p);
+                        t.damage(10.0, (Entity)p);
                     }
                     t.setVelocity(dir.clone().multiply(1.5).setY(0.3));
+                    Long cur = this.skillCooldowns.get(p.getUniqueId());
+                    if (cur != null) {
+                        this.skillCooldowns.put(p.getUniqueId(), cur.longValue() - 1000L);
+                    }
                     return;
                 }
             }
@@ -1935,7 +1995,7 @@ public class SkillManager {
             existing.entity.remove();
             this.activeMines.remove(existing);
         }
-        this.setCooldown(p.getUniqueId(), 5000L);
+        this.setCooldown(p.getUniqueId(), 2000L);
         loc.getWorld().spawnParticle(Particle.FLAME, loc.clone().add(0.0, 0.1, 0.0), 3, 0.1, 0.1, 0.1, 0.01);
         loc.getWorld().playSound(loc, Sound.BLOCK_STONE_PLACE, 0.3f, 0.5f);
         ArmorStand as = (ArmorStand)loc.getWorld().spawn(loc, ArmorStand.class, a -> {
@@ -1955,7 +2015,7 @@ public class SkillManager {
             return;
         }
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_LEVER_CLICK, 1.0f, 1.5f);
-        this.setCooldown(p.getUniqueId(), 15000L);
+        this.setCooldown(p.getUniqueId(), 7000L);
         p.sendMessage("\u00a7c\u00a7l\u8d77\u7206\uff01");
         for (MineData m2 : new ArrayList<MineData>(this.activeMines)) {
             if (!m2.owner.equals(p.getUniqueId())) continue;
@@ -2156,8 +2216,11 @@ public class SkillManager {
     }
 
     private void engineerSkill(Player p) {
-        this.setCooldown(p.getUniqueId(), 20000L);
-        if (this.activeTurrets.stream().filter(t -> t.owner.equals(p.getUniqueId())).count() >= 2L) {
+        this.setCooldown(p.getUniqueId(), 15000L);
+        TeamColor myTeam = this.gm.getTeamOf(p);
+        int enemyCount = myTeam == TeamColor.RED ? this.gm.getCtfBlueTeamSize() : this.gm.getCtfRedTeamSize();
+        int maxTurrets = Math.max(1, enemyCount);
+        if (this.activeTurrets.stream().filter(t -> t.owner.equals(p.getUniqueId())).count() >= (long)maxTurrets) {
             for (TurretData t2 : new ArrayList<TurretData>(this.activeTurrets)) {
                 if (!t2.owner.equals(p.getUniqueId())) continue;
                 t2.entity.remove();
@@ -2165,7 +2228,7 @@ public class SkillManager {
                 break;
             }
         }
-        Location loc = p.getLocation().add(p.getLocation().getDirection().multiply(2));
+        Location loc = p.getLocation().add(p.getLocation().getDirection().multiply(2)).add(0, 0.6, 0);
         Skeleton skel = (Skeleton)loc.getWorld().spawn(loc, Skeleton.class, s -> {
             s.setAI(false);
             s.setRemoveWhenFarAway(false);
@@ -2478,7 +2541,9 @@ public class SkillManager {
                 s.getEquipment().setChestplateDropChance(0.0f);
                 s.getEquipment().setLeggingsDropChance(0.0f);
                 s.getEquipment().setBootsDropChance(0.0f);
-                s.getEquipment().setItemInMainHand(null);
+                ItemStack stick = new ItemStack(Material.STICK);
+                stick.addEnchantment(Enchantment.KNOCKBACK, 1);
+                s.getEquipment().setItemInMainHand(stick);
                 s.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 999999, 9, false, false));
             });
             skel.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "decoy"), PersistentDataType.BYTE, (byte)1);
