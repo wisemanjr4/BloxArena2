@@ -1,16 +1,34 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  org.bukkit.Bukkit
+ *  org.bukkit.Sound
+ *  org.bukkit.entity.Player
+ *  org.bukkit.plugin.Plugin
+ *  org.bukkit.scheduler.BukkitRunnable
+ */
 package com.bloxarena.song;
 
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import java.io.*;
-import java.util.*;
 
 public class NbsPlayer {
-
     private final String name;
-    private final List<int[]> notes = new ArrayList<>();
+    private final List<int[]> notes = new ArrayList<int[]>();
     private int tempo = 1000;
     private int songLength = 0;
     private BukkitRunnable currentTask;
@@ -20,12 +38,13 @@ public class NbsPlayer {
         this.name = name;
         this.plugin = plugin;
         try {
-            parse(file);
-        } catch (Exception e) {
-            org.bukkit.Bukkit.getLogger().warning("[BloxArenaII] Failed to load NBS: " + name);
-            notes.clear();
-            tempo = 1000;
-            songLength = 0;
+            this.parse(file);
+        }
+        catch (Exception e) {
+            Bukkit.getLogger().warning("[BloxArenaII] Failed to load NBS: " + name);
+            this.notes.clear();
+            this.tempo = 1000;
+            this.songLength = 0;
         }
     }
 
@@ -34,93 +53,105 @@ public class NbsPlayer {
         in.readShort();
         int version = in.readByte() & 0xFF;
         in.readByte();
-        songLength = in.readShort() & 0xFFFF;
+        this.songLength = in.readShort() & 0xFFFF;
         int layers = in.readShort() & 0xFFFF;
-        skipString(in);
-        skipString(in);
-        skipString(in);
-        skipString(in);
-        tempo = Math.max(100, in.readShort() & 0xFFFF);
+        this.skipString(in);
+        this.skipString(in);
+        this.skipString(in);
+        this.skipString(in);
+        this.tempo = Math.max(100, in.readShort() & 0xFFFF);
         in.skipBytes(23);
-        skipString(in);
+        this.skipString(in);
         in.readByte();
         in.readByte();
         in.readShort();
         if (version >= 1) {
             int customCount = in.readShort() & 0xFFFF;
-            for (int i = 0; i < customCount; i++) {
-                skipString(in);
-                skipString(in);
+            for (int i = 0; i < customCount; ++i) {
+                this.skipString(in);
+                this.skipString(in);
                 in.readByte();
                 in.readByte();
             }
         }
-        for (int i = 0; i < layers; i++) {
-            skipString(in);
+        for (int i = 0; i < layers; ++i) {
+            this.skipString(in);
             in.readByte();
             in.readByte();
             in.readByte();
         }
-        int prevTick = -1;
-        while (true) {
-            try {
-                short tick = in.readShort();
-                if (tick <= prevTick) break;
+        short prevTick = -1;
+        try {
+            short tick;
+            while ((tick = in.readShort()) > prevTick) {
                 prevTick = tick;
                 short instrument = in.readShort();
                 short key = in.readShort();
-                notes.add(new int[]{tick, instrument & 0xFFFF, key & 0xFFFF});
-            } catch (EOFException e) {
-                break;
+                this.notes.add(new int[]{tick, instrument & 0xFFFF, key & 0xFFFF});
             }
         }
+        catch (EOFException e) {
+            // empty catch block
+        }
         in.close();
-        Collections.sort(notes, Comparator.comparingInt(a -> a[0]));
+        Collections.sort(this.notes, Comparator.comparingInt(a -> a[0]));
     }
 
     private void skipString(DataInputStream in) throws IOException {
         int len = in.readInt();
-        if (len > 0 && len < 100000) in.skipBytes(len);
+        if (len > 0 && len < 100000) {
+            in.skipBytes(len);
+        }
     }
 
-    public String getName() { return name; }
+    public String getName() {
+        return this.name;
+    }
 
-    public void play(Collection<Player> listeners) {
-        stop();
-        if (notes.isEmpty()) return;
-        int rawPerTick = (int)((long)2000 / tempo);
-        if (rawPerTick < 1) rawPerTick = 1;
+    public void play(final Collection<Player> listeners) {
+        this.stop();
+        if (this.notes.isEmpty()) {
+            return;
+        }
+        int rawPerTick = (int)(2000L / (long)this.tempo);
+        if (rawPerTick < 1) {
+            rawPerTick = 1;
+        }
         final int perTick = rawPerTick;
-        currentTask = new BukkitRunnable() {
+        this.currentTask = new BukkitRunnable(){
             int serverTick = 0;
             int noteIdx = 0;
             int prevSongTick = -1;
-            @Override public void run() {
-                int songTick = serverTick / perTick;
-                serverTick++;
-                if (songTick == prevSongTick) return;
-                prevSongTick = songTick;
-                while (noteIdx < notes.size() && notes.get(noteIdx)[0] <= songTick) {
-                    int[] n = notes.get(noteIdx++);
-                    Sound snd = getInstrument(n[1]);
-                    float pitch = getPitch(n[2]);
+
+            public void run() {
+                int songTick = this.serverTick / perTick;
+                ++this.serverTick;
+                if (songTick == this.prevSongTick) {
+                    return;
+                }
+                this.prevSongTick = songTick;
+                while (this.noteIdx < NbsPlayer.this.notes.size() && NbsPlayer.this.notes.get(this.noteIdx)[0] <= songTick) {
+                    int[] n = NbsPlayer.this.notes.get(this.noteIdx++);
+                    Sound snd = NbsPlayer.this.getInstrument(n[1]);
+                    float pitch = NbsPlayer.this.getPitch(n[2]);
                     for (Player p : listeners) {
-                        if (p.isOnline()) p.playSound(p.getLocation(), snd, 0.8f, pitch);
+                        if (!p.isOnline()) continue;
+                        p.playSound(p.getLocation(), snd, 0.8f, pitch);
                     }
                 }
-                if (songTick > songLength + 10) {
-                    cancel();
-                    currentTask = null;
+                if (songTick > NbsPlayer.this.songLength + 10) {
+                    this.cancel();
+                    NbsPlayer.this.currentTask = null;
                 }
             }
         };
-        currentTask.runTaskTimer(plugin, 0L, 1L);
+        this.currentTask.runTaskTimer(this.plugin, 0L, 1L);
     }
 
     public void stop() {
-        if (currentTask != null) {
-            currentTask.cancel();
-            currentTask = null;
+        if (this.currentTask != null) {
+            this.currentTask.cancel();
+            this.currentTask = null;
         }
     }
 
@@ -147,9 +178,13 @@ public class NbsPlayer {
     }
 
     private float getPitch(int key) {
-        int k = key;
-        while (k < 33) k += 12;
-        while (k > 57) k -= 12;
-        return (float) Math.pow(2.0, (k - 45) / 12.0);
+        int k;
+        for (k = key; k < 33; k += 12) {
+        }
+        while (k > 57) {
+            k -= 12;
+        }
+        return (float)Math.pow(2.0, (double)(k - 45) / 12.0);
     }
 }
+

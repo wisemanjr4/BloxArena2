@@ -1,380 +1,442 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  org.bukkit.Location
+ *  org.bukkit.entity.Player
+ */
 package com.bloxarena.command;
 
 import com.bloxarena.BloxArenaPlugin;
 import com.bloxarena.game.GameMode;
 import com.bloxarena.map.MapConfig;
 import com.bloxarena.util.SelectionTool;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.util.*;
-
-/**
- * /ba admin addmap <mapId> で起動（新規マップ作成）
- * /ba upgrade <mapId> で起動（既存マップの新モード対応追加）
- *
- * 新規: 8ステップ（必須4＋任意4）
- *   [必須] ①赤スポーン ②青スポーン ③センター ④マップロビー
- *   [任意] ⑤赤ゲート ⑥青ゲート ⑦ゲート素材 ⑧マップOOB
- *
- * アップグレード: 不足している新モード設定のみ案内
- *   爆破: 設置地点・解除地点
- *   CTF:  赤旗・青旗・赤帰還・青帰還
- *   占領: 拠点位置（複数追加可 / skipで終了）
- *
- * 操作: /ba admin next = 確定 /ba admin skip = スキップ /ba admin cancel = 中断
- */
 public class MapWizard {
-
     private static final int LAST_STEP = 7;
     private static final int OPTIONAL_FROM = 4;
-
     private final BloxArenaPlugin plugin;
-
-    private static class State {
-        String mapId;
-        int    step         = 0;
-        boolean redGateSet  = false;
-        boolean blueGateSet = false;
-        boolean isUpgrade   = false;
-
-        State(String mapId) { this.mapId = mapId; }
-    }
-
-    private final Map<UUID, State> sessions = new HashMap<>();
+    private final Map<UUID, State> sessions = new HashMap<UUID, State>();
 
     public MapWizard(BloxArenaPlugin plugin) {
         this.plugin = plugin;
     }
 
-    // ─── 公開API ───
-
-    public boolean isActive(Player p) { return sessions.containsKey(p.getUniqueId()); }
-
-    /**
-     * @param mapId 新規作成するマップID
-     */
-    public void start(Player p, String mapId) {
-        if (isActive(p)) {
-            p.sendMessage("§cマップウィザードはすでに起動中です。 §f/ba admin next §c で次へ進めてください。");
-            return;
-        }
-        if (plugin.getMapManager().getById(mapId) != null) {
-            p.sendMessage("§cマップ §e" + mapId + " §cはすでに存在します。別のIDを指定してください。");
-            return;
-        }
-        plugin.getMapManager().addMap(mapId, p.getWorld().getName());
-        State s = new State(mapId);
-        sessions.put(p.getUniqueId(), s);
-
-        header(p);
-        p.sendMessage("§6§lマップ §e§l" + mapId + " §6§lを作成します");
-        p.sendMessage("§7必須4＋任意4の全8ステップです。");
-        p.sendMessage("§7  §f/ba admin next §7= 確定　§f/ba admin skip §7= 任意をスキップ　§f/ba admin cancel §7= 中断");
-        p.sendMessage("§7  §7§oワンドが必要です → /ba wand");
-        footer(p);
-        showStep(p, s);
+    public boolean isActive(Player p) {
+        return this.sessions.containsKey(p.getUniqueId());
     }
 
-    /**
-     * 既存マップのアップグレードウィザード（新モード対応の不足設定を順番に案内）
-     */
-    public void startUpgrade(Player p, String mapId) {
-        MapConfig mc = plugin.getMapManager().getById(mapId);
-        if (mc == null) {
-            p.sendMessage("§cマップ '" + mapId + "' が見つかりません。"); return;
+    public void start(Player p, String mapId) {
+        if (this.isActive(p)) {
+            p.sendMessage("\u00a7c\u30de\u30c3\u30d7\u30a6\u30a3\u30b6\u30fc\u30c9\u306f\u3059\u3067\u306b\u8d77\u52d5\u4e2d\u3067\u3059\u3002 \u00a7f/ba admin next \u00a7c \u3067\u6b21\u3078\u9032\u3081\u3066\u304f\u3060\u3055\u3044\u3002");
+            return;
         }
-        if (mc.isReadyFor(GameMode.BOMB_MISSION)
-                && mc.isReadyFor(GameMode.DOMINATION)
-                && mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
-            p.sendMessage("§aこのマップは既に全モードに対応しています。");
+        if (this.plugin.getMapManager().getById(mapId) != null) {
+            p.sendMessage("\u00a7c\u30de\u30c3\u30d7 \u00a7e" + mapId + " \u00a7c\u306f\u3059\u3067\u306b\u5b58\u5728\u3057\u307e\u3059\u3002\u5225\u306eID\u3092\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+            return;
+        }
+        this.plugin.getMapManager().addMap(mapId, p.getWorld().getName());
+        State s = new State(mapId);
+        this.sessions.put(p.getUniqueId(), s);
+        this.header(p);
+        p.sendMessage("\u00a76\u00a7l\u30de\u30c3\u30d7 \u00a7e\u00a7l" + mapId + " \u00a76\u00a7l\u3092\u4f5c\u6210\u3057\u307e\u3059");
+        p.sendMessage("\u00a77\u5fc5\u98084\uff0b\u4efb\u610f4\u306e\u51688\u30b9\u30c6\u30c3\u30d7\u3067\u3059\u3002");
+        p.sendMessage("\u00a77  \u00a7f/ba admin next \u00a77= \u78ba\u5b9a\u3000\u00a7f/ba admin skip \u00a77= \u4efb\u610f\u3092\u30b9\u30ad\u30c3\u30d7\u3000\u00a7f/ba admin cancel \u00a77= \u4e2d\u65ad");
+        p.sendMessage("\u00a77  \u00a77\u00a7o\u30ef\u30f3\u30c9\u304c\u5fc5\u8981\u3067\u3059 \u2192 /ba wand");
+        this.footer(p);
+        this.showStep(p, s);
+    }
+
+    public void startUpgrade(Player p, String mapId) {
+        MapConfig mc = this.plugin.getMapManager().getById(mapId);
+        if (mc == null) {
+            p.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + mapId + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+            return;
+        }
+        if (mc.isReadyFor(GameMode.BOMB_MISSION) && mc.isReadyFor(GameMode.DOMINATION) && mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
+            p.sendMessage("\u00a7a\u3053\u306e\u30de\u30c3\u30d7\u306f\u65e2\u306b\u5168\u30e2\u30fc\u30c9\u306b\u5bfe\u5fdc\u3057\u3066\u3044\u307e\u3059\u3002");
             return;
         }
         State s = new State(mapId);
         s.isUpgrade = true;
-        sessions.put(p.getUniqueId(), s);
-        header(p);
-        p.sendMessage("§6§lマップ §e" + mapId + " §6§lのアップグレード");
-        p.sendMessage("§7新モード（爆破・CTF・占領）に必要な設定を順に案内します。");
-        p.sendMessage("§7  §f/ba admin next §7= 確定　§f/ba admin skip §7= スキップ　§f/ba admin cancel §7= 中断");
-        footer(p);
-        showUpgradeStep(p, s);
+        this.sessions.put(p.getUniqueId(), s);
+        this.header(p);
+        p.sendMessage("\u00a76\u00a7l\u30de\u30c3\u30d7 \u00a7e" + mapId + " \u00a76\u00a7l\u306e\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9");
+        p.sendMessage("\u00a77\u65b0\u30e2\u30fc\u30c9\uff08\u7206\u7834\u30fbCTF\u30fb\u5360\u9818\uff09\u306b\u5fc5\u8981\u306a\u8a2d\u5b9a\u3092\u9806\u306b\u6848\u5185\u3057\u307e\u3059\u3002");
+        p.sendMessage("\u00a77  \u00a7f/ba admin next \u00a77= \u78ba\u5b9a\u3000\u00a7f/ba admin skip \u00a77= \u30b9\u30ad\u30c3\u30d7\u3000\u00a7f/ba admin cancel \u00a77= \u4e2d\u65ad");
+        this.footer(p);
+        this.showUpgradeStep(p, s);
     }
 
     public void next(Player p) {
-        State s = sessions.get(p.getUniqueId());
-        if (s == null) { p.sendMessage("§c/ba admin addmap <id> でウィザードを開始してください。"); return; }
-        if (applyStep(p, s)) advance(p, s);
+        State s = this.sessions.get(p.getUniqueId());
+        if (s == null) {
+            p.sendMessage("\u00a7c/ba admin addmap <id> \u3067\u30a6\u30a3\u30b6\u30fc\u30c9\u3092\u958b\u59cb\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+            return;
+        }
+        if (this.applyStep(p, s)) {
+            this.advance(p, s);
+        }
     }
 
     public void skip(Player p) {
-        State s = sessions.get(p.getUniqueId());
-        if (s == null) { p.sendMessage("§cウィザードが起動していません。"); return; }
+        State s = this.sessions.get(p.getUniqueId());
+        if (s == null) {
+            p.sendMessage("\u00a7c\u30a6\u30a3\u30b6\u30fc\u30c9\u304c\u8d77\u52d5\u3057\u3066\u3044\u307e\u305b\u3093\u3002");
+            return;
+        }
         if (s.isUpgrade) {
-            p.sendMessage("§7ステップをスキップしました。");
-            advance(p, s);
+            p.sendMessage("\u00a77\u30b9\u30c6\u30c3\u30d7\u3092\u30b9\u30ad\u30c3\u30d7\u3057\u307e\u3057\u305f\u3002");
+            this.advance(p, s);
             return;
         }
-        if (s.step < OPTIONAL_FROM) {
-            p.sendMessage("§c必須ステップはスキップできません。 §f/ba admin next §c で進んでください。");
+        if (s.step < 4) {
+            p.sendMessage("\u00a7c\u5fc5\u9808\u30b9\u30c6\u30c3\u30d7\u306f\u30b9\u30ad\u30c3\u30d7\u3067\u304d\u307e\u305b\u3093\u3002 \u00a7f/ba admin next \u00a7c \u3067\u9032\u3093\u3067\u304f\u3060\u3055\u3044\u3002");
             return;
         }
-        p.sendMessage("§7ステップをスキップしました。");
-        advance(p, s);
+        p.sendMessage("\u00a77\u30b9\u30c6\u30c3\u30d7\u3092\u30b9\u30ad\u30c3\u30d7\u3057\u307e\u3057\u305f\u3002");
+        this.advance(p, s);
     }
 
     public void cancel(Player p) {
-        State s = sessions.remove(p.getUniqueId());
+        State s = this.sessions.remove(p.getUniqueId());
         if (s != null) {
-            p.sendMessage("§cウィザードをキャンセルしました。");
+            p.sendMessage("\u00a7c\u30a6\u30a3\u30b6\u30fc\u30c9\u3092\u30ad\u30e3\u30f3\u30bb\u30eb\u3057\u307e\u3057\u305f\u3002");
         } else {
-            p.sendMessage("§c起動中のウィザードがありません。");
+            p.sendMessage("\u00a7c\u8d77\u52d5\u4e2d\u306e\u30a6\u30a3\u30b6\u30fc\u30c9\u304c\u3042\u308a\u307e\u305b\u3093\u3002");
         }
     }
 
     private void showUpgradeStep(Player p, State s) {
-        MapConfig mc = plugin.getMapManager().getById(s.mapId);
-        if (mc == null) { cancel(p); return; }
-        
+        MapConfig mc = this.plugin.getMapManager().getById(s.mapId);
+        if (mc == null) {
+            this.cancel(p);
+            return;
+        }
         if (!mc.isReadyFor(GameMode.BOMB_MISSION)) {
             if (mc.getBombSite() == null) {
-                header(p); p.sendMessage("§6§l【爆破モード】§e 必須 §6- 爆弾設置地点");
-                p.sendMessage("§7攻撃側が爆弾を設置する場所です。その地点に立ってください。");
-                p.sendMessage("§f/ba admin next §7= 現在地を設定　§f/ba admin skip §7= 爆破モードを飛ばす");
-                footer(p); return;
+                this.header(p);
+                p.sendMessage("\u00a76\u00a7l\u3010\u7206\u7834\u30e2\u30fc\u30c9\u3011\u00a7e \u5fc5\u9808 \u00a76- \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9");
+                p.sendMessage("\u00a77\u653b\u6483\u5074\u304c\u7206\u5f3e\u3092\u8a2d\u7f6e\u3059\u308b\u5834\u6240\u3067\u3059\u3002\u305d\u306e\u5730\u70b9\u306b\u7acb\u3063\u3066\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a7f/ba admin next \u00a77= \u73fe\u5728\u5730\u3092\u8a2d\u5b9a\u3000\u00a7f/ba admin skip \u00a77= \u7206\u7834\u30e2\u30fc\u30c9\u3092\u98db\u3070\u3059");
+                this.footer(p);
+                return;
             }
             if (mc.getDefusePoint() == null) {
-                header(p); p.sendMessage("§6§l【爆破モード】§e 必須 §6- 爆弾解除地点");
-                p.sendMessage("§7守備側が爆弾を解除する場所です。その地点に立ってください。");
-                p.sendMessage("§f/ba admin next §7= 現在地を設定");
-                footer(p); return;
+                this.header(p);
+                p.sendMessage("\u00a76\u00a7l\u3010\u7206\u7834\u30e2\u30fc\u30c9\u3011\u00a7e \u5fc5\u9808 \u00a76- \u7206\u5f3e\u89e3\u9664\u5730\u70b9");
+                p.sendMessage("\u00a77\u5b88\u5099\u5074\u304c\u7206\u5f3e\u3092\u89e3\u9664\u3059\u308b\u5834\u6240\u3067\u3059\u3002\u305d\u306e\u5730\u70b9\u306b\u7acb\u3063\u3066\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a7f/ba admin next \u00a77= \u73fe\u5728\u5730\u3092\u8a2d\u5b9a");
+                this.footer(p);
+                return;
             }
         }
         if (!mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
             if (mc.getRedFlagLocation() == null) {
-                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §c赤旗 §6初期位置（相手陣地）");
-                p.sendMessage("§7§c赤チーム§7が奪いに行く旗です。§9青陣地側§7に設置します。");
-                p.sendMessage("§7設置したい場所に立って §f/ba admin next　§f/ba admin skip §7= CTFを飛ばす");
-                footer(p); return;
+                this.header(p);
+                p.sendMessage("\u00a76\u00a7l\u3010CTF\u3011\u00a7e \u5fc5\u9808 \u00a76- \u00a7c\u8d64\u65d7 \u00a76\u521d\u671f\u4f4d\u7f6e\uff08\u76f8\u624b\u9663\u5730\uff09");
+                p.sendMessage("\u00a77\u00a7c\u8d64\u30c1\u30fc\u30e0\u00a77\u304c\u596a\u3044\u306b\u884c\u304f\u65d7\u3067\u3059\u3002\u00a79\u9752\u9663\u5730\u5074\u00a77\u306b\u8a2d\u7f6e\u3057\u307e\u3059\u3002");
+                p.sendMessage("\u00a77\u8a2d\u7f6e\u3057\u305f\u3044\u5834\u6240\u306b\u7acb\u3063\u3066 \u00a7f/ba admin next\u3000\u00a7f/ba admin skip \u00a77= CTF\u3092\u98db\u3070\u3059");
+                this.footer(p);
+                return;
             }
             if (mc.getBlueFlagLocation() == null) {
-                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §9青旗 §6初期位置（自陣）");
-                p.sendMessage("§7自陣に置く旗です。§c赤チーム§7が奪いに来ます。");
-                p.sendMessage("§7設置したい場所に立って §f/ba admin next");
-                footer(p); return;
+                this.header(p);
+                p.sendMessage("\u00a76\u00a7l\u3010CTF\u3011\u00a7e \u5fc5\u9808 \u00a76- \u00a79\u9752\u65d7 \u00a76\u521d\u671f\u4f4d\u7f6e\uff08\u81ea\u9663\uff09");
+                p.sendMessage("\u00a77\u81ea\u9663\u306b\u7f6e\u304f\u65d7\u3067\u3059\u3002\u00a7c\u8d64\u30c1\u30fc\u30e0\u00a77\u304c\u596a\u3044\u306b\u6765\u307e\u3059\u3002");
+                p.sendMessage("\u00a77\u8a2d\u7f6e\u3057\u305f\u3044\u5834\u6240\u306b\u7acb\u3063\u3066 \u00a7f/ba admin next");
+                this.footer(p);
+                return;
             }
             if (mc.getRedReturnLocation() == null) {
-                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §c赤 §6持ち帰り地点");
-                p.sendMessage("§7§c赤チーム§7が相手の§9青旗§7を持ち帰るゴール地点です。");
-                p.sendMessage("§f/ba admin next §7= 現在地を設定");
-                footer(p); return;
+                this.header(p);
+                p.sendMessage("\u00a76\u00a7l\u3010CTF\u3011\u00a7e \u5fc5\u9808 \u00a76- \u00a7c\u8d64 \u00a76\u6301\u3061\u5e30\u308a\u5730\u70b9");
+                p.sendMessage("\u00a77\u00a7c\u8d64\u30c1\u30fc\u30e0\u00a77\u304c\u76f8\u624b\u306e\u00a79\u9752\u65d7\u00a77\u3092\u6301\u3061\u5e30\u308b\u30b4\u30fc\u30eb\u5730\u70b9\u3067\u3059\u3002");
+                p.sendMessage("\u00a7f/ba admin next \u00a77= \u73fe\u5728\u5730\u3092\u8a2d\u5b9a");
+                this.footer(p);
+                return;
             }
             if (mc.getBlueReturnLocation() == null) {
-                header(p); p.sendMessage("§6§l【CTF】§e 必須 §6- §9青 §6持ち帰り地点");
-                p.sendMessage("§7§9青チーム§7が相手の§c赤旗§7を持ち帰るゴール地点です。");
-                p.sendMessage("§f/ba admin next §7= 現在地を設定");
-                footer(p); return;
+                this.header(p);
+                p.sendMessage("\u00a76\u00a7l\u3010CTF\u3011\u00a7e \u5fc5\u9808 \u00a76- \u00a79\u9752 \u00a76\u6301\u3061\u5e30\u308a\u5730\u70b9");
+                p.sendMessage("\u00a77\u00a79\u9752\u30c1\u30fc\u30e0\u00a77\u304c\u76f8\u624b\u306e\u00a7c\u8d64\u65d7\u00a77\u3092\u6301\u3061\u5e30\u308b\u30b4\u30fc\u30eb\u5730\u70b9\u3067\u3059\u3002");
+                p.sendMessage("\u00a7f/ba admin next \u00a77= \u73fe\u5728\u5730\u3092\u8a2d\u5b9a");
+                this.footer(p);
+                return;
             }
         }
         if (!mc.isReadyFor(GameMode.DOMINATION)) {
-            header(p); p.sendMessage("§6§l【占領戦】§7 任意 §6- 占領拠点の追加");
-            p.sendMessage("§7占領拠点の中心に立ってください。半径5mで設定されます。");
-            p.sendMessage("§f/ba admin next §7= 拠点を追加（何個でもOK）　§f/ba admin skip §7= 終了");
-            footer(p); return;
+            this.header(p);
+            p.sendMessage("\u00a76\u00a7l\u3010\u5360\u9818\u6226\u3011\u00a77 \u4efb\u610f \u00a76- \u5360\u9818\u62e0\u70b9\u306e\u8ffd\u52a0");
+            p.sendMessage("\u00a77\u5360\u9818\u62e0\u70b9\u306e\u4e2d\u5fc3\u306b\u7acb\u3063\u3066\u304f\u3060\u3055\u3044\u3002\u534a\u5f845m\u3067\u8a2d\u5b9a\u3055\u308c\u307e\u3059\u3002");
+            p.sendMessage("\u00a7f/ba admin next \u00a77= \u62e0\u70b9\u3092\u8ffd\u52a0\uff08\u4f55\u500b\u3067\u3082OK\uff09\u3000\u00a7f/ba admin skip \u00a77= \u7d42\u4e86");
+            this.footer(p);
+            return;
         }
-        finish(p, s);
-        sessions.remove(p.getUniqueId());
+        this.finish(p, s);
+        this.sessions.remove(p.getUniqueId());
     }
-
-    // ─── ナビゲーション ───
 
     private void advance(Player p, State s) {
         if (s.isUpgrade) {
-            showUpgradeStep(p, s);
+            this.showUpgradeStep(p, s);
             return;
         }
-        // 両ゲートとも未設定ならゲートブロックステップ(6)をスキップ
         if (s.step == 5 && !s.redGateSet && !s.blueGateSet) {
             s.step = 6;
         }
-        s.step++;
-        if (s.step > LAST_STEP) { finish(p, s); sessions.remove(p.getUniqueId()); }
-        else showStep(p, s);
+        ++s.step;
+        if (s.step > 7) {
+            this.finish(p, s);
+            this.sessions.remove(p.getUniqueId());
+        } else {
+            this.showStep(p, s);
+        }
     }
-
-    // ─── ステップ表示 ───
 
     private void showStep(Player p, State s) {
-        header(p);
+        this.header(p);
         switch (s.step) {
-            // ── 必須 ──
-            case 0 -> {
-                p.sendMessage("§6§l【1/8】§e 必須 §6- §c赤チーム §6スポーンゾーン（範囲選択）");
-                p.sendMessage("§7§c赤チーム§7の出現エリアをワンドで囲んでください。");
-                p.sendMessage("§7§l左クリック§r§7=始点　§7§l右クリック§r§7=終点　→ §f/ba admin next");
+            case 0: {
+                p.sendMessage("\u00a76\u00a7l\u30101/8\u3011\u00a7e \u5fc5\u9808 \u00a76- \u00a7c\u8d64\u30c1\u30fc\u30e0 \u00a76\u30b9\u30dd\u30fc\u30f3\u30be\u30fc\u30f3\uff08\u7bc4\u56f2\u9078\u629e\uff09");
+                p.sendMessage("\u00a77\u00a7c\u8d64\u30c1\u30fc\u30e0\u00a77\u306e\u51fa\u73fe\u30a8\u30ea\u30a2\u3092\u30ef\u30f3\u30c9\u3067\u56f2\u3093\u3067\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a77\u00a7l\u5de6\u30af\u30ea\u30c3\u30af\u00a7r\u00a77=\u59cb\u70b9\u3000\u00a77\u00a7l\u53f3\u30af\u30ea\u30c3\u30af\u00a7r\u00a77=\u7d42\u70b9\u3000\u2192 \u00a7f/ba admin next");
+                break;
             }
-            case 1 -> {
-                p.sendMessage("§6§l【2/8】§e 必須 §6- §9青チーム §6スポーンゾーン（範囲選択）");
-                p.sendMessage("§7§9青チーム§7の出現エリアをワンドで囲んでください。");
-                p.sendMessage("§7選択後 → §f/ba admin next");
+            case 1: {
+                p.sendMessage("\u00a76\u00a7l\u30102/8\u3011\u00a7e \u5fc5\u9808 \u00a76- \u00a79\u9752\u30c1\u30fc\u30e0 \u00a76\u30b9\u30dd\u30fc\u30f3\u30be\u30fc\u30f3\uff08\u7bc4\u56f2\u9078\u629e\uff09");
+                p.sendMessage("\u00a77\u00a79\u9752\u30c1\u30fc\u30e0\u00a77\u306e\u51fa\u73fe\u30a8\u30ea\u30a2\u3092\u30ef\u30f3\u30c9\u3067\u56f2\u3093\u3067\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a77\u9078\u629e\u5f8c \u2192 \u00a7f/ba admin next");
+                break;
             }
-            case 2 -> {
-                p.sendMessage("§6§l【3/8】§e 必須 §6- 中央コンクリート基準点");
-                p.sendMessage("§7バトルアリーナ中央（コンクリート中心）に立ってください。");
-                p.sendMessage("§f/ba admin next §7で現在地を設定");
+            case 2: {
+                p.sendMessage("\u00a76\u00a7l\u30103/8\u3011\u00a7e \u5fc5\u9808 \u00a76- \u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8\u57fa\u6e96\u70b9");
+                p.sendMessage("\u00a77\u30d0\u30c8\u30eb\u30a2\u30ea\u30fc\u30ca\u4e2d\u592e\uff08\u30b3\u30f3\u30af\u30ea\u30fc\u30c8\u4e2d\u5fc3\uff09\u306b\u7acb\u3063\u3066\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a7f/ba admin next \u00a77\u3067\u73fe\u5728\u5730\u3092\u8a2d\u5b9a");
+                break;
             }
-            case 3 -> {
-                p.sendMessage("§6§l【4/8】§e 必須 §6- 観戦リスポーン地点");
-                p.sendMessage("§7脱落したプレイヤーが観戦モードで飛ばされる場所です。");
-                p.sendMessage("§f/ba admin next §7で現在地を設定");
+            case 3: {
+                p.sendMessage("\u00a76\u00a7l\u30104/8\u3011\u00a7e \u5fc5\u9808 \u00a76- \u89b3\u6226\u30ea\u30b9\u30dd\u30fc\u30f3\u5730\u70b9");
+                p.sendMessage("\u00a77\u8131\u843d\u3057\u305f\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u89b3\u6226\u30e2\u30fc\u30c9\u3067\u98db\u3070\u3055\u308c\u308b\u5834\u6240\u3067\u3059\u3002");
+                p.sendMessage("\u00a7f/ba admin next \u00a77\u3067\u73fe\u5728\u5730\u3092\u8a2d\u5b9a");
+                break;
             }
-            // ── 任意 ──
-            case 4 -> {
-                p.sendMessage("§6§l【5/8】§7 任意 §6- §c赤チーム§6 スタートゲート（範囲選択）");
-                p.sendMessage("§7試合開始時に封鎖する§c赤§7側の領域をワンドで囲んでください。");
-                p.sendMessage("§7選択後: §f/ba admin next　　不要なら: §f/ba admin skip");
+            case 4: {
+                p.sendMessage("\u00a76\u00a7l\u30105/8\u3011\u00a77 \u4efb\u610f \u00a76- \u00a7c\u8d64\u30c1\u30fc\u30e0\u00a76 \u30b9\u30bf\u30fc\u30c8\u30b2\u30fc\u30c8\uff08\u7bc4\u56f2\u9078\u629e\uff09");
+                p.sendMessage("\u00a77\u8a66\u5408\u958b\u59cb\u6642\u306b\u5c01\u9396\u3059\u308b\u00a7c\u8d64\u00a77\u5074\u306e\u9818\u57df\u3092\u30ef\u30f3\u30c9\u3067\u56f2\u3093\u3067\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a77\u9078\u629e\u5f8c: \u00a7f/ba admin next\u3000\u3000\u4e0d\u8981\u306a\u3089: \u00a7f/ba admin skip");
+                break;
             }
-            case 5 -> {
-                p.sendMessage("§6§l【6/8】§7 任意 §6- §9青チーム§6 スタートゲート（範囲選択）");
-                p.sendMessage("§7§9青§7側の封鎖領域をワンドで囲んでください。");
-                p.sendMessage("§7選択後: §f/ba admin next　　不要なら: §f/ba admin skip");
+            case 5: {
+                p.sendMessage("\u00a76\u00a7l\u30106/8\u3011\u00a77 \u4efb\u610f \u00a76- \u00a79\u9752\u30c1\u30fc\u30e0\u00a76 \u30b9\u30bf\u30fc\u30c8\u30b2\u30fc\u30c8\uff08\u7bc4\u56f2\u9078\u629e\uff09");
+                p.sendMessage("\u00a77\u00a79\u9752\u00a77\u5074\u306e\u5c01\u9396\u9818\u57df\u3092\u30ef\u30f3\u30c9\u3067\u56f2\u3093\u3067\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a77\u9078\u629e\u5f8c: \u00a7f/ba admin next\u3000\u3000\u4e0d\u8981\u306a\u3089: \u00a7f/ba admin skip");
+                break;
             }
-            case 6 -> {
-                MapConfig mc = plugin.getMapManager().getById(s.mapId);
+            case 6: {
+                MapConfig mc = this.plugin.getMapManager().getById(s.mapId);
                 String mat = mc != null ? mc.getGateMaterial().name() : "BARRIER";
-                p.sendMessage("§6§l【7/8】§7 任意 §6- ゲート素材の確認");
-                p.sendMessage("§7スタートゲートのブロック素材（現在: §e" + mat + "§7）");
-                p.sendMessage("§7変更: §f/ba gatematl " + s.mapId + " <素材名>");
-                p.sendMessage("§7  §8例: §7§o/ba gatematl " + s.mapId + " IRON_BARS");
-                p.sendMessage("§7確定: §f/ba admin next　　不要なら: §f/ba admin skip");
+                p.sendMessage("\u00a76\u00a7l\u30107/8\u3011\u00a77 \u4efb\u610f \u00a76- \u30b2\u30fc\u30c8\u7d20\u6750\u306e\u78ba\u8a8d");
+                p.sendMessage("\u00a77\u30b9\u30bf\u30fc\u30c8\u30b2\u30fc\u30c8\u306e\u30d6\u30ed\u30c3\u30af\u7d20\u6750\uff08\u73fe\u5728: \u00a7e" + mat + "\u00a77\uff09");
+                p.sendMessage("\u00a77\u5909\u66f4: \u00a7f/ba gatematl " + s.mapId + " <\u7d20\u6750\u540d>");
+                p.sendMessage("\u00a77  \u00a78\u4f8b: \u00a77\u00a7o/ba gatematl " + s.mapId + " IRON_BARS");
+                p.sendMessage("\u00a77\u78ba\u5b9a: \u00a7f/ba admin next\u3000\u3000\u4e0d\u8981\u306a\u3089: \u00a7f/ba admin skip");
+                break;
             }
-            case 7 -> {
-                p.sendMessage("§6§l【8/8】§7 任意 §6- 場外判定ゾーン（範囲選択）");
-                p.sendMessage("§7試合中の移動許可範囲です。エリア外に出ると脱落します。");
-                p.sendMessage("§7選択後: §f/ba admin next　　不要なら: §f/ba admin skip");
+            case 7: {
+                p.sendMessage("\u00a76\u00a7l\u30108/8\u3011\u00a77 \u4efb\u610f \u00a76- \u5834\u5916\u5224\u5b9a\u30be\u30fc\u30f3\uff08\u7bc4\u56f2\u9078\u629e\uff09");
+                p.sendMessage("\u00a77\u8a66\u5408\u4e2d\u306e\u79fb\u52d5\u8a31\u53ef\u7bc4\u56f2\u3067\u3059\u3002\u30a8\u30ea\u30a2\u5916\u306b\u51fa\u308b\u3068\u8131\u843d\u3057\u307e\u3059\u3002");
+                p.sendMessage("\u00a77\u9078\u629e\u5f8c: \u00a7f/ba admin next\u3000\u3000\u4e0d\u8981\u306a\u3089: \u00a7f/ba admin skip");
             }
         }
-        if (s.step >= OPTIONAL_FROM) p.sendMessage("§8スキップ: §f/ba admin skip");
-        p.sendMessage("§8キャンセル: §f/ba admin cancel");
-        footer(p);
+        if (s.step >= 4) {
+            p.sendMessage("\u00a78\u30b9\u30ad\u30c3\u30d7: \u00a7f/ba admin skip");
+        }
+        p.sendMessage("\u00a78\u30ad\u30e3\u30f3\u30bb\u30eb: \u00a7f/ba admin cancel");
+        this.footer(p);
     }
 
-    // ─── ステップ実行 ───
-
     private boolean applyStep(Player p, State s) {
-        SelectionTool tool = plugin.getSelectionTool();
-        MapConfig mc = plugin.getMapManager().getById(s.mapId);
-        if (mc == null) return true;
-
+        SelectionTool tool = this.plugin.getSelectionTool();
+        MapConfig mc = this.plugin.getMapManager().getById(s.mapId);
+        if (mc == null) {
+            return true;
+        }
         if (s.isUpgrade) {
             if (!mc.isReadyFor(GameMode.BOMB_MISSION)) {
-                if (mc.getBombSite() == null) { mc.setBombSite(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ 爆弾設置地点を設定しました"); return true; }
-                if (mc.getDefusePoint() == null) { mc.setDefusePoint(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ 爆弾解除地点を設定しました"); return true; }
+                if (mc.getBombSite() == null) {
+                    mc.setBombSite(p.getLocation());
+                    this.plugin.getMapManager().saveMap(mc);
+                    p.sendMessage("\u00a7a\u2714 \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f");
+                    return true;
+                }
+                if (mc.getDefusePoint() == null) {
+                    mc.setDefusePoint(p.getLocation());
+                    this.plugin.getMapManager().saveMap(mc);
+                    p.sendMessage("\u00a7a\u2714 \u7206\u5f3e\u89e3\u9664\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f");
+                    return true;
+                }
             }
             if (!mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
-                if (mc.getRedFlagLocation() == null) { mc.setRedFlagLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §c赤旗§a地点を設定しました（§c自陣§aに置いてください）"); return true; }
-                if (mc.getBlueFlagLocation() == null) { mc.setBlueFlagLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §9青旗§a地点を設定しました（§9自陣§aに置いてください）"); return true; }
-                if (mc.getRedReturnLocation() == null) { mc.setRedReturnLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §c赤§a持ち帰り地点を設定しました"); return true; }
-                if (mc.getBlueReturnLocation() == null) { mc.setBlueReturnLocation(p.getLocation()); plugin.getMapManager().saveMap(mc); p.sendMessage("§a✔ §9青§a持ち帰り地点を設定しました"); return true; }
+                if (mc.getRedFlagLocation() == null) {
+                    mc.setRedFlagLocation(p.getLocation());
+                    this.plugin.getMapManager().saveMap(mc);
+                    p.sendMessage("\u00a7a\u2714 \u00a7c\u8d64\u65d7\u00a7a\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\uff08\u00a7c\u81ea\u9663\u00a7a\u306b\u7f6e\u3044\u3066\u304f\u3060\u3055\u3044\uff09");
+                    return true;
+                }
+                if (mc.getBlueFlagLocation() == null) {
+                    mc.setBlueFlagLocation(p.getLocation());
+                    this.plugin.getMapManager().saveMap(mc);
+                    p.sendMessage("\u00a7a\u2714 \u00a79\u9752\u65d7\u00a7a\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\uff08\u00a79\u81ea\u9663\u00a7a\u306b\u7f6e\u3044\u3066\u304f\u3060\u3055\u3044\uff09");
+                    return true;
+                }
+                if (mc.getRedReturnLocation() == null) {
+                    mc.setRedReturnLocation(p.getLocation());
+                    this.plugin.getMapManager().saveMap(mc);
+                    p.sendMessage("\u00a7a\u2714 \u00a7c\u8d64\u00a7a\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f");
+                    return true;
+                }
+                if (mc.getBlueReturnLocation() == null) {
+                    mc.setBlueReturnLocation(p.getLocation());
+                    this.plugin.getMapManager().saveMap(mc);
+                    p.sendMessage("\u00a7a\u2714 \u00a79\u9752\u00a7a\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f");
+                    return true;
+                }
             }
             if (!mc.isReadyFor(GameMode.DOMINATION)) {
                 mc.addDomPoint(new MapConfig.DomPoint(p.getLocation(), 5.0));
-                plugin.getMapManager().saveMap(mc);
-                p.sendMessage("§a✔ 占領拠点を追加しました（半径5m）。続けて追加できます。");
+                this.plugin.getMapManager().saveMap(mc);
+                p.sendMessage("\u00a7a\u2714 \u5360\u9818\u62e0\u70b9\u3092\u8ffd\u52a0\u3057\u307e\u3057\u305f\uff08\u534a\u5f845m\uff09\u3002\u7d9a\u3051\u3066\u8ffd\u52a0\u3067\u304d\u307e\u3059\u3002");
             }
             return true;
         }
-
         switch (s.step) {
-            case 0: // 赤スポーン
-                if (!tool.hasSelection(p)) { p.sendMessage("§cワンドで2点を選択してください。"); return false; }
-                mc.setRedSpawnMin(tool.getMin(p)); mc.setRedSpawnMax(tool.getMax(p));
-                plugin.getMapManager().saveMap(mc);
-                p.sendMessage("§a✔ §c赤チーム §aスポーンゾーンを設定しました。");
+            case 0: {
+                if (!tool.hasSelection(p)) {
+                    p.sendMessage("\u00a7c\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                    return false;
+                }
+                mc.setRedSpawnMin(tool.getMin(p));
+                mc.setRedSpawnMax(tool.getMax(p));
+                this.plugin.getMapManager().saveMap(mc);
+                p.sendMessage("\u00a7a\u2714 \u00a7c\u8d64\u30c1\u30fc\u30e0 \u00a7a\u30b9\u30dd\u30fc\u30f3\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
                 return true;
-
-            case 1: // 青スポーン
-                if (!tool.hasSelection(p)) { p.sendMessage("§cワンドで2点を選択してください。"); return false; }
-                mc.setBlueSpawnMin(tool.getMin(p)); mc.setBlueSpawnMax(tool.getMax(p));
-                plugin.getMapManager().saveMap(mc);
-                p.sendMessage("§a✔ §9青チーム §aスポーンゾーンを設定しました。");
+            }
+            case 1: {
+                if (!tool.hasSelection(p)) {
+                    p.sendMessage("\u00a7c\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                    return false;
+                }
+                mc.setBlueSpawnMin(tool.getMin(p));
+                mc.setBlueSpawnMax(tool.getMax(p));
+                this.plugin.getMapManager().saveMap(mc);
+                p.sendMessage("\u00a7a\u2714 \u00a79\u9752\u30c1\u30fc\u30e0 \u00a7a\u30b9\u30dd\u30fc\u30f3\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
                 return true;
-
-            case 2: // センター
+            }
+            case 2: {
                 mc.setCenter(p.getLocation());
-                plugin.getMapManager().saveMap(mc);
-                p.sendMessage("§a✔ 中央基準点を設定しました: " + fmtLoc(p.getLocation()));
+                this.plugin.getMapManager().saveMap(mc);
+                p.sendMessage("\u00a7a\u2714 \u4e2d\u592e\u57fa\u6e96\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f: " + this.fmtLoc(p.getLocation()));
                 return true;
-
-            case 3: // マップロビー
+            }
+            case 3: {
                 mc.setLobby(p.getLocation());
-                plugin.getMapManager().saveMap(mc);
-                p.sendMessage("§a✔ マップロビー地点を設定しました: " + fmtLoc(p.getLocation()));
+                this.plugin.getMapManager().saveMap(mc);
+                p.sendMessage("\u00a7a\u2714 \u30de\u30c3\u30d7\u30ed\u30d3\u30fc\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f: " + this.fmtLoc(p.getLocation()));
                 return true;
-
-            case 4: // 赤ゲート (任意)
-                if (!tool.hasSelection(p)) { p.sendMessage("§cワンドで2点を選択するか §f/ba admin skip §c でスキップしてください。"); return false; }
-                mc.setRedGateMin(tool.getMin(p)); mc.setRedGateMax(tool.getMax(p));
-                plugin.getMapManager().saveMap(mc);
+            }
+            case 4: {
+                if (!tool.hasSelection(p)) {
+                    p.sendMessage("\u00a7c\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3059\u308b\u304b \u00a7f/ba admin skip \u00a7c \u3067\u30b9\u30ad\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                    return false;
+                }
+                mc.setRedGateMin(tool.getMin(p));
+                mc.setRedGateMax(tool.getMax(p));
+                this.plugin.getMapManager().saveMap(mc);
                 s.redGateSet = true;
-                p.sendMessage("§a✔ §c赤チーム §aゲート領域を設定しました。");
+                p.sendMessage("\u00a7a\u2714 \u00a7c\u8d64\u30c1\u30fc\u30e0 \u00a7a\u30b2\u30fc\u30c8\u9818\u57df\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
                 return true;
-
-            case 5: // 青ゲート (任意)
-                if (!tool.hasSelection(p)) { p.sendMessage("§cワンドで2点を選択するか §f/ba admin skip §c でスキップしてください。"); return false; }
-                mc.setBlueGateMin(tool.getMin(p)); mc.setBlueGateMax(tool.getMax(p));
-                plugin.getMapManager().saveMap(mc);
+            }
+            case 5: {
+                if (!tool.hasSelection(p)) {
+                    p.sendMessage("\u00a7c\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3059\u308b\u304b \u00a7f/ba admin skip \u00a7c \u3067\u30b9\u30ad\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                    return false;
+                }
+                mc.setBlueGateMin(tool.getMin(p));
+                mc.setBlueGateMax(tool.getMax(p));
+                this.plugin.getMapManager().saveMap(mc);
                 s.blueGateSet = true;
-                p.sendMessage("§a✔ §9青チーム §aゲート領域を設定しました。");
+                p.sendMessage("\u00a7a\u2714 \u00a79\u9752\u30c1\u30fc\u30e0 \u00a7a\u30b2\u30fc\u30c8\u9818\u57df\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
                 return true;
-
-            case 6: // ゲートブロック (任意)
+            }
+            case 6: {
                 String matName = mc != null ? mc.getGateMaterial().name() : "BARRIER";
-                p.sendMessage("§a✔ ゲートブロック: §e" + matName + " §aで確定しました。");
+                p.sendMessage("\u00a7a\u2714 \u30b2\u30fc\u30c8\u30d6\u30ed\u30c3\u30af: \u00a7e" + matName + " \u00a7a\u3067\u78ba\u5b9a\u3057\u307e\u3057\u305f\u3002");
                 return true;
-
-            case 7: // マップOOB (任意)
-                if (!tool.hasSelection(p)) { p.sendMessage("§cワンドで2点を選択するか §f/ba admin skip §c でスキップしてください。"); return false; }
-                mc.setOobMin(tool.getMin(p)); mc.setOobMax(tool.getMax(p));
-                plugin.getMapManager().saveMap(mc);
-                p.sendMessage("§a✔ マップOOBゾーンを設定しました。");
+            }
+            case 7: {
+                if (!tool.hasSelection(p)) {
+                    p.sendMessage("\u00a7c\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3059\u308b\u304b \u00a7f/ba admin skip \u00a7c \u3067\u30b9\u30ad\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                    return false;
+                }
+                mc.setOobMin(tool.getMin(p));
+                mc.setOobMax(tool.getMax(p));
+                this.plugin.getMapManager().saveMap(mc);
+                p.sendMessage("\u00a7a\u2714 \u30de\u30c3\u30d7OOB\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
                 return true;
-
-            default: return true;
+            }
         }
+        return true;
     }
-
-    // ─── 完了画面 ───
 
     private void finish(Player p, State s) {
-        MapConfig mc = plugin.getMapManager().getById(s.mapId);
-        header(p);
-        p.sendMessage("§a§l✔ マップ §e§l" + s.mapId + " §a§lの設定が完了しました");
+        MapConfig mc = this.plugin.getMapManager().getById(s.mapId);
+        this.header(p);
+        p.sendMessage("\u00a7a\u00a7l\u2714 \u30de\u30c3\u30d7 \u00a7e\u00a7l" + s.mapId + " \u00a7a\u00a7l\u306e\u8a2d\u5b9a\u304c\u5b8c\u4e86\u3057\u307e\u3057\u305f");
         p.sendMessage("");
         if (mc != null) {
-            p.sendMessage("§7状態:        " + (mc.isReady() ? "§a全モード対応完了" : "§e基本設定完了（不足モードあり）"));
-            p.sendMessage("§7ゲート(§c赤§7):   " + (s.redGateSet  ? "§a設定済" : "§7なし"));
-            p.sendMessage("§7ゲート(§9青§7):   " + (s.blueGateSet ? "§a設定済" : "§7なし"));
-            p.sendMessage("§7場外判定:    " + (mc.hasOob()   ? "§a設定済" : "§7なし"));
+            p.sendMessage("\u00a77\u72b6\u614b:        " + (mc.isReady() ? "\u00a7a\u5168\u30e2\u30fc\u30c9\u5bfe\u5fdc\u5b8c\u4e86" : "\u00a7e\u57fa\u672c\u8a2d\u5b9a\u5b8c\u4e86\uff08\u4e0d\u8db3\u30e2\u30fc\u30c9\u3042\u308a\uff09"));
+            p.sendMessage("\u00a77\u30b2\u30fc\u30c8(\u00a7c\u8d64\u00a77):   " + (s.redGateSet ? "\u00a7a\u8a2d\u5b9a\u6e08" : "\u00a77\u306a\u3057"));
+            p.sendMessage("\u00a77\u30b2\u30fc\u30c8(\u00a79\u9752\u00a77):   " + (s.blueGateSet ? "\u00a7a\u8a2d\u5b9a\u6e08" : "\u00a77\u306a\u3057"));
+            p.sendMessage("\u00a77\u5834\u5916\u5224\u5b9a:    " + (mc.hasOob() ? "\u00a7a\u8a2d\u5b9a\u6e08" : "\u00a77\u306a\u3057"));
         }
         p.sendMessage("");
-        p.sendMessage("§6【次のステップ】");
-        p.sendMessage("§7  マップ確認:     §f/ba info " + s.mapId);
-        p.sendMessage("§7  不足を追加:     §f/ba upgrade " + s.mapId);
-        p.sendMessage("§7  CTF旗の設定:   §f/ba setredflag " + s.mapId);
-        p.sendMessage("§7  爆破地点の設定: §f/ba setbombplant " + s.mapId);
-        p.sendMessage("§7  別のマップ追加: §f/ba admin addmap <id>");
-        footer(p);
+        p.sendMessage("\u00a76\u3010\u6b21\u306e\u30b9\u30c6\u30c3\u30d7\u3011");
+        p.sendMessage("\u00a77  \u30de\u30c3\u30d7\u78ba\u8a8d:     \u00a7f/ba info " + s.mapId);
+        p.sendMessage("\u00a77  \u4e0d\u8db3\u3092\u8ffd\u52a0:     \u00a7f/ba upgrade " + s.mapId);
+        p.sendMessage("\u00a77  CTF\u65d7\u306e\u8a2d\u5b9a:   \u00a7f/ba setredflag " + s.mapId);
+        p.sendMessage("\u00a77  \u7206\u7834\u5730\u70b9\u306e\u8a2d\u5b9a: \u00a7f/ba setbombplant " + s.mapId);
+        p.sendMessage("\u00a77  \u5225\u306e\u30de\u30c3\u30d7\u8ffd\u52a0: \u00a7f/ba admin addmap <id>");
+        this.footer(p);
     }
 
-    // ─── UI ヘルパー ───
+    private void header(Player p) {
+        p.sendMessage("\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+    }
 
-    private void header(Player p) { p.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"); }
-    private void footer(Player p) { p.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"); }
+    private void footer(Player p) {
+        p.sendMessage("\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+    }
 
     private String fmtLoc(Location l) {
-        return String.format("§f(%d,%d,%d)§7[§f%s§7]",
-            l.getBlockX(), l.getBlockY(), l.getBlockZ(),
-            l.getWorld() != null ? l.getWorld().getName() : "?");
+        return String.format("\u00a7f(%d,%d,%d)\u00a77[\u00a7f%s\u00a77]", l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getWorld() != null ? l.getWorld().getName() : "?");
+    }
+
+    private static class State {
+        String mapId;
+        int step = 0;
+        boolean redGateSet = false;
+        boolean blueGateSet = false;
+        boolean isUpgrade = false;
+
+        State(String mapId) {
+            this.mapId = mapId;
+        }
     }
 }
+

@@ -1,6 +1,11 @@
+/*
+ * Decompiled with CFR 0.152.
+ */
 package com.bloxarena.game;
 
 public enum WinCondition {
-    ELIMINATION, // 殲滅勝利
-    OBJECTIVE    // オブジェクト勝利
+    ELIMINATION,
+    OBJECTIVE;
+
 }
+

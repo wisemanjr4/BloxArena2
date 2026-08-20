@@ -1,73 +1,136 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  net.kyori.adventure.text.Component
+ *  org.bukkit.Bukkit
+ *  org.bukkit.Color
+ *  org.bukkit.FireworkEffect
+ *  org.bukkit.FireworkEffect$Type
+ *  org.bukkit.GameMode
+ *  org.bukkit.Location
+ *  org.bukkit.Material
+ *  org.bukkit.Particle
+ *  org.bukkit.Particle$DustOptions
+ *  org.bukkit.Sound
+ *  org.bukkit.World
+ *  org.bukkit.attribute.Attribute
+ *  org.bukkit.attribute.AttributeInstance
+ *  org.bukkit.block.Block
+ *  org.bukkit.boss.BarColor
+ *  org.bukkit.boss.BarFlag
+ *  org.bukkit.boss.BarStyle
+ *  org.bukkit.boss.BossBar
+ *  org.bukkit.entity.Arrow
+ *  org.bukkit.entity.EnderPearl
+ *  org.bukkit.entity.Entity
+ *  org.bukkit.entity.EntityType
+ *  org.bukkit.entity.Firework
+ *  org.bukkit.entity.Player
+ *  org.bukkit.entity.SpectralArrow
+ *  org.bukkit.entity.ThrownPotion
+ *  org.bukkit.inventory.ItemStack
+ *  org.bukkit.inventory.meta.FireworkMeta
+ *  org.bukkit.inventory.meta.ItemMeta
+ *  org.bukkit.plugin.Plugin
+ *  org.bukkit.potion.PotionEffect
+ *  org.bukkit.potion.PotionEffectType
+ *  org.bukkit.scheduler.BukkitRunnable
+ *  org.bukkit.scheduler.BukkitTask
+ *  org.bukkit.util.Vector
+ */
 package com.bloxarena.game;
 
 import com.bloxarena.BloxArenaPlugin;
+import com.bloxarena.game.GameMode;
+import com.bloxarena.game.GameState;
+import com.bloxarena.game.TeamColor;
+import com.bloxarena.game.WinCondition;
+import com.bloxarena.kit.KitBuilder;
+import com.bloxarena.kit.KitSelectGUI;
+import com.bloxarena.kit.KitType;
+import com.bloxarena.map.MapConfig;
+import com.bloxarena.song.NbsPlayer;
 import com.bloxarena.stats.MatchStats;
 import com.bloxarena.stats.StatsManager;
-import com.bloxarena.kit.KitType;
-import com.bloxarena.skill.SkillManager;
-
-import com.bloxarena.kit.KitSelectGUI;
-import com.bloxarena.map.MapConfig;
 import com.bloxarena.util.Effects;
-import org.bukkit.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarFlag;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.EnderPearl;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.SpectralArrow;
+import org.bukkit.entity.ThrownPotion;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-
-import java.util.*;
+import org.bukkit.util.Vector;
 
 public class GameManager {
-
     private final BloxArenaPlugin plugin;
-
     private GameState state = GameState.WAITING;
     private MapConfig currentMap = null;
-
-    private final List<UUID> redTeam = new ArrayList<>();
-    private final List<UUID> blueTeam = new ArrayList<>();
-    private final Set<UUID> spectators = new LinkedHashSet<>();
-
-    // 落下ダメージ免除フラグ
-    private final Set<UUID> noFallDamage = new HashSet<>();
-    private final Set<UUID> deadPlayers  = new HashSet<>();  // 死亡済み（リスポーン待ち）
+    private final List<UUID> redTeam = new ArrayList<UUID>();
+    private final List<UUID> blueTeam = new ArrayList<UUID>();
+    private final Set<UUID> spectators = new LinkedHashSet<UUID>();
+    private final Set<UUID> noFallDamage = new HashSet<UUID>();
+    private final Set<UUID> deadPlayers = new HashSet<UUID>();
     private MatchStats matchStats = new MatchStats();
-
-    // キル・デス統計
-    private final Map<UUID, Integer> kills = new HashMap<>();
-    private final Map<UUID, Integer> deaths = new HashMap<>();
-    private final Map<UUID, Integer> roundKills = new HashMap<>(); // ラウンド内連続キル数
-
-    // キット選択状態
-    private final Map<UUID, String> selectedKits = new HashMap<>(); // チーム別選択済みキット名
-    private final Map<UUID, String> playerKit = new HashMap<>();
-
+    private final Map<UUID, Integer> kills = new HashMap<UUID, Integer>();
+    private final Map<UUID, Integer> deaths = new HashMap<UUID, Integer>();
+    private final Map<UUID, Integer> roundKills = new HashMap<UUID, Integer>();
+    private final Map<UUID, String> selectedKits = new HashMap<UUID, String>();
+    private final Map<UUID, String> playerKit = new HashMap<UUID, String>();
     private BukkitTask endingTask = null;
-    private BukkitTask holdTask    = null;
-    private TeamColor  holdingTeam = null;
-    private long inGameStartTime   = 0;
-    private static final long OBJECTIVE_LOCK_MS = 2 * 60 * 1000L; // 2分ロック
-    private static final int  HOLD_SECONDS      = 15;             // ホールド秒数
-
-    // ─── ラウンドシステム ───
+    private BukkitTask holdTask = null;
+    private TeamColor holdingTeam = null;
+    private long inGameStartTime = 0L;
+    private static final long OBJECTIVE_LOCK_MS = 120000L;
+    private static final int HOLD_SECONDS = 15;
     private static final int WINS_TO_WIN = 3;
-    private int currentRound   = 0;
-    private int roundWinsRed   = 0;
-    private int roundWinsBlue  = 0;
+    private int currentRound = 0;
+    private int roundWinsRed = 0;
+    private int roundWinsBlue = 0;
     private GameMode currentGameMode = GameMode.BATTLE_ARENA;
-
-    private org.bukkit.boss.BossBar preBattleBossBar = null;
-
-    // TDM
+    private BossBar preBattleBossBar = null;
     private int tdmKillsRed = 0;
     private int tdmKillsBlue = 0;
-    private long tdmStartTime = 0;
+    private long tdmStartTime = 0L;
     private BukkitTask tdmTimerTask = null;
-
-    // Bomb Mission
     private boolean bombPlanted = false;
     private Location bombLoc = null;
     private BukkitTask bombTimerTask = null;
@@ -76,471 +139,558 @@ public class GameManager {
     private Player bombDefuser = null;
     private int defuseProgress = 0;
     private boolean bombRoundAttackerRed = true;
-
-    // Domination
-    private final Map<Integer, Float> domCapProgress = new HashMap<>();
-    private final Map<Integer, TeamColor> domCapOwner = new HashMap<>();
+    private BukkitTask bombRoundTimerTask = null;
+    private final Map<Integer, Float> domCapProgress = new HashMap<Integer, Float>();
+    private final Map<Integer, TeamColor> domCapOwner = new HashMap<Integer, TeamColor>();
     private int domPointsRed = 0;
     private int domPointsBlue = 0;
     private BukkitTask domTimerTask = null;
-
-    // CTF
+    private BukkitTask gameTickTask = null;
+    private NbsPlayer selectedBgm;
     private boolean redFlagTaken = false;
     private boolean blueFlagTaken = false;
     private UUID redFlagCarrier = null;
     private UUID blueFlagCarrier = null;
-    private long redFlagDropTime = -1;
-    private long blueFlagDropTime = -1;
+    private long redFlagDropTime = -1L;
+    private long blueFlagDropTime = -1L;
+    private Location redFlagDropLoc = null;
+    private Location blueFlagDropLoc = null;
     private int ctfRedCaptures = 0;
     private int ctfBlueCaptures = 0;
-    private final Map<Integer, Material> ctfOriginalBlocks = new HashMap<>();
-    private final Map<UUID, Long> ctfPickupCooldown = new HashMap<>();
+    private final Map<Integer, Material> ctfOriginalBlocks = new HashMap<Integer, Material>();
+    private final Map<UUID, Long> ctfPickupCooldown = new HashMap<UUID, Long>();
+    private final Map<UUID, Boolean> ctfCarrierOnGround = new HashMap<UUID, Boolean>();
     private Location ctfRedFlagSpawn = null;
     private Location ctfBlueFlagSpawn = null;
+    private int ctfRedTeamSize = 0;
+    private int ctfBlueTeamSize = 0;
+    private final List<UUID> ffaParticipants = new ArrayList<UUID>();
+    private final Set<UUID> ffaEliminated = new HashSet<UUID>();
+    private final Map<UUID, Integer> ffaKills = new HashMap<UUID, Integer>();
+    private int ffaTimeLimit = 300;
+    private BukkitTask ffaTimerTask = null;
+
+    public int getCtfRedTeamSize() {
+        return this.ctfRedTeamSize;
+    }
+
+    public int getCtfBlueTeamSize() {
+        return this.ctfBlueTeamSize;
+    }
 
     public GameManager(BloxArenaPlugin plugin) {
         this.plugin = plugin;
     }
 
-    // ─────────────────────────────────────────────
-    // ゲーム開始処理
-    // ─────────────────────────────────────────────
-
     public void startGame(MapConfig map, GameMode mode, List<UUID> participants) {
         this.currentMap = map;
         this.currentGameMode = mode;
-        if (currentGameMode == GameMode.BOMB_MISSION) {
-            bombRoundAttackerRed = true;
+        if (this.currentGameMode == GameMode.BOMB_MISSION) {
+            this.bombRoundAttackerRed = true;
         }
-        Bukkit.broadcastMessage("§d§l[ゲームモード] §f" + currentGameMode.getDisplayName() + " §7- " + currentGameMode.getDescription());
-        for (Player pl : Bukkit.getOnlinePlayers()) {
-            pl.playSound(pl.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.8f, 2.0f);
+        Bukkit.broadcastMessage((String)("\u00a7d\u00a7l[\u30b2\u30fc\u30e0\u30e2\u30fc\u30c9] \u00a7f" + this.currentGameMode.getDisplayName() + " \u00a77- " + this.currentGameMode.getDescription()));
+        for (Player pl2 : Bukkit.getOnlinePlayers()) {
+            pl2.playSound(pl2.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.8f, 2.0f);
         }
         for (UUID uid : participants) {
-            Player pl = Bukkit.getPlayer(uid);
-            if (pl != null) {
-                pl.sendTitle("§d§l⚡ ゲームモード ⚡", "§f" + currentGameMode.getDisplayName() + " §7- " + currentGameMode.getDescription(), 5, 50, 15);
-            }
+            Player pl = Bukkit.getPlayer((UUID)uid);
+            if (pl == null) continue;
+            pl.sendTitle("\u00a7d\u00a7l\u26a1 \u30b2\u30fc\u30e0\u30e2\u30fc\u30c9 \u26a1", "\u00a7f" + this.currentGameMode.getDisplayName() + " \u00a77- " + this.currentGameMode.getDescription(), 5, 50, 15);
         }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            String rules = switch (currentGameMode) {
-                case BATTLE_ARENA -> "§6§lルール§f: 敵を殲滅するか、中央コンクリート(25枚)を自色で埋めて15秒ホールドせよ！BO3先取制。";
-                case TEAM_DEATHMATCH -> "§6§lルール§f: 制限時間内により多くの敵を倒せ！死亡しても3秒でリスポーン。目標30キル先取でも勝利。";
-                case BOMB_MISSION -> "§6§lルール§f: 攻撃側は爆弾を設置(5秒)→爆発45秒。守備側は解除(7秒)せよ！ラウンド毎に攻守交代。";
-                case DOMINATION -> "§6§lルール§f: 拠点に立ち続けて占領せよ！占領拠点から毎秒ポイント獲得。先に目標ポイント到達で勝利。";
-                case CAPTURE_THE_FLAG -> "§6§lルール§f: 敵陣の旗を奪い自陣に持ち帰れ！先に3回奪取で勝利。死亡時は旗を落とす。";
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            String rules = switch (this.currentGameMode) {
+                case BATTLE_ARENA -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u6575\u3092\u6bb2\u6ec5\u3059\u308b\u304b\u3001\u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8(25\u679a)\u3092\u81ea\u8272\u3067\u57cb\u3081\u306615\u79d2\u30db\u30fc\u30eb\u30c9\u305b\u3088\uff01BO3\u5148\u53d6\u5236\u3002";
+                case TEAM_DEATHMATCH -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u5236\u9650\u6642\u9593\u5185\u306b\u3088\u308a\u591a\u304f\u306e\u6575\u3092\u5012\u305b\uff01\u6b7b\u4ea1\u3057\u3066\u30823\u79d2\u3067\u30ea\u30b9\u30dd\u30fc\u30f3\u3002\u76ee\u6a1930\u30ad\u30eb\u5148\u53d6\u3067\u3082\u52dd\u5229\u3002";
+                case BOMB_MISSION -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u653b\u6483\u5074\u306f\u7206\u5f3e\u3092\u8a2d\u7f6e(5\u79d2)\u2192\u7206\u767a45\u79d2\u3002\u5b88\u5099\u5074\u306f\u89e3\u9664(7\u79d2)\u305b\u3088\uff01\u30e9\u30a6\u30f3\u30c9\u6bce\u306b\u653b\u5b88\u4ea4\u4ee3\u3002";
+                case DOMINATION -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u62e0\u70b9\u306b\u7acb\u3061\u7d9a\u3051\u3066\u5360\u9818\u305b\u3088\uff01\u5360\u9818\u62e0\u70b9\u304b\u3089\u6bce\u79d2\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3002\u5148\u306b\u76ee\u6a19\u30dd\u30a4\u30f3\u30c8\u5230\u9054\u3067\u52dd\u5229\u3002";
+                case CAPTURE_THE_FLAG -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u6575\u9663\u306e\u65d7\u3092\u596a\u3044\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01\u5148\u306b3\u56de\u596a\u53d6\u3067\u52dd\u5229\u3002\u6b7b\u4ea1\u6642\u306f\u65d7\u3092\u843d\u3068\u3059\u3002";
+                case FFA -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u5168\u54e1\u304c\u6575\uff01\u6700\u5f8c\u306e1\u4eba\u306b\u306a\u308b\u307e\u3067\u6226\u3048\uff01\u30ea\u30b9\u30dd\u30fc\u30f3\u306a\u3057\u3002";
+                default -> throw new IncompatibleClassChangeError();
             };
-            Bukkit.broadcastMessage(rules);
+            Bukkit.broadcastMessage((String)rules);
         }, 60L);
         this.state = GameState.KIT_SELECT;
-        this.currentRound  = 1;
-        this.roundWinsRed  = 0;
+        this.currentRound = 1;
+        this.roundWinsRed = 0;
         this.roundWinsBlue = 0;
-
-        // チームをクリアして再振り分け
-        redTeam.clear();
-        blueTeam.clear();
-        kills.clear();
-        deaths.clear();
-        selectedKits.clear();
-        playerKit.clear();
-        noFallDamage.clear();
-        deadPlayers.clear();
-
-        assignTeams(participants);
-        // Restore all max HP
-        for (UUID uid : participants) {
-            Player pp = Bukkit.getPlayer(uid);
-            if (pp != null) plugin.getSkillManager().restoreMaxHp(pp);
+        this.redTeam.clear();
+        this.blueTeam.clear();
+        this.kills.clear();
+        this.deaths.clear();
+        this.selectedKits.clear();
+        this.playerKit.clear();
+        this.noFallDamage.clear();
+        this.deadPlayers.clear();
+        if (this.currentGameMode == GameMode.FFA) {
+            this.ffaParticipants.clear();
+            this.ffaParticipants.addAll(participants);
+        } else {
+            this.assignTeams(participants);
         }
-        // マップ名を全員にタイトル表示
-        Bukkit.broadcastMessage("§6§l[BAII WoNG] §eMAP: §f" + map.getDisplayName());
-        broadcastTeamAnnouncement();
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        for (UUID uid : participants) {
+            Player pp = Bukkit.getPlayer((UUID)uid);
+            if (pp == null) continue;
+            this.plugin.getSkillManager().restoreMaxHp(pp);
+        }
+        Bukkit.broadcastMessage((String)("\u00a76\u00a7l[BAII WoNG] \u00a7eMAP: \u00a7f" + map.getDisplayName()));
+        if (this.currentGameMode != GameMode.FFA) {
+            this.broadcastTeamAnnouncement();
+        } else {
             for (UUID uid : participants) {
-                Player pl = Bukkit.getPlayer(uid);
-                if (pl != null && pl.isOnline()) {
-                    TeamColor t = getTeamOf(pl);
-                    if (t != null) {
-                        pl.sendTitle(t.getColorCode() + "§lあなたは " + t.getDisplayName() + " チーム", "§7キット選択画面で準備してください", 5, 40, 10);
-                    }
+                Player pl = Bukkit.getPlayer((UUID)uid);
+                if (pl == null) continue;
+                pl.sendTitle("\u00a7e\u00a7lFFA", "\u00a7f\u5168\u54e1\u304c\u6575\uff01\u6700\u5f8c\u307e\u3067\u751f\u304d\u6b8b\u308c", 5, 60, 10);
+                pl.playSound(pl.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+            }
+        }
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            for (UUID uid : participants) {
+                Player pl = Bukkit.getPlayer((UUID)uid);
+                if (pl == null || !pl.isOnline()) continue;
+                TeamColor t = this.getTeamOf(pl);
+                if (t != null) {
+                    pl.sendTitle(t.getColorCode() + "\u00a7l\u3042\u306a\u305f\u306f " + t.getDisplayName() + " \u30c1\u30fc\u30e0", "\u00a77\u30ad\u30c3\u30c8\u9078\u629e\u753b\u9762\u3067\u6e96\u5099\u3057\u3066\u304f\u3060\u3055\u3044", 5, 40, 10);
+                    continue;
                 }
+                if (this.currentGameMode != GameMode.FFA) continue;
+                pl.sendTitle("\u00a7e\u00a7lFFA", "\u00a77\u30ad\u30c3\u30c8\u9078\u629e\u753b\u9762\u3067\u6e96\u5099\u3057\u3066\u304f\u3060\u3055\u3044", 5, 40, 10);
             }
         }, 50L);
-
-        // マップ初期化（中央コンクリート設置）
-        initCenterBlocks(map);
-
-        // ゲート設置
-        placeGates(map);
-
-        // BOTをスポーン（pendingBotsがあれば）
-        plugin.getBotManager().spawnBotsForGame(redTeam, blueTeam, map);
-
-        // 各プレイヤーをスポーンゾーンへ転送しキット選択GUI
-        for (UUID uid : redTeam) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p == null) continue;
-            kills.put(uid, 0);
-            deaths.put(uid, 0);
-            p.setGameMode(org.bukkit.GameMode.SURVIVAL);
-            teleportToSpawnZonePublic(p, map, TeamColor.RED);
-        }
-        for (UUID uid : blueTeam) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p == null) continue;
-            kills.put(uid, 0);
-            deaths.put(uid, 0);
-            p.setGameMode(org.bukkit.GameMode.SURVIVAL);
-            teleportToSpawnZonePublic(p, map, TeamColor.BLUE);
-        }
-
-        // キット選択GUIを開く
-        int timeoutSeconds = plugin.getConfig().getInt("kit_select.timeout_seconds", 30);
-        KitSelectGUI gui = new KitSelectGUI(plugin, this);
-        plugin.getGameListeners().setActiveGUI(gui);
-        for (UUID uid : participants) {
-            Player pl = Bukkit.getPlayer(uid);
-            if (pl != null) {
-                pl.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SATURATION, 999999, 255, false, false));
-                pl.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.REGENERATION, 999999, 255, false, false));
+        this.initCenterBlocks(map);
+        this.placeGates(map);
+        this.plugin.getBotManager().spawnBotsForGame(this.redTeam, this.blueTeam, map);
+        if (this.currentGameMode == GameMode.FFA) {
+            for (UUID uid : participants) {
+                Player p = Bukkit.getPlayer((UUID)uid);
+                if (p == null) continue;
+                this.ffaKills.put(uid, 0);
+                this.kills.put(uid, 0);
+                this.deaths.put(uid, 0);
+                p.setGameMode(org.bukkit.GameMode.SURVIVAL);
+                p.teleport(this.getRandomSpawnPoint(map));
+            }
+        } else {
+            for (UUID uid : this.redTeam) {
+                Player p = Bukkit.getPlayer((UUID)uid);
+                if (p == null) continue;
+                this.kills.put(uid, 0);
+                this.deaths.put(uid, 0);
+                p.setGameMode(org.bukkit.GameMode.SURVIVAL);
+                this.teleportToSpawnZonePublic(p, map, TeamColor.RED);
+            }
+            for (UUID uid : this.blueTeam) {
+                Player p = Bukkit.getPlayer((UUID)uid);
+                if (p == null) continue;
+                this.kills.put(uid, 0);
+                this.deaths.put(uid, 0);
+                p.setGameMode(org.bukkit.GameMode.SURVIVAL);
+                this.teleportToSpawnZonePublic(p, map, TeamColor.BLUE);
             }
         }
-        gui.openForAll(redTeam, blueTeam, timeoutSeconds);
+        int timeoutSeconds = this.plugin.getConfig().getInt("kit_select.timeout_seconds", 30);
+        KitSelectGUI gui = new KitSelectGUI(this.plugin, this);
+        this.plugin.getGameListeners().setActiveGUI(gui);
+        if (this.currentGameMode == GameMode.FFA) {
+            gui.openForAll(this.ffaParticipants, new ArrayList<UUID>(), timeoutSeconds);
+        } else {
+            gui.openForAll(this.redTeam, this.blueTeam, timeoutSeconds);
+        }
     }
 
-    // キット選択完了後に呼ばれる（KitSelectGUIから）
     public void onKitSelectDone() {
-        state = GameState.IN_GAME;
-        inGameStartTime = System.currentTimeMillis();
-        for (UUID uid : getAllParticipants()) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) {
-                p.removePotionEffect(org.bukkit.potion.PotionEffectType.SATURATION);
-                p.removePotionEffect(org.bukkit.potion.PotionEffectType.REGENERATION);
-                p.setHealth(p.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getBaseValue());
-                p.setFoodLevel(20);
-                p.setSaturation(20f);
+        this.state = GameState.IN_GAME;
+        this.inGameStartTime = System.currentTimeMillis();
+        this.ctfRedTeamSize = this.redTeam.size();
+        this.ctfBlueTeamSize = this.blueTeam.size();
+        this.plugin.getScoreboardManager().start(this);
+        this.gameTickTask = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, this::gameTickUpdate, 0L, 2L);
+        if (this.selectedBgm != null) {
+            Collection<Player> players = new ArrayList<>();
+            for (UUID uid : this.getAllParticipants()) {
+                Player p = Bukkit.getPlayer(uid);
+                if (p == null) continue;
+                players.add(p);
+            }
+            this.selectedBgm.play(players);
+        }
+        if (this.currentGameMode == GameMode.FFA) {
+            for (UUID uUID : this.ffaParticipants) {
+                Player p = Bukkit.getPlayer((UUID)uUID);
+                if (p == null) continue;
+                this.plugin.getSkillManager().refreshBurst(p);
+            }
+        } else {
+            for (UUID uUID : this.redTeam) {
+                Player p = Bukkit.getPlayer((UUID)uUID);
+                if (p == null) continue;
+                this.plugin.getSkillManager().refreshBurst(p);
+            }
+            for (UUID uUID : this.blueTeam) {
+                Player p = Bukkit.getPlayer((UUID)uUID);
+                if (p == null) continue;
+                this.plugin.getSkillManager().refreshBurst(p);
             }
         }
-        plugin.getScoreboardManager().start(this);
-        // Distribute burst skill items
-        for (UUID uid : redTeam) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) plugin.getSkillManager().refreshBurst(p);
-        }
-        for (UUID uid : blueTeam) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) plugin.getSkillManager().refreshBurst(p);
-        }
+        if (this.currentGameMode == GameMode.FFA) {
+            this.ffaTimeLimit = this.currentGameMode.getDefaultTimeLimitSeconds();
+            this.ffaTimerTask = new BukkitRunnable(){
 
-        if (currentGameMode == GameMode.DOMINATION) {
-            domPointsRed = 0;
-            domPointsBlue = 0;
-            domCapProgress.clear();
-            domCapOwner.clear();
-            if (currentMap != null) {
+                public void run() {
+                    if (GameManager.this.state != GameState.IN_GAME) {
+                        this.cancel();
+                        return;
+                    }
+                    --GameManager.this.ffaTimeLimit;
+                    if (GameManager.this.ffaTimeLimit <= 0) {
+                        this.cancel();
+                        UUID topKiller = null;
+                        int topKills = -1;
+                        for (Map.Entry<UUID, Integer> entry : GameManager.this.ffaKills.entrySet()) {
+                            if (entry.getValue() <= topKills) continue;
+                            topKills = entry.getValue();
+                            topKiller = entry.getKey();
+                        }
+                        GameManager.this.state = GameState.ENDING;
+                        Player winner = topKiller != null ? Bukkit.getPlayer(topKiller) : null;
+                        String winName = winner != null ? winner.getName() : "\u306a\u3057";
+                        Bukkit.broadcastMessage((String)("\u00a7e\u00a7l\u23f1 \u5236\u9650\u6642\u9593\u7d42\u4e86\uff01 \u00a7f" + winName + " \u00a7e\u304c\u6700\u591a\u30ad\u30eb\u3067\u52dd\u5229\uff01"));
+                        GameManager.this.endGame(null, WinCondition.ELIMINATION);
+                    }
+                }
+            }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
+        }
+        if (this.currentGameMode == GameMode.DOMINATION) {
+            this.domPointsRed = 0;
+            this.domPointsBlue = 0;
+            this.domCapProgress.clear();
+            this.domCapOwner.clear();
+            if (this.currentMap != null) {
                 int idx = 0;
-                for (MapConfig.DomPoint dp : currentMap.getDominationPoints()) {
-                    domCapProgress.put(idx, 0f);
-                    domCapOwner.put(idx, null);
+                for (MapConfig.DomPoint dp : this.currentMap.getDominationPoints()) {
+                    this.domCapProgress.put(idx, Float.valueOf(0.0f));
+                    this.domCapOwner.put(idx, null);
                     Location cloc = dp.getCenter();
                     if (cloc.getWorld() != null) {
                         cloc.getBlock().setType(Material.BEACON);
                     }
-                    idx++;
+                    ++idx;
                 }
             }
-            int timeLimit = plugin.getConfig().getInt("domination.time_limit_seconds", 120);
-            int targetPoints = plugin.getConfig().getInt("domination.target_points", 100);
-            domTimerTask = new BukkitRunnable() {
-                @Override public void run() {
-                    if (state != GameState.IN_GAME) { cancel(); return; }
-                    updateDomination(currentMap, targetPoints);
-                    long elapsed = (System.currentTimeMillis() - inGameStartTime) / 1000;
-                    if (elapsed >= timeLimit) {
-                        cancel();
-                        TeamColor winner = domPointsRed > domPointsBlue ? TeamColor.RED
-                            : domPointsBlue > domPointsRed ? TeamColor.BLUE : null;
-                        endGame(winner, WinCondition.OBJECTIVE);
+            int timeLimit = this.plugin.getConfig().getInt("domination.time_limit_seconds", 120);
+            final int n = this.plugin.getConfig().getInt("domination.target_points", 100);
+            this.domTimerTask = new BukkitRunnable(){
+
+                public void run() {
+                    if (GameManager.this.state != GameState.IN_GAME) {
+                        this.cancel();
+                        return;
                     }
+                    GameManager.this.updateDomination(GameManager.this.currentMap, n);
                 }
-            }.runTaskTimer(plugin, 0L, 20L);
+            }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
         }
+        this.startCountdownBeforeBarrierRemoval();
+        if (this.currentGameMode == GameMode.TEAM_DEATHMATCH) {
+            this.tdmKillsRed = 0;
+            this.tdmKillsBlue = 0;
+            this.tdmStartTime = System.currentTimeMillis();
+            final int timeLimit = this.plugin.getConfig().getInt("team_deathmatch.time_limit_seconds", 300);
+            this.tdmTimerTask = new BukkitRunnable(){
 
-        startCountdownBeforeBarrierRemoval();
-
-        // TDM timer
-        if (currentGameMode == GameMode.TEAM_DEATHMATCH) {
-            tdmKillsRed = 0;
-            tdmKillsBlue = 0;
-            tdmStartTime = System.currentTimeMillis();
-            int timeLimit = plugin.getConfig().getInt("team_deathmatch.time_limit_seconds", 300);
-            tdmTimerTask = new BukkitRunnable() {
-                @Override public void run() {
-                    if (state != GameState.IN_GAME) { cancel(); return; }
-                    long elapsed = (System.currentTimeMillis() - tdmStartTime) / 1000;
-                    long remaining = timeLimit - elapsed;
-                    for (Player pl : Bukkit.getOnlinePlayers()) {
-                        if (isParticipant(pl) || isSpectator(pl))
-                            pl.sendActionBar(net.kyori.adventure.text.Component.text(
-                                "§c⚔ TDM §7| §c赤:" + tdmKillsRed + " §9青:" + tdmKillsBlue
-                                + " §7| §e残り " + formatTime(remaining)));
+                public void run() {
+                    if (GameManager.this.state != GameState.IN_GAME) {
+                        this.cancel();
+                        return;
                     }
-                    if (remaining <= 0) {
-                        cancel();
-                        TeamColor winner = tdmKillsRed > tdmKillsBlue ? TeamColor.RED
-                            : tdmKillsBlue > tdmKillsRed ? TeamColor.BLUE : null;
-                        endGame(winner, WinCondition.ELIMINATION);
+                    long elapsed = (System.currentTimeMillis() - GameManager.this.tdmStartTime) / 1000L;
+                    long remaining = (long)timeLimit - elapsed;
+                    if (remaining <= 0L) {
+                        this.cancel();
+                        TeamColor winner = GameManager.this.tdmKillsRed > GameManager.this.tdmKillsBlue ? TeamColor.RED : (GameManager.this.tdmKillsBlue > GameManager.this.tdmKillsRed ? TeamColor.BLUE : null);
+                        GameManager.this.endGame(winner, WinCondition.ELIMINATION);
                     }
                 }
-            }.runTaskTimer(plugin, 0L, 20L);
+            }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
         }
-
-        // Bomb Mission
-        if (currentGameMode == GameMode.BOMB_MISSION) {
-            TeamColor attacker = bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-            for (UUID uid : (attacker == TeamColor.RED ? redTeam : blueTeam)) {
-                Player pl = Bukkit.getPlayer(uid);
-                if (pl != null) {
-            ItemStack bomb = new ItemStack(Material.TNT);
-            ItemMeta m = bomb.getItemMeta();
-            if (m != null) { m.setDisplayName("§c§l💣 爆弾 §7(設置地点で右クリック)"); bomb.setItemMeta(m); }
-            pl.getInventory().addItem(bomb);
+        if (this.currentGameMode == GameMode.BOMB_MISSION) {
+            TeamColor attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
+            for (UUID uid : attacker == TeamColor.RED ? this.redTeam : this.blueTeam) {
+                Player pl = Bukkit.getPlayer((UUID)uid);
+                if (pl == null) continue;
+                ItemStack bomb = new ItemStack(Material.TNT);
+                ItemMeta m = bomb.getItemMeta();
+                if (m != null) {
+                    m.setDisplayName("\u00a7c\u00a7l\ud83d\udca3 \u7206\u5f3e \u00a77(\u8a2d\u7f6e\u5730\u70b9\u3067\u53f3\u30af\u30ea\u30c3\u30af)");
+                    bomb.setItemMeta(m);
                 }
+                pl.getInventory().addItem(new ItemStack[]{bomb});
             }
-            broadcastBombRoundInfo();
-            // Round timer: defenders win if bomb not planted before time runs out
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (state != GameState.IN_GAME) return;
-                if (!bombPlanted) {
-                    TeamColor defender = bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-                    Bukkit.broadcastMessage("§e⏱ 制限時間切れ！ " + defender.getDisplayName() + "チームの勝利！");
-                    endGame(defender, WinCondition.OBJECTIVE);
+            this.broadcastBombRoundInfo();
+            this.bombRoundTimerTask = Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+                if (this.state != GameState.IN_GAME) {
+                    return;
                 }
-            }, plugin.getConfig().getInt("bomb_mission.time_limit_seconds", 180) * 20L);
+                if (!this.bombPlanted) {
+                    TeamColor defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
+                    Bukkit.broadcastMessage((String)("\u00a7e\u23f1 \u5236\u9650\u6642\u9593\u5207\u308c\uff01 " + defender.getDisplayName() + "\u30c1\u30fc\u30e0\u306e\u52dd\u5229\uff01"));
+                    this.endGame(defender, WinCondition.OBJECTIVE);
+                }
+            }, (long)this.plugin.getConfig().getInt("bomb_mission.time_limit_seconds", 180) * 20L);
         }
-
-        // CTF flag init
-        if (currentGameMode == GameMode.CAPTURE_THE_FLAG) {
-            ctfRedCaptures = 0;
-            ctfBlueCaptures = 0;
-            redFlagTaken = false; blueFlagTaken = false;
-            redFlagCarrier = null; blueFlagCarrier = null;
-            if (currentMap != null) {
-                if (currentMap.getRedFlagLocation() != null) {
-                    Location rloc = currentMap.getRedFlagLocation();
-                    ctfRedFlagSpawn = rloc.clone();
-                    ctfOriginalBlocks.put(0, rloc.getBlock().getType());
+        if (this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
+            this.ctfRedCaptures = 0;
+            this.ctfBlueCaptures = 0;
+            this.redFlagTaken = false;
+            this.blueFlagTaken = false;
+            this.redFlagCarrier = null;
+            this.blueFlagCarrier = null;
+            this.redFlagDropTime = -1L;
+            this.blueFlagDropTime = -1L;
+            this.redFlagDropLoc = null;
+            this.blueFlagDropLoc = null;
+            if (this.currentMap != null) {
+                if (this.currentMap.getRedFlagLocation() != null) {
+                    Location rloc = this.currentMap.getRedFlagLocation();
+                    this.ctfRedFlagSpawn = rloc.clone();
+                    this.ctfOriginalBlocks.put(0, rloc.getBlock().getType());
                     rloc.getBlock().setType(Material.RED_BANNER);
                 }
-                if (currentMap.getBlueFlagLocation() != null) {
-                    Location bloc = currentMap.getBlueFlagLocation();
-                    ctfBlueFlagSpawn = bloc.clone();
-                    ctfOriginalBlocks.put(1, bloc.getBlock().getType());
+                if (this.currentMap.getBlueFlagLocation() != null) {
+                    Location bloc = this.currentMap.getBlueFlagLocation();
+                    this.ctfBlueFlagSpawn = bloc.clone();
+                    this.ctfOriginalBlocks.put(1, bloc.getBlock().getType());
                     bloc.getBlock().setType(Material.CYAN_BANNER);
                 }
             }
-            new BukkitRunnable() {
-                @Override public void run() {
-                    if (state != GameState.IN_GAME) { cancel(); return; }
-                    updateCTF();
+            new BukkitRunnable(){
+
+                public void run() {
+                    if (GameManager.this.state != GameState.IN_GAME) {
+                        this.cancel();
+                        return;
+                    }
+                    GameManager.this.updateCTF();
                 }
-            }.runTaskTimer(plugin, 0L, 20L);
+            }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
         }
     }
 
+    private void gameTickUpdate() {
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        this.plugin.getSkillManager().fastUpdate();
+    }
+
     private void updateDomination(MapConfig map, int targetPoints) {
-        if (map == null) return;
+        if (map == null) {
+            return;
+        }
         int idx = 0;
-        int pointsPerSec = plugin.getConfig().getInt("domination.points_per_second", 2);
+        int pointsPerSec = this.plugin.getConfig().getInt("domination.points_per_second", 2);
         for (MapConfig.DomPoint dp : map.getDominationPoints()) {
+            TeamColor now;
             Location center = dp.getCenter();
             double radius = dp.getRadius();
             World w = center.getWorld();
-            if (w == null) { idx++; continue; }
-
-            int redCount = 0, blueCount = 0;
+            if (w == null) {
+                ++idx;
+                continue;
+            }
+            int redCount = 0;
+            int blueCount = 0;
             for (Player pl : w.getPlayers()) {
-                if (!isParticipant(pl) || isSpectator(pl)) continue;
-                if (pl.getLocation().distance(center) > radius) continue;
-                if (redTeam.contains(pl.getUniqueId())) redCount++;
-                else if (blueTeam.contains(pl.getUniqueId())) blueCount++;
+                if (!this.isParticipant(pl) || this.isSpectator(pl) || pl.getLocation().distance(center) > radius) continue;
+                if (this.redTeam.contains(pl.getUniqueId())) {
+                    ++redCount;
+                    continue;
+                }
+                if (!this.blueTeam.contains(pl.getUniqueId())) continue;
+                ++blueCount;
             }
-
-            float progress = domCapProgress.getOrDefault(idx, 0f);
+            float progress = this.domCapProgress.getOrDefault(idx, Float.valueOf(0.0f)).floatValue();
+            if (redCount > 0 && blueCount == 0 && progress < 0.0f) {
+                progress = 0.0f;
+            }
+            if (blueCount > 0 && redCount == 0 && progress > 0.0f) {
+                progress = 0.0f;
+            }
             if (redCount > blueCount) {
-                progress = Math.min(1f, progress + 0.05f * (redCount - blueCount));
+                if (progress <= -0.8f) {
+                    progress = 0.0f;
+                } else {
+                    float ratio = this.ctfBlueTeamSize > 0 ? (float)this.ctfBlueTeamSize / (float)this.ctfRedTeamSize : 1.0f;
+                    progress = Math.min(1.0f, progress + 0.05f * (float)(redCount - blueCount) * ratio);
+                }
             } else if (blueCount > redCount) {
-                progress = Math.max(-1f, progress - 0.05f * (blueCount - redCount));
-            }
-            domCapProgress.put(idx, progress);
-
-            TeamColor prev = domCapOwner.get(idx);
-            TeamColor now = progress >= 0.8f ? TeamColor.RED : progress <= -0.8f ? TeamColor.BLUE : null;
-            if (now != prev) {
-                domCapOwner.put(idx, now);
-                if (now != null) {
-                    Bukkit.broadcastMessage(now.getColorCode() + "拠点" + (idx+1) + "を占領！");
+                if (progress >= 0.8f) {
+                    progress = 0.0f;
+                } else {
+                    float ratio = this.ctfRedTeamSize > 0 ? (float)this.ctfRedTeamSize / (float)this.ctfBlueTeamSize : 1.0f;
+                    progress = Math.max(-1.0f, progress - 0.05f * (float)(blueCount - redCount) * ratio);
                 }
             }
-
-            if (center.getBlock().getType() == Material.BEACON) {
-                org.bukkit.Color c = org.bukkit.Color.fromRGB(
-                    progress > 0 ? (int)(255*progress) : 0, 0,
-                    progress < 0 ? (int)(-255*progress) : 0);
-                w.spawnParticle(Particle.REDSTONE, center.clone().add(0, 1, 0), 5, 1, 0.5, 1,
-                    new org.bukkit.Particle.DustOptions(c, 1.5f));
+            this.domCapProgress.put(idx, Float.valueOf(progress));
+            TeamColor prev = this.domCapOwner.get(idx);
+            now = progress >= 0.8f ? TeamColor.RED : (progress <= -0.8f ? TeamColor.BLUE : null);
+            if (now != prev) {                this.domCapOwner.put(idx, now);
+                if (now != null) {
+                    Bukkit.broadcastMessage((String)(now.getColorCode() + "\u62e0\u70b9" + (idx + 1) + "\u3092\u5360\u9818\uff01"));
+                }
             }
-
-            if (now == TeamColor.RED) domPointsRed += pointsPerSec;
-            else if (now == TeamColor.BLUE) domPointsBlue += pointsPerSec;
-
-            idx++;
+            if (center.getBlock().getType() == Material.BEACON) {
+                Color c = Color.fromRGB((int)(progress > 0.0f ? (int)(255.0f * progress) : 0), (int)0, (int)(progress < 0.0f ? (int)(-255.0f * progress) : 0));
+                w.spawnParticle(Particle.REDSTONE, center.clone().add(0.0, 1.0, 0.0), 5, 1.0, 0.5, 1.0, (Object)new Particle.DustOptions(c, 1.5f));
+            }
+            if (now == TeamColor.RED) {
+                this.domPointsRed += pointsPerSec;
+            } else if (now == TeamColor.BLUE) {
+                this.domPointsBlue += pointsPerSec;
+            }
+            ++idx;
         }
-
-        if (domPointsRed >= targetPoints) { endGame(TeamColor.RED, WinCondition.OBJECTIVE); return; }
-        if (domPointsBlue >= targetPoints) { endGame(TeamColor.BLUE, WinCondition.OBJECTIVE); return; }
-
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player pl = Bukkit.getPlayer(uid);
-            if (pl != null) pl.sendActionBar(net.kyori.adventure.text.Component.text(
-                "§e⚑ 占領戦 §7| §c赤:" + domPointsRed + "pts §9青:" + domPointsBlue + "pts"));
+        if (this.domPointsRed >= targetPoints) {
+            this.endGame(TeamColor.RED, WinCondition.OBJECTIVE);
+            return;
+        }
+        if (this.domPointsBlue >= targetPoints) {
+            this.endGame(TeamColor.BLUE, WinCondition.OBJECTIVE);
+            return;
         }
     }
 
     private void startCountdownBeforeBarrierRemoval() {
-        // キット選択完了 → ステージ名アナウンス
-        String mapName = (currentMap != null) ? currentMap.getDisplayName() : "???";
-        broadcastTitle("§6§l⚔ BAII WoNG", "§e" + mapName + " §7- §fバトル開始まで待機中…", 10, 60, 10);
-        broadcastSound(Sound.ENTITY_WITHER_SPAWN, 0.6f, 1.2f);
-
-        preBattleBossBar = Bukkit.createBossBar("§c§l⚔ バトル準備中...", org.bukkit.boss.BarColor.RED, org.bukkit.boss.BarStyle.SOLID);
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player pl = Bukkit.getPlayer(uid);
-            if (pl != null) preBattleBossBar.addPlayer(pl);
+        final String mapName = this.currentMap != null ? this.currentMap.getDisplayName() : "???";
+        this.broadcastTitle("\u00a76\u00a7l\u2694 BAII WoNG", "\u00a7e" + mapName + " \u00a77- \u00a7f\u30d0\u30c8\u30eb\u958b\u59cb\u307e\u3067\u5f85\u6a5f\u4e2d\u2026", 10, 60, 10);
+        this.broadcastSound(Sound.ENTITY_WITHER_SPAWN, 0.6f, 1.2f);
+        this.preBattleBossBar = Bukkit.createBossBar((String)"\u00a7c\u00a7l\u2694 \u30d0\u30c8\u30eb\u6e96\u5099\u4e2d...", (BarColor)BarColor.RED, (BarStyle)BarStyle.SOLID, (BarFlag[])new BarFlag[0]);
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            Player pl = Bukkit.getPlayer((UUID)uid);
+            if (pl == null) continue;
+            this.preBattleBossBar.addPlayer(pl);
         }
-
-        new BukkitRunnable() {
+        new BukkitRunnable(){
             int count = 5;
-            @Override
+
             public void run() {
-                if (count > 0) {
-                    // 数字ごとに色・ピッチを変化させてド派手に
-                    String color = switch (count) {
-                        case 5 -> "§c§l";
-                        case 4 -> "§6§l";
-                        case 3 -> "§e§l";
-                        case 2 -> "§a§l";
-                        default -> "§b§l";
+                if (this.count > 0) {
+                    String color = switch (this.count) {
+                        case 5 -> "\u00a7c\u00a7l";
+                        case 4 -> "\u00a76\u00a7l";
+                        case 3 -> "\u00a7e\u00a7l";
+                        case 2 -> "\u00a7a\u00a7l";
+                        default -> "\u00a7b\u00a7l";
                     };
-                    float pitch = 0.6f + (5 - count) * 0.15f;
-                    broadcastTitle(color + count, "§7" + mapName, 0, 22, 3);
-                    broadcastSound(Sound.BLOCK_NOTE_BLOCK_PLING, 1.2f, pitch);
-                    broadcastActionBar("§f準備しろ！§e" + count + "§f秒後にゲートが開く！");
-                    if (preBattleBossBar != null) {
-                        preBattleBossBar.setProgress(count / 5.0);
-                        preBattleBossBar.setTitle("§c§l⚔ ゲート開放まで §e" + count + "§c 秒");
+                    float pitch = 0.6f + (float)(5 - this.count) * 0.15f;
+                    GameManager.this.broadcastTitle(color + this.count, "\u00a77" + mapName, 0, 22, 3);
+                    GameManager.this.broadcastSound(Sound.BLOCK_NOTE_BLOCK_PLING, 1.2f, pitch);
+                    GameManager.this.broadcastActionBar("\u00a7f\u6e96\u5099\u3057\u308d\uff01\u00a7e" + this.count + "\u00a7f\u79d2\u5f8c\u306b\u30b2\u30fc\u30c8\u304c\u958b\u304f\uff01");
+                    if (GameManager.this.preBattleBossBar != null) {
+                        GameManager.this.preBattleBossBar.setProgress((double)this.count / 5.0);
+                        GameManager.this.preBattleBossBar.setTitle("\u00a7c\u00a7l\u2694 \u30b2\u30fc\u30c8\u958b\u653e\u307e\u3067 \u00a7e" + this.count + "\u00a7c \u79d2");
                     }
-                    count--;
+                    --this.count;
                 } else {
-                    if (preBattleBossBar != null) { preBattleBossBar.removeAll(); preBattleBossBar = null; }
-                    cancel();
-                    removeGates(currentMap); // ゲート開放
-                    grantNoFallDamage();
-                    broadcastTitle("§c§l⚔  FIGHT!!  ⚔", "§e" + mapName + " §7| §fオブジェクトを制圧せよ！", 3, 50, 12);
-                    broadcastSound(Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 1.0f);
-                    broadcastSound(Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.3f);
-                    broadcastSound(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                    broadcastActionBar("§c§l⚔ FIGHT!! §7| §e2分後にオブジェクトが解放される！");
-                    // 中央に雷エフェクト（ダメージなし）
-                    if (currentMap != null && currentMap.getCenter() != null) {
-                        currentMap.getCenter().getWorld().strikeLightningEffect(currentMap.getCenter());
-                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                            if (currentMap != null && currentMap.getCenter() != null)
-                                currentMap.getCenter().getWorld().strikeLightningEffect(currentMap.getCenter());
+                    if (GameManager.this.preBattleBossBar != null) {
+                        GameManager.this.preBattleBossBar.removeAll();
+                        GameManager.this.preBattleBossBar = null;
+                    }
+                    this.cancel();
+                    GameManager.this.removeGates(GameManager.this.currentMap);
+                    GameManager.this.grantNoFallDamage();
+                    GameManager.this.broadcastTitle("\u00a7c\u00a7l\u2694  FIGHT!!  \u2694", "\u00a7e" + mapName + " \u00a77| \u00a7f\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u3092\u5236\u5727\u305b\u3088\uff01", 3, 50, 12);
+                    GameManager.this.broadcastSound(Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 1.0f);
+                    GameManager.this.broadcastSound(Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.3f);
+                    GameManager.this.broadcastSound(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                    GameManager.this.broadcastActionBar("\u00a7c\u00a7l\u2694 FIGHT!! \u00a77| \u00a7e2\u5206\u5f8c\u306b\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u304c\u89e3\u653e\u3055\u308c\u308b\uff01");
+                    if (GameManager.this.currentMap != null && GameManager.this.currentMap.getCenter() != null) {
+                        GameManager.this.currentMap.getCenter().getWorld().strikeLightningEffect(GameManager.this.currentMap.getCenter());
+                        Bukkit.getScheduler().runTaskLater((Plugin)GameManager.this.plugin, () -> {
+                            if (GameManager.this.currentMap != null && GameManager.this.currentMap.getCenter() != null) {
+                                GameManager.this.currentMap.getCenter().getWorld().strikeLightningEffect(GameManager.this.currentMap.getCenter());
+                            }
                         }, 5L);
                     }
                 }
             }
-        }.runTaskTimer(plugin, 40L, 20L); // 2秒後からカウント開始
+        }.runTaskTimer((Plugin)this.plugin, 40L, 20L);
     }
 
-
-    // ─────────────────────────────────────────────
-    // チーム振り分け
-    // ─────────────────────────────────────────────
-
     private void assignTeams(List<UUID> participants) {
-        List<UUID> shuffled = new ArrayList<>(participants);
-        // 毎回新しいRandomで確実にシャッフル
-        java.util.Random rng = new java.util.Random();
-        for (int i = shuffled.size() - 1; i > 0; i--) {
+        Player p;
+        ArrayList<UUID> shuffled = new ArrayList<UUID>(participants);
+        Random rng = new Random();
+        for (int i = shuffled.size() - 1; i > 0; --i) {
             int j = rng.nextInt(i + 1);
-            UUID tmp = shuffled.get(i);
-            shuffled.set(i, shuffled.get(j));
+            UUID tmp = (UUID)shuffled.get(i);
+            shuffled.set(i, (UUID)shuffled.get(j));
             shuffled.set(j, tmp);
         }
         int half = shuffled.size() / 2;
-        // 奇数なら赤か青にランダムで1人多く
         int redCount = half + (shuffled.size() % 2 == 1 && rng.nextBoolean() ? 1 : 0);
-        for (int i = 0; i < shuffled.size(); i++) {
-            if (i < redCount) redTeam.add(shuffled.get(i));
-            else blueTeam.add(shuffled.get(i));
+        for (int i = 0; i < shuffled.size(); ++i) {
+            if (i < redCount) {
+                this.redTeam.add((UUID)shuffled.get(i));
+                continue;
+            }
+            this.blueTeam.add((UUID)shuffled.get(i));
         }
-        // デバッグ: チーム割り当て結果をログ
-        StringBuilder log = new StringBuilder("§8[BA] チーム振り分け: §c赤=");
-        for (UUID uid : redTeam) { Player p = Bukkit.getPlayer(uid); if (p != null) log.append(p.getName()).append(" "); }
-        log.append("§b青=");
-        for (UUID uid : blueTeam) { Player p = Bukkit.getPlayer(uid); if (p != null) log.append(p.getName()).append(" "); }
+        StringBuilder log = new StringBuilder("\u00a78[BA] \u30c1\u30fc\u30e0\u632f\u308a\u5206\u3051: \u00a7c\u8d64=");
+        for (UUID uid : this.redTeam) {
+            p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            log.append(p.getName()).append(" ");
+        }
+        log.append("\u00a7b\u9752=");
+        for (UUID uid : this.blueTeam) {
+            p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            log.append(p.getName()).append(" ");
+        }
         Bukkit.getConsoleSender().sendMessage(log.toString());
     }
 
     private void broadcastTeamAnnouncement() {
+        Player p;
         StringBuilder sb = new StringBuilder();
-        sb.append("§c[赤] §f");
-        for (UUID uid : redTeam) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) sb.append(p.getName()).append(", ");
+        sb.append("\u00a7c[\u8d64] \u00a7f");
+        for (UUID uid : this.redTeam) {
+            p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            sb.append(p.getName()).append(", ");
         }
-        sb.append(" §b[青] §f");
-        for (UUID uid : blueTeam) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) sb.append(p.getName()).append(", ");
+        sb.append(" \u00a7b[\u9752] \u00a7f");
+        for (UUID uid : this.blueTeam) {
+            p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            sb.append(p.getName()).append(", ");
         }
-        Bukkit.broadcastMessage(sb.toString());
-
-        for (UUID uid : redTeam) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) {
-                p.sendTitle("§c赤チーム", "§fあなたは赤チームです", 5, 60, 10);
-                p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
-            }
+        Bukkit.broadcastMessage((String)sb.toString());
+        for (UUID uid : this.redTeam) {
+            p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.sendTitle("\u00a7c\u8d64\u30c1\u30fc\u30e0", "\u00a7f\u3042\u306a\u305f\u306f\u8d64\u30c1\u30fc\u30e0\u3067\u3059", 5, 60, 10);
+            p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         }
-        for (UUID uid : blueTeam) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) {
-                p.sendTitle("§b青チーム", "§fあなたは青チームです", 5, 60, 10);
-                p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
-            }
+        for (UUID uid : this.blueTeam) {
+            p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.sendTitle("\u00a7b\u9752\u30c1\u30fc\u30e0", "\u00a7f\u3042\u306a\u305f\u306f\u9752\u30c1\u30fc\u30e0\u3067\u3059", 5, 60, 10);
+            p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         }
     }
 
-    // ─────────────────────────────────────────────
-    // 中央コンクリート初期化
-    // ─────────────────────────────────────────────
-
     private void initCenterBlocks(MapConfig map) {
-        World world = Bukkit.getWorld(map.getWorld());
-        if (world == null) return;
+        World world = Bukkit.getWorld((String)map.getWorld());
+        if (world == null) {
+            return;
+        }
         Location center = map.getCenter();
         int cx = center.getBlockX();
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
-        // 土台: Y-1 に緑コンクリート、Y に白コンクリート (5x5)
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
+        for (int dx = -2; dx <= 2; ++dx) {
+            for (int dz = -2; dz <= 2; ++dz) {
                 world.getBlockAt(cx + dx, cy - 1, cz + dz).setType(Material.LIME_CONCRETE);
                 world.getBlockAt(cx + dx, cy, cz + dz).setType(Material.WHITE_CONCRETE);
             }
@@ -548,47 +698,46 @@ public class GameManager {
     }
 
     private void resetCenterBlocks() {
-        if (currentMap == null) return;
-        World world = Bukkit.getWorld(currentMap.getWorld());
-        if (world == null) return;
-        Location center = currentMap.getCenter();
+        if (this.currentMap == null) {
+            return;
+        }
+        World world = Bukkit.getWorld((String)this.currentMap.getWorld());
+        if (world == null) {
+            return;
+        }
+        Location center = this.currentMap.getCenter();
         int cx = center.getBlockX();
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
+        for (int dx = -2; dx <= 2; ++dx) {
+            for (int dz = -2; dz <= 2; ++dz) {
                 world.getBlockAt(cx + dx, cy, cz + dz).setType(Material.WHITE_CONCRETE);
             }
         }
-        // ホールドタイマーリセット
-        cancelHoldTimer();
+        this.cancelHoldTimer();
     }
 
-    // ─────────────────────────────────────────────
-    // バリア操作
-    // ─────────────────────────────────────────────
-
-
-    // ─── ゲートシステム ───
-
-    /** ゲート領域をブロックで埋める（試合開始時に呼ぶ） */
     public void placeGates(MapConfig map) {
-        if (!map.hasGate()) return;
+        if (!map.hasGate()) {
+            return;
+        }
         Material mat = map.getGateMaterial();
-        fillRegion(map.getRedGateMin(),  map.getRedGateMax(),  mat);
-        fillRegion(map.getBlueGateMin(), map.getBlueGateMax(), mat);
+        this.fillRegion(map.getRedGateMin(), map.getRedGateMax(), mat);
+        this.fillRegion(map.getBlueGateMin(), map.getBlueGateMax(), mat);
     }
 
-    /** ゲート領域を空気にする（カウントダウン終了時に呼ぶ） */
     public void removeGates(MapConfig map) {
-        if (!map.hasGate()) return;
-        fillRegion(map.getRedGateMin(),  map.getRedGateMax(),  Material.AIR);
-        fillRegion(map.getBlueGateMin(), map.getBlueGateMax(), Material.AIR);
+        if (!map.hasGate()) {
+            return;
+        }
+        this.fillRegion(map.getRedGateMin(), map.getRedGateMax(), Material.AIR);
+        this.fillRegion(map.getBlueGateMin(), map.getBlueGateMax(), Material.AIR);
     }
 
-    /** 指定領域内の全ブロックを指定マテリアルに書き換える */
     private void fillRegion(Location min, Location max, Material material) {
-        if (min == null || max == null || min.getWorld() == null) return;
+        if (min == null || max == null || min.getWorld() == null) {
+            return;
+        }
         World world = min.getWorld();
         int x1 = Math.min(min.getBlockX(), max.getBlockX());
         int y1 = Math.min(min.getBlockY(), max.getBlockY());
@@ -596,1246 +745,1598 @@ public class GameManager {
         int x2 = Math.max(min.getBlockX(), max.getBlockX());
         int y2 = Math.max(min.getBlockY(), max.getBlockY());
         int z2 = Math.max(min.getBlockZ(), max.getBlockZ());
-        for (int x = x1; x <= x2; x++)
-            for (int y = y1; y <= y2; y++)
-                for (int z = z1; z <= z2; z++)
+        for (int x = x1; x <= x2; ++x) {
+            for (int y = y1; y <= y2; ++y) {
+                for (int z = z1; z <= z2; ++z) {
                     world.getBlockAt(x, y, z).setType(material);
-    }
-
-    // バリアシステム廃止（ゲートシステムに統合済み）
-
-    private void grantNoFallDamage() {
-        for (UUID uid : getAllParticipants()) {
-            noFallDamage.add(uid);
+                }
+            }
         }
     }
 
-    // ─────────────────────────────────────────────
-    // スポーン転送
-    // ─────────────────────────────────────────────
+    private void grantNoFallDamage() {
+        for (UUID uid : this.getAllParticipants()) {
+            this.noFallDamage.add(uid);
+        }
+    }
 
     public void teleportToSpawnZonePublic(Player p, MapConfig map, TeamColor team) {
         Location min = team == TeamColor.RED ? map.getRedSpawnMin() : map.getBlueSpawnMin();
         Location max = team == TeamColor.RED ? map.getRedSpawnMax() : map.getBlueSpawnMax();
-        // ゾーン中央上部へ
-        double x = (min.getBlockX() + max.getBlockX()) / 2.0 + 0.5;
-        double y = max.getBlockY() + 0.1;
-        double z = (min.getBlockZ() + max.getBlockZ()) / 2.0 + 0.5;
+        double x = (double)(min.getBlockX() + max.getBlockX()) / 2.0 + 0.5;
+        double y = (double)max.getBlockY() + 0.1;
+        double z = (double)(min.getBlockZ() + max.getBlockZ()) / 2.0 + 0.5;
         p.teleport(new Location(min.getWorld(), x, y, z));
     }
 
-    // ─────────────────────────────────────────────
-    // 勝利チェック
-    // ─────────────────────────────────────────────
+    private Location getRandomSpawnPoint(MapConfig map) {
+        Location max;
+        Location min;
+        Random r = new Random();
+        if (r.nextBoolean() && map.getRedSpawnMin() != null && map.getRedSpawnMax() != null) {
+            min = map.getRedSpawnMin();
+            max = map.getRedSpawnMax();
+        } else if (map.getBlueSpawnMin() != null && map.getBlueSpawnMax() != null) {
+            min = map.getBlueSpawnMin();
+            max = map.getBlueSpawnMax();
+        } else if (map.getRedSpawnMin() != null && map.getRedSpawnMax() != null) {
+            min = map.getRedSpawnMin();
+            max = map.getRedSpawnMax();
+        } else {
+            Location center = map.getCenter();
+            if (center == null) {
+                World world = Bukkit.getWorld((String)map.getWorld());
+                return world != null ? world.getSpawnLocation() : ((World)Bukkit.getWorlds().get(0)).getSpawnLocation();
+            }
+            return center;
+        }
+        World world = min.getWorld();
+        if (world == null && (world = Bukkit.getWorld((String)map.getWorld())) == null) {
+            world = (World)Bukkit.getWorlds().get(0);
+        }
+        double x = min.getX() + r.nextDouble() * (max.getX() - min.getX());
+        double y = min.getY() + r.nextDouble() * (max.getY() - min.getY());
+        double z = min.getZ() + r.nextDouble() * (max.getZ() - min.getZ());
+        return new Location(world, x, y, z);
+    }
 
     public void checkEliminationWin() {
-        if (state != GameState.IN_GAME) return;
-        long redAlive = getAliveCount(TeamColor.RED);
-        long blueAlive = getAliveCount(TeamColor.BLUE);
-
-        if (blueAlive == 0 && redAlive > 0) {
-            endGame(TeamColor.RED, WinCondition.ELIMINATION);
-        } else if (redAlive == 0 && blueAlive > 0) {
-            endGame(TeamColor.BLUE, WinCondition.ELIMINATION);
-        } else if (redAlive == 0 && blueAlive == 0) {
-            endGame(null, WinCondition.ELIMINATION); // 引き分け（稀ケース）
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        if (this.currentGameMode == GameMode.FFA) {
+            return;
+        }
+        long redAlive = this.getAliveCount(TeamColor.RED);
+        long blueAlive = this.getAliveCount(TeamColor.BLUE);
+        if (blueAlive == 0L && redAlive > 0L) {
+            this.endGame(TeamColor.RED, WinCondition.ELIMINATION);
+        } else if (redAlive == 0L && blueAlive > 0L) {
+            this.endGame(TeamColor.BLUE, WinCondition.ELIMINATION);
+        } else if (redAlive == 0L && blueAlive == 0L) {
+            this.endGame(null, WinCondition.ELIMINATION);
         }
     }
 
     public void checkObjectiveWin(Location placedBlock) {
-        if (state != GameState.IN_GAME) return;
-        if (currentGameMode != GameMode.BATTLE_ARENA && currentGameMode != GameMode.TEAM_DEATHMATCH) return;
-        if (currentMap == null) return;
-
-        Location center = currentMap.getCenter();
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        if (this.currentGameMode != GameMode.BATTLE_ARENA && this.currentGameMode != GameMode.TEAM_DEATHMATCH) {
+            return;
+        }
+        if (this.currentMap == null) {
+            return;
+        }
+        Location center = this.currentMap.getCenter();
         int cx = center.getBlockX();
         int cz = center.getBlockZ();
         int checkY = placedBlock.getBlockY();
-
-        World world = Bukkit.getWorld(currentMap.getWorld());
-        if (world == null) return;
-
-        // 進捗カウント＋通知
-        int redCount = 0, cyanCount = 0;
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
+        World world = Bukkit.getWorld((String)this.currentMap.getWorld());
+        if (world == null) {
+            return;
+        }
+        int redCount = 0;
+        int cyanCount = 0;
+        for (int dx = -2; dx <= 2; ++dx) {
+            for (int dz = -2; dz <= 2; ++dz) {
                 Material mat = world.getBlockAt(cx + dx, checkY, cz + dz).getType();
-                if (mat == Material.RED_CONCRETE)  redCount++;
-                if (mat == Material.CYAN_CONCRETE) cyanCount++;
+                if (mat == Material.RED_CONCRETE) {
+                    ++redCount;
+                }
+                if (mat != Material.CYAN_CONCRETE) continue;
+                ++cyanCount;
             }
         }
-        Bukkit.broadcastMessage("§6[BA] §eオブジェクトが奪取されています！ §c赤:" + redCount + "/25 §b青:" + cyanCount + "/25");
-
-        // 25枚全部同じ色か確認
+        Bukkit.broadcastMessage((String)("\u00a76[BA] \u00a7e\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u304c\u596a\u53d6\u3055\u308c\u3066\u3044\u307e\u3059\uff01 \u00a7c\u8d64:" + redCount + "/25 \u00a7b\u9752:" + cyanCount + "/25"));
         Material first = null;
         boolean allSame = true;
-        outer:
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
+        block2: for (int dx = -2; dx <= 2; ++dx) {
+            for (int dz = -2; dz <= 2; ++dz) {
                 Material mat = world.getBlockAt(cx + dx, checkY, cz + dz).getType();
-                if (first == null) { first = mat; }
-                else if (mat != first) { allSame = false; break outer; }
+                if (first == null) {
+                    first = mat;
+                    continue;
+                }
+                if (mat == first) continue;
+                allSame = false;
+                break block2;
             }
         }
-        if (!allSame || first == null) { cancelHoldTimer(); return; }
-
+        if (!allSame || first == null) {
+            this.cancelHoldTimer();
+            return;
+        }
         TeamColor winner = null;
-        if (first == Material.RED_CONCRETE)  winner = TeamColor.RED;
-        if (first == Material.CYAN_CONCRETE) winner = TeamColor.BLUE;
-        if (winner == null) return;
-
-        if (holdingTeam == winner && holdTask != null) return; // 既にホールド中
-        cancelHoldTimer();
-        holdingTeam = winner;
+        if (first == Material.RED_CONCRETE) {
+            winner = TeamColor.RED;
+        }
+        if (first == Material.CYAN_CONCRETE) {
+            winner = TeamColor.BLUE;
+        }
+        if (winner == null) {
+            return;
+        }
+        if (this.holdingTeam == winner && this.holdTask != null) {
+            return;
+        }
+        this.cancelHoldTimer();
+        this.holdingTeam = winner;
         final TeamColor fw = winner;
-        broadcastTitle(winner.getColorCode() + "§l25枚制圧！", "§e15秒ホールドで勝利", 5, 30, 5);
-        Bukkit.broadcastMessage(winner.getColorCode() + "§l[BA] " + winner.getDisplayName() + " チームが25枚制圧！15秒ホールドで勝利！");
-        holdTask = new org.bukkit.scheduler.BukkitRunnable() {
-            int rem = HOLD_SECONDS;
-            @Override public void run() {
-                if (state != GameState.IN_GAME) { cancel(); return; }
-                if (rem <= 0) { cancel(); endGame(fw, WinCondition.OBJECTIVE); return; }
-                broadcastActionBar(fw.getColorCode() + "§l" + fw.getDisplayName() + " §eホールド §f" + rem + "§e秒");
-                rem--;
+        this.broadcastTitle(winner.getColorCode() + "\u00a7l25\u679a\u5236\u5727\uff01", "\u00a7e15\u79d2\u30db\u30fc\u30eb\u30c9\u3067\u52dd\u5229", 5, 30, 5);
+        Bukkit.broadcastMessage((String)(winner.getColorCode() + "\u00a7l[BA] " + winner.getDisplayName() + " \u30c1\u30fc\u30e0\u304c25\u679a\u5236\u5727\uff0115\u79d2\u30db\u30fc\u30eb\u30c9\u3067\u52dd\u5229\uff01"));
+        this.holdTask = new BukkitRunnable(){
+            int rem = 15;
+
+            public void run() {
+                if (GameManager.this.state != GameState.IN_GAME) {
+                    this.cancel();
+                    return;
+                }
+                if (this.rem <= 0) {
+                    this.cancel();
+                    GameManager.this.endGame(fw, WinCondition.OBJECTIVE);
+                    return;
+                }
+                GameManager.this.broadcastActionBar(fw.getColorCode() + "\u00a7l" + fw.getDisplayName() + " \u00a7e\u30db\u30fc\u30eb\u30c9 \u00a7f" + this.rem + "\u00a7e\u79d2");
+                --this.rem;
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
     }
 
-    /** ブロック破壊時：ホールドタイマーをリセット */
     public void onObjectiveBlockBroken() {
-        if (holdTask != null) {
-            cancelHoldTimer();
-            Bukkit.broadcastMessage("§6[BA] §cホールドが中断されました！");
+        if (this.holdTask != null) {
+            this.cancelHoldTimer();
+            Bukkit.broadcastMessage((String)"\u00a76[BA] \u00a7c\u30db\u30fc\u30eb\u30c9\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f\uff01");
         }
     }
 
     private void cancelHoldTimer() {
-        if (holdTask != null) { holdTask.cancel(); holdTask = null; }
-        holdingTeam = null;
+        if (this.holdTask != null) {
+            this.holdTask.cancel();
+            this.holdTask = null;
+        }
+        this.holdingTeam = null;
     }
 
-    /** オブジェクトロック中か（試合開始3分以内） */
     public boolean isObjectiveLocked() {
-        return System.currentTimeMillis() - inGameStartTime < OBJECTIVE_LOCK_MS;
+        return System.currentTimeMillis() - this.inGameStartTime < 120000L;
     }
-
-    // ─────────────────────────────────────────────
-    // ゲーム終了処理
-    // ─────────────────────────────────────────────
 
     public void endGame(TeamColor winner, WinCondition condition) {
-        // TDM/Domination/CTF: no rounds, go directly to match end
-        if (currentGameMode == GameMode.TEAM_DEATHMATCH
-                || currentGameMode == GameMode.DOMINATION
-                || currentGameMode == GameMode.CAPTURE_THE_FLAG) {
-            endMatch(winner, condition);
+        if (this.currentGameMode == GameMode.FFA) {
+            this.endMatch(winner, condition);
+            return;
+        }
+        if (this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
+            this.endMatch(winner, condition);
         } else {
-            endRound(winner, condition);
+            this.endRound(winner, condition);
         }
     }
 
-    private void endRound(TeamColor winner, WinCondition condition) {
-        if (state == GameState.ENDING) return;
-        state = GameState.ENDING;
-        noFallDamage.clear();
-        plugin.getScoreboardManager().stop();
-        // ラウンド終了: 投射中のエンティティ（エンダーパール・ロケット・ポーション等）を除去
-        if (currentMap != null && currentMap.getCenter() != null) {
-            org.bukkit.World w = currentMap.getCenter().getWorld();
-            if (w != null) {
-                w.getEntities().stream()
-                    .filter(e -> e instanceof org.bukkit.entity.EnderPearl
-                        || e instanceof org.bukkit.entity.Firework
-                        || e instanceof org.bukkit.entity.ThrownPotion
-                        || e instanceof org.bukkit.entity.Arrow
-                        || e instanceof org.bukkit.entity.SpectralArrow)
-                    .forEach(org.bukkit.entity.Entity::remove);
-            }
+    private void endRound(final TeamColor winner, final WinCondition condition) {
+        World w;
+        if (this.state == GameState.ENDING) {
+            return;
         }
-
-        // ラウンド勝利数を加算
-        if (winner == TeamColor.RED)  roundWinsRed++;
-        else if (winner == TeamColor.BLUE) roundWinsBlue++;
-
-        // ラウンド結果を全員に表示
-        String roundResult = winner != null
-            ? winner.getColorCode() + winner.getDisplayName() + " §aがラウンドを制しました！"
-            : "§7引き分け";
-        String scoreStr = "§c赤 " + roundWinsRed + " §7- §9" + roundWinsBlue + " §7青";
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player p = Bukkit.getPlayer(uid);
+        this.state = GameState.ENDING;
+        this.noFallDamage.clear();
+        this.plugin.getScoreboardManager().stop();
+        if (this.currentMap != null && this.currentMap.getCenter() != null && (w = this.currentMap.getCenter().getWorld()) != null) {
+            w.getEntities().stream().filter(e -> e instanceof EnderPearl || e instanceof Firework || e instanceof ThrownPotion || e instanceof Arrow || e instanceof SpectralArrow).forEach(Entity::remove);
+        }
+        if (winner == TeamColor.RED) {
+            ++this.roundWinsRed;
+        } else if (winner == TeamColor.BLUE) {
+            ++this.roundWinsBlue;
+        }
+        String roundResult = winner != null ? winner.getColorCode() + winner.getDisplayName() + " \u00a7a\u304c\u30e9\u30a6\u30f3\u30c9\u3092\u5236\u3057\u307e\u3057\u305f\uff01" : "\u00a77\u5f15\u304d\u5206\u3051";
+        String scoreStr = "\u00a7c\u8d64 " + this.roundWinsRed + " \u00a77- \u00a79" + this.roundWinsBlue + " \u00a77\u9752";
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
             p.sendTitle(roundResult, scoreStr, 5, 50, 10);
-            p.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            p.sendMessage("§6§l  ラウンド " + currentRound + " 終了");
-            p.sendMessage("§7結果: " + roundResult);
-            p.sendMessage("§7スコア: " + scoreStr);
-            p.sendMessage("§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            p.sendMessage("\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+            p.sendMessage("\u00a76\u00a7l  \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u7d42\u4e86");
+            p.sendMessage("\u00a77\u7d50\u679c: " + roundResult);
+            p.sendMessage("\u00a77\u30b9\u30b3\u30a2: " + scoreStr);
+            p.sendMessage("\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
         }
+        this.endingTask = this.roundWinsRed >= 3 || this.roundWinsBlue >= 3 ? new BukkitRunnable(){
 
-        // 3点先取でマッチ終了
-        if (roundWinsRed >= WINS_TO_WIN || roundWinsBlue >= WINS_TO_WIN) {
-            endingTask = new BukkitRunnable() {
-                @Override public void run() { endMatch(winner, condition); }
-            }.runTaskLater(plugin, 80L); // 4秒後
-        } else {
-            // 次ラウンドへ
-            endingTask = new BukkitRunnable() {
-                @Override public void run() { startNextRound(); }
-            }.runTaskLater(plugin, 80L); // 4秒後
-        }
+            public void run() {
+                GameManager.this.endMatch(winner, condition);
+            }
+        }.runTaskLater((Plugin)this.plugin, 80L) : new BukkitRunnable(){
+
+            public void run() {
+                GameManager.this.startNextRound();
+            }
+        }.runTaskLater((Plugin)this.plugin, 80L);
     }
 
     private void startNextRound() {
-        currentRound++;
-        if (currentGameMode == GameMode.BOMB_MISSION) {
-            bombRoundAttackerRed = !bombRoundAttackerRed;
-            bombCleanup();
+        Player p;
+        ++this.currentRound;
+        if (this.currentGameMode == GameMode.BOMB_MISSION) {
+            this.bombRoundAttackerRed = !this.bombRoundAttackerRed;
+            this.bombCleanup();
         }
-        String scoreStr = "§c赤 " + roundWinsRed + " §7- §9" + roundWinsBlue + " §7青";
-        broadcastTitle("§6§l⚔ ラウンド " + currentRound + " ⚔", scoreStr, 10, 60, 10);
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player pl = Bukkit.getPlayer(uid);
-            if (pl != null) pl.sendMessage("§8§m                                ");
-            if (pl != null) pl.sendMessage("§6§l★ ラウンド " + currentRound + " 開始！ ★");
-            if (pl != null) pl.sendMessage("§7" + scoreStr);
-            if (pl != null) pl.sendMessage("§8§m                                ");
+        String scoreStr = "\u00a7c\u8d64 " + this.roundWinsRed + " \u00a77- \u00a79" + this.roundWinsBlue + " \u00a77\u9752";
+        this.broadcastTitle("\u00a76\u00a7l\u2694 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u2694", scoreStr, 10, 60, 10);
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            Player pl = Bukkit.getPlayer((UUID)uid);
+            if (pl != null) {
+                pl.sendMessage("\u00a78\u00a7m                                ");
+            }
+            if (pl != null) {
+                pl.sendMessage("\u00a76\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u958b\u59cb\uff01 \u2605");
+            }
+            if (pl != null) {
+                pl.sendMessage("\u00a77" + scoreStr);
+            }
+            if (pl == null) continue;
+            pl.sendMessage("\u00a78\u00a7m                                ");
         }
-        state = GameState.IN_GAME;
-        noFallDamage.clear();
-        deadPlayers.clear();
-        matchStats = new MatchStats();
-        deaths.clear();
-        roundKills.clear(); // ラウンドごとに連続キルをリセット
-        // kills はマッチ通算でそのまま継続
-
-        // マップリセット
-        resetCenterBlocks();
-        initCenterBlocks(currentMap);
-        placeGates(currentMap);
-
-        // 全プレイヤーを復活させてスポーンへ（インベントリはキット選択後に配布）
-        for (UUID uid : redTeam) {
-            Player p = Bukkit.getPlayer(uid);
+        this.state = GameState.IN_GAME;
+        this.noFallDamage.clear();
+        this.deadPlayers.clear();
+        this.matchStats = new MatchStats();
+        this.deaths.clear();
+        this.roundKills.clear();
+        this.resetCenterBlocks();
+        this.initCenterBlocks(this.currentMap);
+        this.placeGates(this.currentMap);
+        for (UUID uid : this.redTeam) {
+            p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            roundRestorePlayer(p);
-            teleportToSpawnZonePublic(p, currentMap, TeamColor.RED);
+            this.roundRestorePlayer(p);
+            this.teleportToSpawnZonePublic(p, this.currentMap, TeamColor.RED);
         }
-        for (UUID uid : blueTeam) {
-            Player p = Bukkit.getPlayer(uid);
+        for (UUID uid : this.blueTeam) {
+            p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            roundRestorePlayer(p);
-            teleportToSpawnZonePublic(p, currentMap, TeamColor.BLUE);
+            this.roundRestorePlayer(p);
+            this.teleportToSpawnZonePublic(p, this.currentMap, TeamColor.BLUE);
         }
-        spectators.clear();
-        selectedKits.clear();
-        playerKit.clear();
-
-        plugin.getSkillManager().resetRound();
-
-        // キット選択GUI
-        state = GameState.KIT_SELECT;
-        int timeoutSeconds = plugin.getConfig().getInt("kit_select.timeout_seconds", 30);
-        KitSelectGUI gui = new KitSelectGUI(plugin, this);
-        plugin.getGameListeners().setActiveGUI(gui);
-        gui.openForAll(redTeam, blueTeam, timeoutSeconds);
-
-        broadcastTitle("§6§lラウンド " + currentRound, scoreStr, 5, 40, 10);
+        this.spectators.clear();
+        this.selectedKits.clear();
+        this.playerKit.clear();
+        this.plugin.getSkillManager().resetRound();
+        this.state = GameState.KIT_SELECT;
+        int timeoutSeconds = this.plugin.getConfig().getInt("kit_select.timeout_seconds", 30);
+        KitSelectGUI gui = new KitSelectGUI(this.plugin, this);
+        this.plugin.getGameListeners().setActiveGUI(gui);
+        gui.openForAll(this.redTeam, this.blueTeam, timeoutSeconds);
+        this.broadcastTitle("\u00a76\u00a7l\u30e9\u30a6\u30f3\u30c9 " + this.currentRound, scoreStr, 5, 40, 10);
     }
 
-    /** ラウンド間の体力・状態リセット（ロビーには戻さない） */
     private void roundRestorePlayer(Player p) {
-        deadPlayers.remove(p.getUniqueId());
-        spectators.remove(p.getUniqueId());
+        this.deadPlayers.remove(p.getUniqueId());
+        this.spectators.remove(p.getUniqueId());
         p.setInvulnerable(false);
         p.setGameMode(org.bukkit.GameMode.SURVIVAL);
         p.getInventory().clear();
-        var attr = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        AttributeInstance attr = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
         double maxHp = attr != null ? attr.getValue() : 20.0;
         p.setHealth(maxHp);
         p.setFoodLevel(20);
-        p.setSaturation(5f);
-        p.setExhaustion(0f);
-        for (var eff : p.getActivePotionEffects()) p.removePotionEffect(eff.getType());
+        p.setSaturation(5.0f);
+        p.setExhaustion(0.0f);
+        for (PotionEffect eff : p.getActivePotionEffects()) {
+            p.removePotionEffect(eff.getType());
+        }
         p.setFireTicks(0);
         p.setArrowsInBody(0);
         p.setWalkSpeed(0.2f);
         p.resetTitle();
-        plugin.getSkillManager().restoreMaxHp(p);
+        this.plugin.getSkillManager().restoreMaxHp(p);
     }
 
-    public com.bloxarena.kit.KitType getPlayerKitType(UUID uid) {
-        String name = playerKit.get(uid);
-        if (name == null) return null;
-        try { return com.bloxarena.kit.KitType.valueOf(name); }
-        catch (IllegalArgumentException e) { return null; }
+    public KitType getPlayerKitType(UUID uid) {
+        String name = this.playerKit.get(uid);
+        if (name == null) {
+            return null;
+        }
+        try {
+            return KitType.valueOf(name);
+        }
+        catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private void endMatch(TeamColor winner, WinCondition condition) {
-        // StatsManager に勝敗を記録
-        StatsManager sm = plugin.getStatsManager();
-        List<UUID> winTeam  = winner == TeamColor.RED ? redTeam  : blueTeam;
-        List<UUID> loseTeam = winner == TeamColor.RED ? blueTeam : redTeam;
-        if (winner != null) {
-            for (UUID uid : winTeam)  sm.addWin(uid);
-            for (UUID uid : loseTeam) sm.addLoss(uid);
-        }
-        sm.save();
-
-        // 試合レポート表示
-        showMatchReport(winner);
-
-        // 演出
-        Effects.playVictoryEffect(winner, condition, getAllParticipantsAndSpectators(),
-                redTeam, blueTeam, currentMap, kills, deaths, plugin);
-
-        // 5秒後にロビーへ
-        endingTask = new BukkitRunnable() {
-            @Override
-            public void run() {
-                returnAllToLobby();
-                if (plugin.getLobbyManager().isContinuousMode()) {
-                    plugin.getLobbyManager().startContinuousCountdown();
+        StatsManager sm = this.plugin.getStatsManager();
+        if (this.currentGameMode == GameMode.FFA) {
+            UUID winnerUid = null;
+            int topKills = -1;
+            for (Map.Entry<UUID, Integer> entry : this.ffaKills.entrySet()) {
+                if (entry.getValue() <= topKills) continue;
+                topKills = entry.getValue();
+                winnerUid = entry.getKey();
+            }
+            if (winnerUid == null) {
+                for (UUID uid : this.ffaParticipants) {
+                    if (this.ffaEliminated.contains(uid)) continue;
+                    winnerUid = uid;
+                    break;
                 }
             }
-        }.runTaskLater(plugin, 100L); // 5秒
+            if (winnerUid != null) {
+                sm.addWin(winnerUid);
+            }
+            for (UUID uid : this.ffaParticipants) {
+                if (uid.equals(winnerUid)) continue;
+                sm.addLoss(uid);
+            }
+            sm.save();
+            this.showMatchReport(null);
+            Effects.playVictoryEffect(null, condition, this.getAllParticipantsAndSpectators(), Collections.emptyList(), Collections.emptyList(), this.currentMap, this.kills, this.deaths, this.plugin);
+            if (this.ffaTimerTask != null) {
+                this.ffaTimerTask.cancel();
+                this.ffaTimerTask = null;
+            }
+        } else {
+            List<UUID> loseTeam;
+            List<UUID> winTeam = winner == TeamColor.RED ? this.redTeam : this.blueTeam;
+            List<UUID> list = loseTeam = winner == TeamColor.RED ? this.blueTeam : this.redTeam;
+            if (winner != null) {
+                for (UUID uid : winTeam) {
+                    sm.addWin(uid);
+                }
+                for (UUID uid : loseTeam) {
+                    sm.addLoss(uid);
+                }
+            }
+            sm.save();
+            this.showMatchReport(winner);
+            Effects.playVictoryEffect(winner, condition, this.getAllParticipantsAndSpectators(), this.redTeam, this.blueTeam, this.currentMap, this.kills, this.deaths, this.plugin);
+        }
+        if (this.selectedBgm != null) {
+            this.selectedBgm.stop();
+        }
+        this.endingTask = new BukkitRunnable(){
+
+            public void run() {
+                GameManager.this.returnAllToLobby();
+                if (GameManager.this.plugin.getLobbyManager().isContinuousMode()) {
+                    GameManager.this.plugin.getLobbyManager().startContinuousCountdown();
+                }
+            }
+        }.runTaskLater((Plugin)this.plugin, 100L);
     }
 
     private void showMatchReport(TeamColor winner) {
-        List<UUID> all = getAllParticipantsAndSpectators();
-        String header = "§8§m━━━━━━━━━━━━━━━━━━━━━━━━━━━";
-        String winStr = winner != null ? winner.getColorCode() + winner.getDisplayName() + "チーム勝利！" : "引き分け";
-
-        UUID mvpUid     = matchStats.getMVP();
-        UUID mostDmgUid = matchStats.getMostDamage();
-
-        String mvpName  = mvpUid     != null ? Bukkit.getOfflinePlayer(mvpUid).getName() : "なし";
-        String dmgName  = mostDmgUid != null ? Bukkit.getOfflinePlayer(mostDmgUid).getName() : "なし";
-        int    mvpKills = mvpUid     != null ? matchStats.getKills(mvpUid) : 0;
-        double maxDmg   = mostDmgUid != null ? matchStats.getDamage(mostDmgUid) : 0;
-
+        List<UUID> all = this.getAllParticipantsAndSpectators();
+        String header = "\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501";
+        String winStr = winner != null ? winner.getColorCode() + winner.getDisplayName() + "\u30c1\u30fc\u30e0\u52dd\u5229\uff01" : "\u5f15\u304d\u5206\u3051";
+        UUID mvpUid = this.matchStats.getMVP();
+        UUID mostDmgUid = this.matchStats.getMostDamage();
+        String mvpName = mvpUid != null ? Bukkit.getOfflinePlayer((UUID)mvpUid).getName() : "\u306a\u3057";
+        String dmgName = mostDmgUid != null ? Bukkit.getOfflinePlayer((UUID)mostDmgUid).getName() : "\u306a\u3057";
+        int mvpKills = mvpUid != null ? this.matchStats.getKills(mvpUid) : 0;
+        double maxDmg = mostDmgUid != null ? this.matchStats.getDamage(mostDmgUid) : 0.0;
         for (UUID uid : all) {
-            Player p = Bukkit.getPlayer(uid);
+            Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
             p.sendMessage(header);
-            p.sendMessage("§6§l        試合結果レポート");
-            p.sendMessage("§7結果: " + winStr);
-            p.sendMessage("§7MVP: §e" + mvpName + " §7(" + mvpKills + " kill)");
-            p.sendMessage("§7最多ダメージ: §e" + dmgName + String.format(" §7(%.1f dmg)", maxDmg));
+            p.sendMessage("\u00a76\u00a7l        \u8a66\u5408\u7d50\u679c\u30ec\u30dd\u30fc\u30c8");
+            p.sendMessage("\u00a77\u7d50\u679c: " + winStr);
+            p.sendMessage("\u00a77MVP: \u00a7e" + mvpName + " \u00a77(" + mvpKills + " kill)");
+            p.sendMessage("\u00a77\u6700\u591a\u30c0\u30e1\u30fc\u30b8: \u00a7e" + dmgName + String.format(" \u00a77(%.1f dmg)", maxDmg));
             p.sendMessage(header);
-            // 個人成績
-            int myKills  = matchStats.getKills(uid);
-            double myDmg = matchStats.getDamage(uid);
-            p.sendMessage(String.format("§7あなたの成績: §fKill §e%d §f/ DMG §e%.1f", myKills, myDmg));
+            int myKills = this.matchStats.getKills(uid);
+            double myDmg = this.matchStats.getDamage(uid);
+            p.sendMessage(String.format("\u00a77\u3042\u306a\u305f\u306e\u6210\u7e3e: \u00a7fKill \u00a7e%d \u00a7f/ DMG \u00a7e%.1f", myKills, myDmg));
             p.sendMessage(header);
         }
     }
 
     public void returnAllToLobby() {
-        // コンクリートを白に戻す
-        resetCenterBlocks();
-
-        // 設置ブロックのクリーンアップ（ビーコン・旗・TNT）
-        if (currentMap != null && currentMap.getWorld() != null) {
-            World w = Bukkit.getWorld(currentMap.getWorld());
-            if (w != null) {
-                // Domination beacons
-                for (MapConfig.DomPoint dp : currentMap.getDominationPoints()) {
-                    if (dp.getCenter().getBlock().getType() == Material.BEACON) {
-                        dp.getCenter().getBlock().setType(Material.AIR);
-                    }
-                }
-                // CTF banners
-                if (currentMap.getRedFlagLocation() != null
-                        && currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
-                    currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
-                }
-                if (currentMap.getBlueFlagLocation() != null) {
-                    Material m = currentMap.getBlueFlagLocation().getBlock().getType();
-                    if (m == Material.CYAN_BANNER || m == Material.BLUE_BANNER) {
-                        currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
-                    }
-                }
-                // Bomb TNT
-                if (bombLoc != null && bombLoc.getBlock().getType() == Material.TNT) {
-                    bombLoc.getBlock().setType(Material.AIR);
-                }
+        Player p;
+        World w;
+        this.resetCenterBlocks();
+        if (this.currentMap != null && this.currentMap.getWorld() != null && (w = Bukkit.getWorld((String)this.currentMap.getWorld())) != null) {
+            Material m;
+            for (MapConfig.DomPoint dp : this.currentMap.getDominationPoints()) {
+                if (dp.getCenter().getBlock().getType() != Material.BEACON) continue;
+                dp.getCenter().getBlock().setType(Material.AIR);
+            }
+            if (this.currentMap.getRedFlagLocation() != null && this.currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
+                this.currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
+            }
+            if (this.currentMap.getBlueFlagLocation() != null && ((m = this.currentMap.getBlueFlagLocation().getBlock().getType()) == Material.CYAN_BANNER || m == Material.BLUE_BANNER)) {
+                this.currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
+            }
+            if (this.bombLoc != null && this.bombLoc.getBlock().getType() == Material.TNT) {
+                this.bombLoc.getBlock().setType(Material.AIR);
             }
         }
-
-        Location lobbySpawn = plugin.getLobbyManager().getLobbySpawn();
-
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player p = Bukkit.getPlayer(uid);
+        Location lobbySpawn = this.plugin.getLobbyManager().getLobbySpawn();
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            fullyRestorePlayer(p, lobbySpawn);
+            this.fullyRestorePlayer(p, lobbySpawn);
         }
-
-        for (UUID uid : new HashSet<>(spectators)) {
-            Player p = Bukkit.getPlayer(uid);
+        for (UUID uid : new HashSet<UUID>(this.spectators)) {
+            p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            fullyRestorePlayer(p, lobbySpawn);
+            this.fullyRestorePlayer(p, lobbySpawn);
         }
-
-        reset();
-        plugin.getLobbyManager().onGameEnd();
+        this.reset();
+        this.plugin.getLobbyManager().onGameEnd();
     }
 
-    /** プレイヤーをロビーに完全復帰させる（状態を全リセット） */
     private void fullyRestorePlayer(Player p, Location lobby) {
         p.setGameMode(org.bukkit.GameMode.ADVENTURE);
         p.teleport(lobby);
         p.getInventory().clear();
-
-        // Restore max HP
-        plugin.getSkillManager().restoreMaxHp(p);
+        this.plugin.getSkillManager().restoreMaxHp(p);
         p.setInvulnerable(false);
-
-        // ─ 体力・食料 ─
-        var maxHpAttr = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        AttributeInstance maxHpAttr = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
         double maxHp = maxHpAttr != null ? maxHpAttr.getValue() : 20.0;
         p.setHealth(maxHp);
         p.setFoodLevel(20);
-        p.setSaturation(5f);
-        p.setExhaustion(0f);
-
-        // ─ ポーション効果をすべて除去 ─
-        for (var effect : p.getActivePotionEffects()) {
+        p.setSaturation(5.0f);
+        p.setExhaustion(0.0f);
+        for (PotionEffect effect : p.getActivePotionEffects()) {
             p.removePotionEffect(effect.getType());
         }
-
-        // ─ 炎・矢 ─
         p.setFireTicks(0);
         p.setArrowsInBody(0);
-
-        // ─ 移動速度をデフォルトに戻す ─
         p.setWalkSpeed(0.2f);
         p.setFlySpeed(0.1f);
-
-        // ─ エフェクトリセット（タイトル等） ─
         p.resetTitle();
     }
 
     private void reset() {
-        plugin.getSkillManager().resetAll();
-        currentGameMode = GameMode.BATTLE_ARENA;
-        state = GameState.WAITING;
-        redTeam.clear();
-        blueTeam.clear();
-        spectators.clear();
-        kills.clear();
-        deaths.clear();
-        selectedKits.clear();
-        playerKit.clear();
-        noFallDamage.clear();
-        deadPlayers.clear();
-        currentMap = null;
-        matchStats = new MatchStats();
-        currentRound  = 0;
-        roundWinsRed  = 0;
-        roundWinsBlue = 0;
-        plugin.getBotManager().clearAll();
-        if (endingTask != null) { endingTask.cancel(); endingTask = null; }
-        if (tdmTimerTask != null) { tdmTimerTask.cancel(); tdmTimerTask = null; }
-        tdmKillsRed = 0;
-        tdmKillsBlue = 0;
-        if (domTimerTask != null) { domTimerTask.cancel(); domTimerTask = null; }
-        domPointsRed = 0;
-        domPointsBlue = 0;
-        redFlagTaken = false; blueFlagTaken = false;
-        redFlagCarrier = null; blueFlagCarrier = null;
-        bombCleanup();
-        bombRoundAttackerRed = true;
-        cancelHoldTimer(); // ホールドタイマーが残っていればキャンセル
+        this.plugin.getSkillManager().resetAll();
+        this.currentGameMode = GameMode.BATTLE_ARENA;
+        this.state = GameState.WAITING;
+        this.redTeam.clear();
+        this.blueTeam.clear();
+        this.spectators.clear();
+        this.kills.clear();
+        this.deaths.clear();
+        this.selectedKits.clear();
+        this.playerKit.clear();
+        this.noFallDamage.clear();
+        this.deadPlayers.clear();
+        this.currentMap = null;
+        this.matchStats = new MatchStats();
+        this.currentRound = 0;
+        this.roundWinsRed = 0;
+        this.roundWinsBlue = 0;
+        if (this.selectedBgm != null) {
+            this.selectedBgm.stop();
+        }
+        this.plugin.getBotManager().clearAll();
+        if (this.endingTask != null) {
+            this.endingTask.cancel();
+            this.endingTask = null;
+        }
+        if (this.tdmTimerTask != null) {
+            this.tdmTimerTask.cancel();
+            this.tdmTimerTask = null;
+        }
+        this.tdmKillsRed = 0;
+        this.tdmKillsBlue = 0;
+        if (this.domTimerTask != null) {
+            this.domTimerTask.cancel();
+            this.domTimerTask = null;
+        }
+        if (this.gameTickTask != null) {
+            this.gameTickTask.cancel();
+            this.gameTickTask = null;
+        }
+        this.domPointsRed = 0;
+        this.domPointsBlue = 0;
+        this.redFlagTaken = false;
+        this.blueFlagTaken = false;
+        this.redFlagCarrier = null;
+        this.blueFlagCarrier = null;
+        this.bombCleanup();
+        this.bombRoundAttackerRed = true;
+        this.cancelHoldTimer();
+        this.ffaParticipants.clear();
+        this.ffaEliminated.clear();
+        this.ffaKills.clear();
+        this.ffaTimeLimit = 300;
+        if (this.ffaTimerTask != null) {
+            this.ffaTimerTask.cancel();
+            this.ffaTimerTask = null;
+        }
     }
 
-    /** 試合中退出→復帰したプレイヤーをspectatorから参加者リストに戻す */
     public void rejoinPlayer(Player p) {
-        spectators.remove(p.getUniqueId());
-        // kills/deaths を維持したまま復帰
-        kills.putIfAbsent(p.getUniqueId(), 0);
-        deaths.putIfAbsent(p.getUniqueId(), 0);
+        this.spectators.remove(p.getUniqueId());
+        this.kills.putIfAbsent(p.getUniqueId(), 0);
+        this.deaths.putIfAbsent(p.getUniqueId(), 0);
     }
 
     public void forceStop() {
-        if (state == GameState.WAITING) return;
-        if (endingTask != null) { endingTask.cancel(); endingTask = null; }
-        endMatch(null, WinCondition.ELIMINATION);
+        if (this.state == GameState.WAITING) {
+            return;
+        }
+        if (this.endingTask != null) {
+            this.endingTask.cancel();
+            this.endingTask = null;
+        }
+        this.endMatch(null, WinCondition.ELIMINATION);
     }
 
-    // ─────────────────────────────────────────────
-    // 死亡処理
-    // ─────────────────────────────────────────────
+    public void onPlayerDied(Player victim, Player killer) {
+        this.onPlayerDied(victim, killer, killer != null ? killer.getUniqueId() : null);
+    }
 
-    public void onPlayerDied(Player victim, Player killer) { onPlayerDied(victim, killer, killer != null ? killer.getUniqueId() : null); }
-
-    /** killerUuid: BOTがkillerの場合はBOTのUUID（killerはnull）、実プレイヤーの場合はkiller.getUniqueId()と同じ */
     public void onPlayerDied(Player victim, Player killer, UUID killerUuid) {
-        if (state != GameState.IN_GAME) return;
-        // 二重呼び出し防止
-        if (deadPlayers.contains(victim.getUniqueId())) return;
-
-        deaths.merge(victim.getUniqueId(), 1, Integer::sum);
-        plugin.getStatsManager().addDeath(victim.getUniqueId());
-        roundKills.put(victim.getUniqueId(), 0); // 被弾でストリークリセット
-
-        TeamColor vt = getTeamOf(victim);
-        String victimColor = vt != null ? vt.getColorCode() : "§f";
         String deathMsg;
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        if (this.deadPlayers.contains(victim.getUniqueId())) {
+            return;
+        }
+        this.deaths.merge(victim.getUniqueId(), 1, Integer::sum);
+        this.plugin.getStatsManager().addDeath(victim.getUniqueId());
+        this.roundKills.put(victim.getUniqueId(), 0);
+        TeamColor vt = this.getTeamOf(victim);
+        String victimColor = vt != null ? vt.getColorCode() : "\u00a7f";
         String killerDisplay = null;
-        String killerColor = "§f";
-
+        String killerColor = "\u00a7f";
         if (killer != null) {
-            kills.merge(killer.getUniqueId(), 1, Integer::sum);
-            matchStats.addKill(killer.getUniqueId());
-            plugin.getStatsManager().addKill(killer.getUniqueId());
-            TeamColor kt = getTeamOf(killer);
-            killerColor = kt != null ? kt.getColorCode() : "§f";
+            this.kills.merge(killer.getUniqueId(), 1, Integer::sum);
+            this.matchStats.addKill(killer.getUniqueId());
+            this.plugin.getStatsManager().addKill(killer.getUniqueId());
+            TeamColor kt = this.getTeamOf(killer);
+            killerColor = kt != null ? ((TeamColor)((Object)kt)).getColorCode() : "\u00a7f";
             killerDisplay = killer.getName();
-            deathMsg = "§8☠ " + killerColor + killer.getName() + " §7» " + victimColor + victim.getName();
-        } else if (killerUuid != null && plugin.getBotManager().getBotTeam(killerUuid) != null) {
-            matchStats.addKill(killerUuid);
-            TeamColor kt = plugin.getBotManager().getBotTeam(killerUuid);
-            killerColor = kt != null ? kt.getColorCode() : "§f";
+            deathMsg = "\u00a78\u2620 " + killerColor + killer.getName() + " \u00a77\u00bb " + victimColor + victim.getName();
+        } else if (killerUuid != null && this.plugin.getBotManager().getBotTeam(killerUuid) != null) {
+            this.matchStats.addKill(killerUuid);
+            TeamColor kt = this.plugin.getBotManager().getBotTeam(killerUuid);
+            killerColor = kt != null ? ((TeamColor)((Object)kt)).getColorCode() : "\u00a7f";
             killerDisplay = "[BOT]";
-            deathMsg = "§8☠ " + killerColor + "[BOT] §7» " + victimColor + victim.getName();
+            deathMsg = "\u00a78\u2620 " + killerColor + "[BOT] \u00a77\u00bb " + victimColor + victim.getName();
         } else {
-            deathMsg = "§8☠ " + victimColor + victim.getName() + " §7が脱落";
+            deathMsg = "\u00a78\u2620 " + victimColor + victim.getName() + " \u00a77\u304c\u8131\u843d";
         }
-
-        // ─ チャット死亡ログ（1行のみ）─
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player pp = Bukkit.getPlayer(uid);
-            if (pp != null) pp.sendMessage(deathMsg);
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            Player pp = Bukkit.getPlayer((UUID)uid);
+            if (pp == null) continue;
+            pp.sendMessage(deathMsg);
         }
-
-        // ─ 派手演出 ─
-        Location deathLoc = victim.getLocation().add(0, 1, 0);
-        // 死亡地点に雷エフェクト + 爆発パーティクル
+        Location deathLoc = victim.getLocation().add(0.0, 1.0, 0.0);
         victim.getWorld().strikeLightningEffect(victim.getLocation());
-        victim.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, deathLoc, 4, 0.3, 0.3, 0.3, 0);
+        victim.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, deathLoc, 4, 0.3, 0.3, 0.3, 0.0);
         victim.getWorld().spawnParticle(Particle.CRIT, deathLoc, 50, 0.5, 0.5, 0.5, 0.5);
         victim.getWorld().spawnParticle(Particle.CRIT_MAGIC, deathLoc, 30, 0.4, 0.4, 0.4, 0.3);
         victim.getWorld().spawnParticle(Particle.SMOKE_LARGE, deathLoc, 15, 0.2, 0.2, 0.2, 0.05);
         victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.2f, 0.8f);
         victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.4f);
-
-        // 被害者タイトル
         if (killerDisplay != null) {
-            victim.sendTitle("§c§l☠  YOU DIED", killerColor + "§l" + killerDisplay + " §7にやられた", 3, 50, 10);
+            victim.sendTitle("\u00a7c\u00a7l\u2620  YOU DIED", killerColor + "\u00a7l" + killerDisplay + " \u00a77\u306b\u3084\u3089\u308c\u305f", 3, 50, 10);
         } else {
-            victim.sendTitle("§c§l☠  YOU DIED", "§7脱落", 3, 50, 10);
+            victim.sendTitle("\u00a7c\u00a7l\u2620  YOU DIED", "\u00a77\u8131\u843d", 3, 50, 10);
         }
-        victim.playSound(victim.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1f, 0.5f);
-
-        // キラー演出
+        victim.playSound(victim.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1.0f, 0.5f);
         if (killer != null) {
-            int rk = roundKills.merge(killer.getUniqueId(), 1, Integer::sum);
-            String streakTitle = getStreakTitle(rk);
-
+            int rk = this.roundKills.merge(killer.getUniqueId(), 1, Integer::sum);
+            String streakTitle = this.getStreakTitle(rk);
             if (rk == 1) {
-                killer.sendTitle("§6§l⚔ KILL!", "§7" + victimColor + victim.getName() + " §7を倒した", 3, 30, 6);
+                killer.sendTitle("\u00a76\u00a7l\u2694 KILL!", "\u00a77" + victimColor + victim.getName() + " \u00a77\u3092\u5012\u3057\u305f", 3, 30, 6);
                 killer.playSound(killer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.6f);
-                killer.spawnParticle(Particle.VILLAGER_HAPPY, killer.getLocation().add(0, 2, 0), 15, 0.4, 0.4, 0.4, 0.1);
+                killer.spawnParticle(Particle.VILLAGER_HAPPY, killer.getLocation().add(0.0, 2.0, 0.0), 15, 0.4, 0.4, 0.4, 0.1);
             } else {
-                // ストリーク: ド派手
-                killer.sendTitle(streakTitle, "§e" + rk + " kills §7in a row!", 3, 45, 10);
-                killer.playSound(killer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f + (rk - 2) * 0.15f);
-                killer.playSound(killer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.8f);
-                killer.spawnParticle(Particle.TOTEM, killer.getLocation().add(0, 1, 0), 60, 0.5, 1.0, 0.5, 0.5);
-                killer.spawnParticle(Particle.CRIT, killer.getLocation().add(0, 1, 0), 40, 0.4, 0.4, 0.4, 0.4);
-
-                // ストリーク3以上: 全員に花火+アナウンス
+                killer.sendTitle(streakTitle, "\u00a7e" + rk + " kills \u00a77in a row!", 3, 45, 10);
+                killer.playSound(killer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f + (float)(rk - 2) * 0.15f);
+                killer.playSound(killer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.8f);
+                killer.spawnParticle(Particle.TOTEM, killer.getLocation().add(0.0, 1.0, 0.0), 60, 0.5, 1.0, 0.5, 0.5);
+                killer.spawnParticle(Particle.CRIT, killer.getLocation().add(0.0, 1.0, 0.0), 40, 0.4, 0.4, 0.4, 0.4);
                 if (rk >= 3) {
-                    for (UUID uid : getAllParticipantsAndSpectators()) {
-                        Player pp = Bukkit.getPlayer(uid);
-                        if (pp != null) {
-                            pp.sendMessage("§6§l★ " + killer.getName() + " §r" + streakTitle + " §8(" + rk + " kills)");
-                            pp.playSound(pp.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.4f);
-                        }
+                    for (UUID uid : this.getAllParticipantsAndSpectators()) {
+                        Player pp = Bukkit.getPlayer((UUID)uid);
+                        if (pp == null) continue;
+                        pp.sendMessage("\u00a76\u00a7l\u2605 " + killer.getName() + " \u00a7r" + streakTitle + " \u00a78(" + rk + " kills)");
+                        pp.playSound(pp.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.4f);
                     }
-                    // キラー頭上に花火
-                    spawnKillStreakFirework(killer, rk);
+                    this.spawnKillStreakFirework(killer, rk);
                 }
             }
-            // Special kill announcer for big plays
             if (rk >= 3) {
-                announceBigPlay(killer, rk);
+                this.announceBigPlay(killer, rk);
             }
         }
-
-        // TDM/Domination/CTF: リスポーン + キルカウント
-        if (currentGameMode == GameMode.TEAM_DEATHMATCH
-                || currentGameMode == GameMode.DOMINATION
-                || currentGameMode == GameMode.CAPTURE_THE_FLAG) {
-            // Clear placements on death
-            plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
-            // TDMのみキルカウントと目標チェック
-            if (currentGameMode == GameMode.TEAM_DEATHMATCH) {
-                TeamColor kt2 = killer != null ? getTeamOf(killer) : null;
-                if (killerUuid != null && plugin.getBotManager().getBotTeam(killerUuid) != null) {
-                    kt2 = plugin.getBotManager().getBotTeam(killerUuid);
-                }
-                if (kt2 == TeamColor.RED) tdmKillsRed++;
-                else if (kt2 == TeamColor.BLUE) tdmKillsBlue++;
-                int target = plugin.getConfig().getInt("team_deathmatch.target_kills", 30);
-                if (tdmKillsRed >= target) { endGame(TeamColor.RED, WinCondition.ELIMINATION); return; }
-                if (tdmKillsBlue >= target) { endGame(TeamColor.BLUE, WinCondition.ELIMINATION); return; }
+        if (this.currentGameMode == GameMode.FFA) {
+            if (killer != null) {
+                this.ffaKills.merge(killer.getUniqueId(), 1, Integer::sum);
             }
-            // 即スペクテーター化 → 3秒後にリスポーン
-            Player finalV = victim;
-            TeamColor vTeam = getTeamOf(finalV);
-            addSpectator(finalV);  // immediately spectate at death location
-            finalV.sendMessage("§7リスポーンまで §e3§7秒...");
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (finalV.isOnline() && state == GameState.IN_GAME) {
-                    roundRestorePlayer(finalV);
-                    finalV.setGameMode(org.bukkit.GameMode.SURVIVAL);
-                    try { finalV.spigot().respawn(); } catch (Exception ignored) {}
-                    KitType kt2 = getPlayerKits().get(finalV.getUniqueId());
-                    if (kt2 != null && vTeam != null) {
-                        com.bloxarena.kit.KitBuilder.giveKit(finalV, kt2, vTeam, plugin);
+            this.plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
+            this.ffaEliminated.add(victim.getUniqueId());
+            this.deadPlayers.add(victim.getUniqueId());
+            Player ffv = victim;
+            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+                if (this.deadPlayers.contains(ffv.getUniqueId())) {
+                    this.addSpectator(ffv);
+                }
+            }, 1L);
+            long aliveCount = this.ffaParticipants.size() - this.ffaEliminated.size();
+            if (aliveCount <= 1L) {
+                this.state = GameState.ENDING;
+                UUID winnerUid = null;
+                for (UUID uid : this.ffaParticipants) {
+                    if (this.ffaEliminated.contains(uid)) continue;
+                    winnerUid = uid;
+                    break;
+                }
+                Player winner = winnerUid != null ? Bukkit.getPlayer(winnerUid) : null;
+                String winName = winner != null ? winner.getName() : "\u306a\u3057";
+                Bukkit.broadcastMessage((String)("\u00a76\u00a7l\ud83c\udfc6 FFA \u7d42\u4e86\uff01 \u00a7e" + winName + " \u00a7f\u304c\u6700\u5f8c\u306e\u751f\u5b58\u8005\u3067\u3059\uff01"));
+                if (this.ffaTimerTask != null) {
+                    this.ffaTimerTask.cancel();
+                    this.ffaTimerTask = null;
+                }
+                Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.endGame(null, WinCondition.ELIMINATION), 60L);
+            }
+            return;
+        }
+        if (this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
+            this.plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
+            if (this.currentGameMode == GameMode.TEAM_DEATHMATCH) {
+                TeamColor kt2;
+                TeamColor teamColor = kt2 = killer != null ? this.getTeamOf(killer) : null;
+                if (killerUuid != null && this.plugin.getBotManager().getBotTeam(killerUuid) != null) {
+                    kt2 = this.plugin.getBotManager().getBotTeam(killerUuid);
+                }
+                if (kt2 == null) {
+                    TeamColor vc = this.getTeamOf(victim);
+                    if (vc == TeamColor.RED) {
+                        if (this.tdmKillsRed > 0) {
+                            --this.tdmKillsRed;
+                        }
+                    } else if (vc == TeamColor.BLUE && this.tdmKillsBlue > 0) {
+                        --this.tdmKillsBlue;
                     }
-                    if (vTeam != null && currentMap != null) teleportToSpawnZonePublic(finalV, currentMap, vTeam);
-                    plugin.getSkillManager().refreshBurst(finalV);
-                    finalV.sendMessage("§aリスポーン！");
+                } else if (kt2 == TeamColor.RED) {
+                    ++this.tdmKillsRed;
+                } else if (kt2 == TeamColor.BLUE) {
+                    ++this.tdmKillsBlue;
                 }
-            }, 60L);  // 3 second respawn delay
-        } else {
-            deadPlayers.add(victim.getUniqueId());
-            if (currentGameMode == GameMode.BATTLE_ARENA || currentGameMode == GameMode.BOMB_MISSION) {
-                plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
+                int target = this.plugin.getConfig().getInt("team_deathmatch.target_kills", 30);
+                if (this.tdmKillsRed >= target) {
+                    this.endGame(TeamColor.RED, WinCondition.ELIMINATION);
+                    return;
+                }
+                if (this.tdmKillsBlue >= target) {
+                    this.endGame(TeamColor.BLUE, WinCondition.ELIMINATION);
+                    return;
+                }
             }
-            final Player finalVictim = victim;
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (deadPlayers.contains(finalVictim.getUniqueId())) {
-                    addSpectator(finalVictim);
+            Player finalV = victim;
+            TeamColor vTeam = this.getTeamOf(finalV);
+            this.addSpectator(finalV);
+            long respawnDelay = 60L;
+            if (this.currentGameMode == GameMode.CAPTURE_THE_FLAG || this.currentGameMode == GameMode.DOMINATION) {
+                long baseRespawn;
+                double ratio;
+                int enemySize;
+                int ownSize = vTeam == TeamColor.RED ? this.ctfRedTeamSize : this.ctfBlueTeamSize;
+                int n = enemySize = vTeam == TeamColor.RED ? this.ctfBlueTeamSize : this.ctfRedTeamSize;
+                if (enemySize == 0) {
+                    enemySize = 1;
+                }
+                if ((respawnDelay = (long)((ratio = (double)ownSize / (double)enemySize) * (double)(baseRespawn = this.currentGameMode == GameMode.CAPTURE_THE_FLAG ? 100L : 80L))) > 200L) {
+                    respawnDelay = 200L;
+                }
+                if (respawnDelay < 40L) {
+                    respawnDelay = 40L;
+                }
+            }
+            finalV.sendMessage("\u00a77\u30ea\u30b9\u30dd\u30fc\u30f3\u307e\u3067 \u00a7e" + respawnDelay / 20L + "\u00a77\u79d2...");
+            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+                if (finalV.isOnline() && this.state == GameState.IN_GAME) {
+                    this.roundRestorePlayer(finalV);
+                    finalV.setGameMode(org.bukkit.GameMode.SURVIVAL);
+                    try {
+                        finalV.spigot().respawn();
+                    }
+                    catch (Exception exception) {
+                        // empty catch block
+                    }
+                    KitType kt2 = this.getPlayerKits().get(finalV.getUniqueId());
+                    if (kt2 != null && vTeam != null) {
+                        KitBuilder.giveKit(finalV, kt2, vTeam, this.plugin);
+                    }
+                    if (vTeam != null && this.currentMap != null) {
+                        this.teleportToSpawnZonePublic(finalV, this.currentMap, vTeam);
+                    }
+                    this.plugin.getSkillManager().refreshBurst(finalV);
+                    finalV.sendMessage("\u00a7a\u30ea\u30b9\u30dd\u30fc\u30f3\uff01");
+                }
+            }, respawnDelay);
+        } else {
+            this.deadPlayers.add(victim.getUniqueId());
+            if (this.currentGameMode == GameMode.BATTLE_ARENA || this.currentGameMode == GameMode.BOMB_MISSION) {
+                this.plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
+            }
+            Player finalVictim = victim;
+            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+                if (this.deadPlayers.contains(finalVictim.getUniqueId())) {
+                    this.addSpectator(finalVictim);
                 }
             }, 1L);
         }
-
-        // CTF: drop flag
-        if (currentGameMode == GameMode.CAPTURE_THE_FLAG) {
-            dropFlag(victim.getUniqueId());
+        if (this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
+            this.dropFlag(victim.getUniqueId());
         }
-
-        // Bomb Mission: cancel defuse if defuser dies
-        if (currentGameMode == GameMode.BOMB_MISSION && bombDefusing && victim.equals(bombDefuser)) {
-            bombDefusing = false; bombDefuser = null;
-            Bukkit.broadcastMessage("§c解除が中断されました！（解除者が死亡）");
+        if (this.currentGameMode == GameMode.BOMB_MISSION && this.bombDefusing && victim.equals((Object)this.bombDefuser)) {
+            this.bombDefusing = false;
+            this.bombDefuser = null;
+            Bukkit.broadcastMessage((String)"\u00a7c\u89e3\u9664\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f\uff01\uff08\u89e3\u9664\u8005\u304c\u6b7b\u4ea1\uff09");
         }
-
-        if (currentGameMode == GameMode.BOMB_MISSION && !bombPlanted) {
-            TeamColor attacker = bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-            if (getAliveCount(attacker) == 0) {
-                TeamColor defender = bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-                endGame(defender, WinCondition.OBJECTIVE);
-                return;
-            }
-        }
-        if (currentGameMode != GameMode.BOMB_MISSION || !bombPlanted) {
-            if (currentGameMode != GameMode.DOMINATION && currentGameMode != GameMode.CAPTURE_THE_FLAG) {
-                Bukkit.getScheduler().runTaskLater(plugin, this::checkEliminationWin, 1L);
-            }
+        if (!(this.currentGameMode == GameMode.BOMB_MISSION && this.bombPlanted || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG)) {
+            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, this::checkEliminationWin, 1L);
         }
     }
 
     private String getStreakTitle(int kills) {
         return switch (kills) {
-            case 2  -> "§e§lDOUBLE KILL!!";
-            case 3  -> "§6§l🔥 TRIPLE KILL!";
-            case 4  -> "§c§l⚡ QUADRA KILL!";
-            case 5  -> "§4§l★ PENTA KILL ★";
-            default -> "§4§l💀 RAMPAGE 💀";
+            case 2 -> "\u00a7e\u00a7lDOUBLE KILL!!";
+            case 3 -> "\u00a76\u00a7l\ud83d\udd25 TRIPLE KILL!";
+            case 4 -> "\u00a7c\u00a7l\u26a1 QUADRA KILL!";
+            case 5 -> "\u00a74\u00a7l\u2605 PENTA KILL \u2605";
+            default -> "\u00a74\u00a7l\ud83d\udc80 RAMPAGE \ud83d\udc80";
         };
     }
 
     private void spawnKillStreakFirework(Player killer, int streak) {
-        org.bukkit.Color color = switch (streak) {
-            case 3  -> org.bukkit.Color.YELLOW;
-            case 4  -> org.bukkit.Color.ORANGE;
-            case 5  -> org.bukkit.Color.RED;
-            default -> org.bukkit.Color.fromRGB(148, 0, 211); // 紫
+        Color color = switch (streak) {
+            case 3 -> Color.YELLOW;
+            case 4 -> Color.ORANGE;
+            case 5 -> Color.RED;
+            default -> Color.fromRGB((int)148, (int)0, (int)211);
         };
-        Location loc = killer.getLocation().add(0, 2, 0);
-        int count = Math.min(streak - 2, 4); // 最大4発
-        for (int i = 0; i < count; i++) {
-            final int delay = i * 3;
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (!killer.isOnline()) return;
-                org.bukkit.entity.Firework fw = (org.bukkit.entity.Firework)
-                    killer.getWorld().spawnEntity(
-                        loc.clone().add((Math.random()-0.5)*2, 0, (Math.random()-0.5)*2),
-                        org.bukkit.entity.EntityType.FIREWORK);
-                org.bukkit.FireworkEffect effect = org.bukkit.FireworkEffect.builder()
-                    .with(org.bukkit.FireworkEffect.Type.STAR)
-                    .withColor(color, org.bukkit.Color.WHITE)
-                    .withFade(org.bukkit.Color.YELLOW)
-                    .withFlicker().withTrail().build();
-                org.bukkit.inventory.meta.FireworkMeta meta = fw.getFireworkMeta();
+        Location loc = killer.getLocation().add(0.0, 2.0, 0.0);
+        int count = Math.min(streak - 2, 4);
+        for (int i = 0; i < count; ++i) {
+            int delay = i * 3;
+            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+                if (!killer.isOnline()) {
+                    return;
+                }
+                Firework fw = (Firework)killer.getWorld().spawnEntity(loc.clone().add((Math.random() - 0.5) * 2.0, 0.0, (Math.random() - 0.5) * 2.0), EntityType.FIREWORK);
+                FireworkEffect effect = FireworkEffect.builder().with(FireworkEffect.Type.STAR).withColor(new Color[]{color, Color.WHITE}).withFade(Color.YELLOW).withFlicker().withTrail().build();
+                FireworkMeta meta = fw.getFireworkMeta();
                 meta.addEffect(effect);
                 meta.setPower(0);
                 fw.setFireworkMeta(meta);
                 fw.detonate();
-            }, delay);
+            }, (long)delay);
         }
     }
 
-    /**
-     * BOT死亡時に呼ばれる。
-     * killer は null の場合あり（落下死など）。
-     */
     public void onBotDied(UUID botUuid, Player killer) {
-        if (state != GameState.IN_GAME) return;
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
         if (killer != null) {
-            kills.merge(killer.getUniqueId(), 1, Integer::sum);
-            matchStats.addKill(killer.getUniqueId());
-            plugin.getStatsManager().addKill(killer.getUniqueId());
-            TeamColor bt = plugin.getBotManager().getBotTeam(botUuid);
-            TeamColor kt = getTeamOf(killer);
-            String botColor = bt != null ? bt.getColorCode() : "§f";
-            String killerColor = kt != null ? kt.getColorCode() : "§f";
-            String msg = botColor + "[BOT] §7が " + killerColor + killer.getName() + " §7にやられた！";
-            for (UUID uid : getAllParticipantsAndSpectators()) {
-                Player p = Bukkit.getPlayer(uid); if (p != null) p.sendMessage(msg);
+            this.kills.merge(killer.getUniqueId(), 1, Integer::sum);
+            this.matchStats.addKill(killer.getUniqueId());
+            this.plugin.getStatsManager().addKill(killer.getUniqueId());
+            TeamColor bt = this.plugin.getBotManager().getBotTeam(botUuid);
+            TeamColor kt = this.getTeamOf(killer);
+            String botColor = bt != null ? bt.getColorCode() : "\u00a7f";
+            String killerColor = kt != null ? kt.getColorCode() : "\u00a7f";
+            String msg = botColor + "[BOT] \u00a77\u304c " + killerColor + killer.getName() + " \u00a77\u306b\u3084\u3089\u308c\u305f\uff01";
+            for (UUID uid : this.getAllParticipantsAndSpectators()) {
+                Player p = Bukkit.getPlayer((UUID)uid);
+                if (p == null) continue;
+                p.sendMessage(msg);
             }
         }
-        // 消去・チームから削除はBotManager側で行い、ここでは勝利チェックのみ
-        Bukkit.getScheduler().runTaskLater(plugin, this::checkEliminationWin, 1L);
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, this::checkEliminationWin, 1L);
     }
 
-        // ─────────────────────────────────────────────
-    // キット選択
-    // ─────────────────────────────────────────────
-
-    /** チーム内で既にそのキットが選択されているか */
     public boolean isKitTakenInTeam(UUID playerUid, String kitName) {
-        List<UUID> team = getTeamOf(playerUid);
+        List<UUID> team = this.getTeamOf(playerUid);
         for (UUID uid : team) {
-            if (kitName.equals(playerKit.get(uid))) return true;
+            if (!kitName.equals(this.playerKit.get(uid))) continue;
+            return true;
         }
         return false;
     }
 
     public void setPlayerKit(UUID uid, String kitName) {
-        playerKit.put(uid, kitName);
+        this.playerKit.put(uid, kitName);
     }
 
     public String getPlayerKit(UUID uid) {
-        return playerKit.get(uid);
+        return this.playerKit.get(uid);
     }
-
-    // ─────────────────────────────────────────────
-    // 爆破ミッション
-    // ─────────────────────────────────────────────
 
     private void broadcastBombRoundInfo() {
-        TeamColor attacker = bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player pl = Bukkit.getPlayer(uid);
-            if (pl != null) {
-                String role = (getTeamOf(pl) == attacker) ? "§c攻撃側: 爆弾を設置せよ！" : "§9守備側: 設置を阻止せよ！";
-                pl.sendTitle(attacker.getColorCode() + "ラウンド " + currentRound, role, 5, 50, 10);
-            }
+        TeamColor attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            Player pl = Bukkit.getPlayer((UUID)uid);
+            if (pl == null) continue;
+            String role = this.getTeamOf(pl) == attacker ? "\u00a7c\u653b\u6483\u5074: \u7206\u5f3e\u3092\u8a2d\u7f6e\u305b\u3088\uff01" : "\u00a79\u5b88\u5099\u5074: \u8a2d\u7f6e\u3092\u963b\u6b62\u305b\u3088\uff01";
+            pl.sendTitle(attacker.getColorCode() + "\u30e9\u30a6\u30f3\u30c9 " + this.currentRound, role, 5, 50, 10);
         }
     }
 
-    public void tryPlantBomb(Player p) {
-        if (currentGameMode != GameMode.BOMB_MISSION) return;
-        if (state != GameState.IN_GAME) return;
-        if (bombPlanted) return;
-        if (currentMap == null || currentMap.getBombSite() == null) return;
-        TeamColor attacker = bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-        if (getTeamOf(p) != attacker) { p.sendMessage("§cあなたは攻撃側ではありません。"); return; }
-        if (p.getLocation().distance(currentMap.getBombSite()) > 3) {
-            if (p.getLocation().distance(currentMap.getBombSite()) < 10) p.sendMessage("§c爆弾設置地点に近づいてください。");
+    public void tryPlantBomb(final Player p) {
+        TeamColor attacker;
+        if (this.currentGameMode != GameMode.BOMB_MISSION) {
             return;
         }
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        if (this.bombPlanted) {
+            return;
+        }
+        if (this.currentMap == null || this.currentMap.getBombSite() == null) {
+            return;
+        }
+        TeamColor teamColor = attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
+        if (this.getTeamOf(p) != attacker) {
+            p.sendMessage("\u00a7c\u3042\u306a\u305f\u306f\u653b\u6483\u5074\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002");
+            return;
+        }
+        if (p.getLocation().distance(this.currentMap.getBombSite()) > 3.0) {
+            if (p.getLocation().distance(this.currentMap.getBombSite()) < 10.0) {
+                p.sendMessage("\u00a7c\u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u306b\u8fd1\u3065\u3044\u3066\u304f\u3060\u3055\u3044\u3002");
+            }
+            return;
+        }
+        final int plantTime = this.plugin.getConfig().getInt("bomb_mission.plant_time_seconds", 5);
+        p.sendMessage("\u00a7c\u00a7l\u7206\u5f3e\u8a2d\u7f6e\u4e2d... \u00a7e" + plantTime + "\u79d2");
+        this.bombPlanted = true;
+        this.bombLoc = this.currentMap.getBombSite().clone();
+        new BukkitRunnable(){
+            int progress;
+            {
+                this.progress = plantTime;
+            }
 
-        int plantTime = plugin.getConfig().getInt("bomb_mission.plant_time_seconds", 5);
-        p.sendMessage("§c§l爆弾設置中... §e" + plantTime + "秒");
-        bombPlanted = true;
-        bombLoc = currentMap.getBombSite().clone();
-        new BukkitRunnable() {
-            int progress = plantTime;
-            @Override public void run() {
-                if (!p.isOnline() || state != GameState.IN_GAME || p.getLocation().distance(bombLoc) > 3) {
-                    p.sendMessage("§c設置が中断されました！");
-                    bombPlanted = false;
-                    bombLoc = null;
-                    cancel();
+            public void run() {
+                if (!p.isOnline() || GameManager.this.state != GameState.IN_GAME || p.getLocation().distance(GameManager.this.bombLoc) > 3.0) {
+                    p.sendMessage("\u00a7c\u8a2d\u7f6e\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f\uff01");
+                    GameManager.this.bombPlanted = false;
+                    GameManager.this.bombLoc = null;
+                    this.cancel();
                     return;
                 }
-                p.sendActionBar(net.kyori.adventure.text.Component.text("§c§l設置中... §e" + progress + "秒"));
-                p.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, p.getLocation().add(0, 1.5, 0), 3, 0.3, 0.3, 0.3, 0);
-                progress--;
-                if (progress <= 0) {
-                    cancel();
-                    bombArmed(p);
+                p.sendActionBar((Component)Component.text((String)("\u00a7c\u00a7l\u8a2d\u7f6e\u4e2d... \u00a7e" + this.progress + "\u79d2")));
+                p.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, p.getLocation().add(0.0, 1.5, 0.0), 3, 0.3, 0.3, 0.3, 0.0);
+                --this.progress;
+                if (this.progress <= 0) {
+                    this.cancel();
+                    GameManager.this.bombArmed(p);
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
     }
 
     private void bombArmed(Player planter) {
-        int fuse = plugin.getConfig().getInt("bomb_mission.bomb_fuse_seconds", 45);
-        bombSecondsRemaining = fuse;
-        Bukkit.broadcastMessage("§c§l💣 爆弾が設置されました！ §e" + fuse + "秒で爆発！");
+        int fuse;
+        this.bombSecondsRemaining = fuse = this.plugin.getConfig().getInt("bomb_mission.bomb_fuse_seconds", 45);
+        Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca3 \u7206\u5f3e\u304c\u8a2d\u7f6e\u3055\u308c\u307e\u3057\u305f\uff01 \u00a7e" + fuse + "\u79d2\u3067\u7206\u767a\uff01"));
         for (Player pl : Bukkit.getOnlinePlayers()) {
             pl.playSound(pl.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.5f, 0.6f);
         }
-        if (bombLoc != null && bombLoc.getWorld() != null) {
-            bombLoc.getBlock().setType(Material.TNT);
+        if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
+            this.bombLoc.getBlock().setType(Material.TNT);
         }
+        this.bombTimerTask = new BukkitRunnable(){
 
-        bombTimerTask = new BukkitRunnable() {
-            @Override public void run() {
-                if (state != GameState.IN_GAME) { cancel(); return; }
-                // Elimination check while bomb is ticking
-                TeamColor attacker = bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-                TeamColor defender = bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-                if (getAliveCount(defender) == 0) {
-                    cancel();
-                    bombCleanup();
-                    Bukkit.broadcastMessage("§c§l💥 防衛側全滅！ " + attacker.getDisplayName() + "チームの勝利！");
-                    endGame(attacker, WinCondition.OBJECTIVE);
+            public void run() {
+                TeamColor defender;
+                if (GameManager.this.state != GameState.IN_GAME) {
+                    this.cancel();
                     return;
                 }
-                bombSecondsRemaining--;
-                if (bombSecondsRemaining <= 10 && bombSecondsRemaining > 0) {
-                    for (Player pl : Bukkit.getOnlinePlayers()) {
-                        if (isParticipant(pl) || isSpectator(pl))
-                            pl.sendActionBar(net.kyori.adventure.text.Component.text(
-                                "§c💣 爆発まで §e" + bombSecondsRemaining + "秒"));
-                        pl.playSound(pl.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.8f);
-                    }
+                TeamColor attacker = GameManager.this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
+                TeamColor teamColor = defender = GameManager.this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
+                if (GameManager.this.getAliveCount(defender) == 0) {
+                    this.cancel();
+                    GameManager.this.bombCleanup();
+                    Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca5 \u9632\u885b\u5074\u5168\u6ec5\uff01 " + attacker.getDisplayName() + "\u30c1\u30fc\u30e0\u306e\u52dd\u5229\uff01"));
+                    GameManager.this.endGame(attacker, WinCondition.OBJECTIVE);
+                    return;
                 }
-                if (bombSecondsRemaining <= 0) {
-                    cancel();
-                    bombExplode();
+                --GameManager.this.bombSecondsRemaining;
+                if (GameManager.this.bombSecondsRemaining <= 0) {
+                    this.cancel();
+                    GameManager.this.bombExplode();
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
     }
 
     private void bombExplode() {
-        if (bombLoc != null && bombLoc.getWorld() != null) {
-            bombLoc.getWorld().createExplosion(bombLoc, 8f, false, true);
-            bombLoc.getBlock().setType(Material.AIR);
+        if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
+            this.bombLoc.getWorld().createExplosion(this.bombLoc, 8.0f, false, true);
+            this.bombLoc.getBlock().setType(Material.AIR);
         }
-        bombCleanup();
-        TeamColor attacker = bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-        Bukkit.broadcastMessage("§c§l💥 爆弾が爆発！ " + attacker.getDisplayName() + "チームの勝利！");
-        endGame(attacker, WinCondition.OBJECTIVE);
+        this.bombCleanup();
+        TeamColor attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
+        Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca5 \u7206\u5f3e\u304c\u7206\u767a\uff01 " + attacker.getDisplayName() + "\u30c1\u30fc\u30e0\u306e\u52dd\u5229\uff01"));
+        this.endGame(attacker, WinCondition.OBJECTIVE);
     }
 
-    public void tryDefuseBomb(Player p) {
-        if (currentGameMode != GameMode.BOMB_MISSION) return;
-        if (state != GameState.IN_GAME) return;
-        if (!bombPlanted || bombLoc == null) return;
-        TeamColor defender = bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-        if (getTeamOf(p) != defender) { p.sendMessage("§cあなたは守備側ではありません。"); return; }
-        if (p.getLocation().distance(bombLoc) > 3) {
-            if (p.getLocation().distance(bombLoc) < 10) p.sendMessage("§c爆弾に近づいてください。");
+    public void tryDefuseBomb(final Player p) {
+        TeamColor defender;
+        if (this.currentGameMode != GameMode.BOMB_MISSION) {
             return;
         }
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        if (!this.bombPlanted || this.bombLoc == null) {
+            return;
+        }
+        TeamColor teamColor = defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
+        if (this.getTeamOf(p) != defender) {
+            p.sendMessage("\u00a7c\u3042\u306a\u305f\u306f\u5b88\u5099\u5074\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002");
+            return;
+        }
+        if (p.getLocation().distance(this.bombLoc) > 3.0) {
+            if (p.getLocation().distance(this.bombLoc) < 10.0) {
+                p.sendMessage("\u00a7c\u7206\u5f3e\u306b\u8fd1\u3065\u3044\u3066\u304f\u3060\u3055\u3044\u3002");
+            }
+            return;
+        }
+        if (p.getInventory().getItemInOffHand().getType() == Material.SHIELD) {
+            p.sendMessage("\u00a7c\u76fe\u3092\u5916\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u89e3\u9664\u4e2d\u306f\u76fe\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3002");
+            return;
+        }
+        final int defuseTime = this.plugin.getConfig().getInt("bomb_mission.defuse_time_seconds", 7);
+        this.bombDefusing = true;
+        this.bombDefuser = p;
+        p.sendMessage("\u00a7a\u00a7l\u89e3\u9664\u4e2d... \u00a7e" + defuseTime + "\u79d2");
+        new BukkitRunnable(){
+            int progress;
+            {
+                this.progress = defuseTime;
+            }
 
-        int defuseTime = plugin.getConfig().getInt("bomb_mission.defuse_time_seconds", 7);
-        bombDefusing = true;
-        bombDefuser = p;
-        p.sendMessage("§a§l解除中... §e" + defuseTime + "秒");
-        new BukkitRunnable() {
-            int progress = defuseTime;
-            @Override public void run() {
-                if (!p.isOnline() || state != GameState.IN_GAME || p.getLocation().distance(bombLoc) > 3) {
-                    p.sendMessage("§c解除が中断されました！");
-                    bombDefusing = false; bombDefuser = null;
-                    cancel();
+            public void run() {
+                if (!p.isOnline() || GameManager.this.state != GameState.IN_GAME || p.getLocation().distance(GameManager.this.bombLoc) > 3.0 || p.getInventory().getItemInOffHand().getType() == Material.SHIELD) {
+                    p.sendMessage("\u00a7c\u89e3\u9664\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f\uff01");
+                    GameManager.this.bombDefusing = false;
+                    GameManager.this.bombDefuser = null;
+                    this.cancel();
                     return;
                 }
-                p.sendActionBar(net.kyori.adventure.text.Component.text("§a§l解除中... §e" + progress + "秒"));
-                progress--;
-                if (progress <= 0) {
-                    cancel();
-                    bombDefused(p);
+                p.sendActionBar((Component)Component.text((String)("\u00a7a\u00a7l\u89e3\u9664\u4e2d... \u00a7e" + this.progress + "\u79d2")));
+                --this.progress;
+                if (this.progress <= 0) {
+                    this.cancel();
+                    GameManager.this.bombDefused(p);
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
     }
 
     private void bombDefused(Player defuser) {
-        TeamColor defender = bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-        Bukkit.broadcastMessage("§a§l🛡 爆弾が解除されました！ " + defender.getDisplayName() + "チームの勝利！");
-        if (bombLoc != null && bombLoc.getWorld() != null) {
-            bombLoc.getBlock().setType(Material.AIR);
+        TeamColor defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
+        Bukkit.broadcastMessage((String)("\u00a7a\u00a7l\ud83d\udee1 \u7206\u5f3e\u304c\u89e3\u9664\u3055\u308c\u307e\u3057\u305f\uff01 " + defender.getDisplayName() + "\u30c1\u30fc\u30e0\u306e\u52dd\u5229\uff01"));
+        if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
+            this.bombLoc.getBlock().setType(Material.AIR);
         }
-        bombCleanup();
-        endGame(defender, WinCondition.OBJECTIVE);
+        this.bombCleanup();
+        this.endGame(defender, WinCondition.OBJECTIVE);
     }
 
     private void bombCleanup() {
-        if (bombLoc != null && bombLoc.getWorld() != null) {
-            bombLoc.getBlock().setType(Material.AIR);
+        if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
+            this.bombLoc.getBlock().setType(Material.AIR);
         }
-        bombPlanted = false;
-        bombLoc = null;
-        bombDefusing = false;
-        bombDefuser = null;
-        if (bombTimerTask != null) { bombTimerTask.cancel(); bombTimerTask = null; }
+        this.bombPlanted = false;
+        this.bombLoc = null;
+        this.bombDefusing = false;
+        this.bombDefuser = null;
+        if (this.bombTimerTask != null) {
+            this.bombTimerTask.cancel();
+            this.bombTimerTask = null;
+        }
+        if (this.bombRoundTimerTask != null) {
+            this.bombRoundTimerTask.cancel();
+            this.bombRoundTimerTask = null;
+        }
     }
 
-    public boolean isBombPlanted() { return bombPlanted; }
-    public Location getBombLoc() { return bombLoc; }
+    public boolean isBombPlanted() {
+        return this.bombPlanted;
+    }
 
-    // ─────────────────────────────────────────────
-    // ユーティリティ
-    // ─────────────────────────────────────────────
+    public long getInGameStartTime() {
+        return this.inGameStartTime;
+    }
+
+    public UUID getBombDefuserUuid() {
+        return this.bombDefuser != null ? this.bombDefuser.getUniqueId() : null;
+    }
+
+    public int getBombSecondsRemaining() {
+        return this.bombSecondsRemaining;
+    }
+
+    public boolean isFlagCarrier(UUID uid) {
+        return uid.equals(this.redFlagCarrier) || uid.equals(this.blueFlagCarrier);
+    }
+
+    public Location getBombLoc() {
+        return this.bombLoc;
+    }
 
     public TeamColor getTeamOf(Player p) {
         UUID uid = p.getUniqueId();
-        if (redTeam.contains(uid)) return TeamColor.RED;
-        if (blueTeam.contains(uid)) return TeamColor.BLUE;
+        if (this.currentGameMode == GameMode.FFA) {
+            return null;
+        }
+        if (this.redTeam.contains(uid)) {
+            return TeamColor.RED;
+        }
+        if (this.blueTeam.contains(uid)) {
+            return TeamColor.BLUE;
+        }
         return null;
     }
 
-
-    /** getTeamOf(UUID) の別名 (スコアボード・リスナーから参照) */
     public TeamColor getTeam(UUID uid) {
-        if (redTeam.contains(uid)) return TeamColor.RED;
-        if (blueTeam.contains(uid)) return TeamColor.BLUE;
+        if (this.currentGameMode == GameMode.FFA) {
+            return null;
+        }
+        if (this.redTeam.contains(uid)) {
+            return TeamColor.RED;
+        }
+        if (this.blueTeam.contains(uid)) {
+            return TeamColor.BLUE;
+        }
+        return null;
+    }
+
+    public TeamColor getKitTeam(UUID uid) {
+        if (this.currentGameMode == GameMode.FFA) {
+            if (this.ffaParticipants.contains(uid)) {
+                return TeamColor.RED;
+            }
+            return null;
+        }
+        if (this.redTeam.contains(uid)) {
+            return TeamColor.RED;
+        }
+        if (this.blueTeam.contains(uid)) {
+            return TeamColor.BLUE;
+        }
         return null;
     }
 
     public List<UUID> getTeamOf(UUID uid) {
-        if (redTeam.contains(uid)) return redTeam;
-        if (blueTeam.contains(uid)) return blueTeam;
+        if (this.currentGameMode == GameMode.FFA) {
+            return Collections.emptyList();
+        }
+        if (this.redTeam.contains(uid)) {
+            return this.redTeam;
+        }
+        if (this.blueTeam.contains(uid)) {
+            return this.blueTeam;
+        }
         return Collections.emptyList();
     }
 
     public boolean isParticipant(Player p) {
         UUID uid = p.getUniqueId();
-        return redTeam.contains(uid) || blueTeam.contains(uid);
+        if (this.currentGameMode == GameMode.FFA) {
+            return this.ffaParticipants.contains(uid);
+        }
+        return this.redTeam.contains(uid) || this.blueTeam.contains(uid);
     }
 
     public boolean isSpectator(Player p) {
-        return spectators.contains(p.getUniqueId());
+        return this.spectators.contains(p.getUniqueId());
     }
 
     public void addSpectator(Player p) {
-        spectators.add(p.getUniqueId());
+        this.spectators.add(p.getUniqueId());
         p.setGameMode(org.bukkit.GameMode.SPECTATOR);
-        // 試合中ならアリーナ中心にTP
-        if (currentMap != null && currentMap.getCenter() != null) {
-            p.teleport(currentMap.getCenter().clone().add(0, 3, 0));
+        if (this.currentMap != null && this.currentMap.getCenter() != null) {
+            p.teleport(this.currentMap.getCenter().clone().add(0.0, 3.0, 0.0));
         }
     }
 
     public boolean isInCenterZone(Block block) {
-        if (currentMap == null) return false;
-        Location center = currentMap.getCenter();
+        if (this.currentMap == null) {
+            return false;
+        }
+        Location center = this.currentMap.getCenter();
         int cx = center.getBlockX();
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
-        int bx = block.getX(), by = block.getY(), bz = block.getZ();
-        // cy = 白コンクリートが置かれるレイヤー = 設置・破壊対象 (5x5)
-        return by == cy
-            && bx >= cx - 2 && bx <= cx + 2
-            && bz >= cz - 2 && bz <= cz + 2;
+        int bx = block.getX();
+        int by = block.getY();
+        int bz = block.getZ();
+        return by == cy && bx >= cx - 2 && bx <= cx + 2 && bz >= cz - 2 && bz <= cz + 2;
     }
 
     public boolean hasNoFallDamage(Player p) {
-        return noFallDamage.remove(p.getUniqueId());
+        return this.noFallDamage.remove(p.getUniqueId());
     }
 
-    public void setNoFallDamage(UUID uid) { noFallDamage.add(uid); }
-    public void clearNoFallDamage(UUID uid) { noFallDamage.remove(uid); }
+    public void setNoFallDamage(UUID uid) {
+        this.noFallDamage.add(uid);
+    }
+
+    public void clearNoFallDamage(UUID uid) {
+        this.noFallDamage.remove(uid);
+    }
 
     private List<UUID> getAllParticipants() {
-        List<UUID> all = new ArrayList<>(redTeam);
-        all.addAll(blueTeam);
+        if (this.currentGameMode == GameMode.FFA) {
+            return new ArrayList<UUID>(this.ffaParticipants);
+        }
+        ArrayList<UUID> all = new ArrayList<UUID>(this.redTeam);
+        all.addAll(this.blueTeam);
         return all;
     }
 
     private List<UUID> getAllParticipantsAndSpectators() {
-        List<UUID> all = getAllParticipants();
-        all.addAll(spectators);
+        List<UUID> all = this.getAllParticipants();
+        all.addAll(this.spectators);
         return all;
     }
 
     private void broadcastTitle(String title, String sub, int fadeIn, int stay, int fadeOut) {
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) p.sendTitle(title, sub, fadeIn, stay, fadeOut);
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.sendTitle(title, sub, fadeIn, stay, fadeOut);
         }
     }
 
     private void broadcastSound(Sound sound, float volume, float pitch) {
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) p.playSound(p.getLocation(), sound, volume, pitch);
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.playSound(p.getLocation(), sound, volume, pitch);
         }
     }
 
     private void broadcastActionBar(String msg) {
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) p.sendActionBar(net.kyori.adventure.text.Component.text(msg));
+        for (UUID uid : this.getAllParticipantsAndSpectators()) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.sendActionBar((Component)Component.text((String)msg));
         }
     }
 
     private String formatTime(long seconds) {
-        return String.format("%d:%02d", seconds / 60, seconds % 60);
+        return String.format("%d:%02d", seconds / 60L, seconds % 60L);
     }
 
-    // ─────────────────────────────────────────────
-    // CTF
-    // ─────────────────────────────────────────────
-
     private void updateCTF() {
-        if (!redFlagTaken && redFlagDropTime > 0 && System.currentTimeMillis() - redFlagDropTime > 30_000) {
-            resetRedFlag();
-            Bukkit.broadcastMessage("§c赤の旗が自動回収されました。");
+        Vector v;
+        Boolean prevOnGround;
+        Player carrier;
+        if (!this.redFlagTaken && this.redFlagDropTime > 0L && System.currentTimeMillis() - this.redFlagDropTime > 30000L) {
+            this.resetRedFlag();
+            Bukkit.broadcastMessage((String)"\u00a7c\u8d64\u306e\u65d7\u304c\u81ea\u52d5\u56de\u53ce\u3055\u308c\u307e\u3057\u305f\u3002");
         }
-        if (!blueFlagTaken && blueFlagDropTime > 0 && System.currentTimeMillis() - blueFlagDropTime > 30_000) {
-            resetBlueFlag();
-            Bukkit.broadcastMessage("§9青の旗が自動回収されました。");
+        if (!this.blueFlagTaken && this.blueFlagDropTime > 0L && System.currentTimeMillis() - this.blueFlagDropTime > 30000L) {
+            this.resetBlueFlag();
+            Bukkit.broadcastMessage((String)"\u00a79\u9752\u306e\u65d7\u304c\u81ea\u52d5\u56de\u53ce\u3055\u308c\u307e\u3057\u305f\u3002");
         }
-        if (redFlagCarrier != null) {
-            Player carrier = Bukkit.getPlayer(redFlagCarrier);
-            if (carrier != null && carrier.isOnline()) {
-                carrier.getWorld().spawnParticle(Particle.REDSTONE, carrier.getLocation().add(0, 2.5, 0), 5, 0.3, 0.5, 0.3, new org.bukkit.Particle.DustOptions(org.bukkit.Color.BLUE, 1.5f));
-                carrier.sendActionBar(net.kyori.adventure.text.Component.text("§9\uD83C\uDFF4 青の旗を持っています！自陣に持ち帰れ！"));
+        this.ctfCarrierOnGround.keySet().removeIf(uuid -> !uuid.equals(this.redFlagCarrier) && !uuid.equals(this.blueFlagCarrier));
+        if (this.redFlagCarrier != null && (carrier = Bukkit.getPlayer((UUID)this.redFlagCarrier)) != null && carrier.isOnline()) {
+            carrier.getWorld().spawnParticle(Particle.REDSTONE, carrier.getLocation().add(0.0, 2.5, 0.0), 5, 0.3, 0.5, 0.3, (Object)new Particle.DustOptions(Color.BLUE, 1.5f));
+            carrier.sendActionBar((Component)Component.text((String)"\u00a79\ud83c\udff4 \u9752\u306e\u65d7\u3092\u6301\u3063\u3066\u3044\u307e\u3059\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
+            prevOnGround = this.ctfCarrierOnGround.get(this.redFlagCarrier);
+            if (prevOnGround != null && prevOnGround.booleanValue() && !carrier.isOnGround()) {
+                v = carrier.getVelocity();
+                carrier.setVelocity(new Vector(0.0, v.getY(), 0.0));
+            }
+            this.ctfCarrierOnGround.put(this.redFlagCarrier, carrier.isOnGround());
+            if (this.ctfRedTeamSize < this.ctfBlueTeamSize) {
+                carrier.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20, 0, true, false));
+                if (this.ctfRedTeamSize == 1) {
+                    carrier.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20, 0, true, false));
+                }
             }
         }
-        if (blueFlagCarrier != null) {
-            Player carrier = Bukkit.getPlayer(blueFlagCarrier);
-            if (carrier != null && carrier.isOnline()) {
-                carrier.getWorld().spawnParticle(Particle.REDSTONE, carrier.getLocation().add(0, 2.5, 0), 5, 0.3, 0.5, 0.3, new org.bukkit.Particle.DustOptions(org.bukkit.Color.RED, 1.5f));
-                carrier.sendActionBar(net.kyori.adventure.text.Component.text("§c\uD83C\uDFF4 赤の旗を持っています！自陣に持ち帰れ！"));
+        if (this.blueFlagCarrier != null && (carrier = Bukkit.getPlayer((UUID)this.blueFlagCarrier)) != null && carrier.isOnline()) {
+            carrier.getWorld().spawnParticle(Particle.REDSTONE, carrier.getLocation().add(0.0, 2.5, 0.0), 5, 0.3, 0.5, 0.3, (Object)new Particle.DustOptions(Color.RED, 1.5f));
+            carrier.sendActionBar((Component)Component.text((String)"\u00a7c\ud83c\udff4 \u8d64\u306e\u65d7\u3092\u6301\u3063\u3066\u3044\u307e\u3059\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
+            prevOnGround = this.ctfCarrierOnGround.get(this.blueFlagCarrier);
+            if (prevOnGround != null && prevOnGround.booleanValue() && !carrier.isOnGround()) {
+                v = carrier.getVelocity();
+                carrier.setVelocity(new Vector(0.0, v.getY(), 0.0));
             }
-        }
-        for (UUID uid : getAllParticipantsAndSpectators()) {
-            Player pl = Bukkit.getPlayer(uid);
-            if (pl != null) pl.sendActionBar(net.kyori.adventure.text.Component.text(
-                "§c\uD83D\uDEA9 CTF §7| §c赤:" + ctfRedCaptures + " §9青:" + ctfBlueCaptures));
+            this.ctfCarrierOnGround.put(this.blueFlagCarrier, carrier.isOnGround());
+            if (this.ctfBlueTeamSize < this.ctfRedTeamSize) {
+                carrier.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20, 0, true, false));
+                if (this.ctfBlueTeamSize == 1) {
+                    carrier.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20, 0, true, false));
+                }
+            }
         }
     }
 
     public void tryPickupFlag(Player p) {
-        if (currentGameMode != GameMode.CAPTURE_THE_FLAG) return;
-        if (state != GameState.IN_GAME) return;
-        if (System.currentTimeMillis() - inGameStartTime < 10_000) return;
-        if (currentMap == null) return;
-        TeamColor team = getTeamOf(p);
-        if (team == null) return;
-
-        Long pickupCd = ctfPickupCooldown.get(p.getUniqueId());
-        if (pickupCd != null && System.currentTimeMillis() - pickupCd < 5_000) return;
-
-        if (team == TeamColor.RED && !redFlagTaken && currentMap.getRedFlagLocation() != null) {
-            if (p.getLocation().distance(currentMap.getRedFlagLocation()) < 2) {
-                redFlagTaken = true;
-                redFlagCarrier = p.getUniqueId();
-                redFlagDropTime = -1;
-                if (currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
-                    currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
-                }
-                p.sendMessage("§c\uD83C\uDFF4 赤の旗を奪取！自陣に持ち帰れ！");
-                p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
-            }
-        }
-        if (team == TeamColor.BLUE && !blueFlagTaken && currentMap.getBlueFlagLocation() != null) {
-            if (p.getLocation().distance(currentMap.getBlueFlagLocation()) < 2) {
-                blueFlagTaken = true;
-                blueFlagCarrier = p.getUniqueId();
-                blueFlagDropTime = -1;
-                if (currentMap.getBlueFlagLocation().getBlock().getType() == Material.CYAN_BANNER) {
-                    currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
-                }
-                p.sendMessage("§9\uD83C\uDFF4 青の旗を奪取！自陣に持ち帰れ！");
-                p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
-            }
-        }
-
-        if (team == TeamColor.RED && redFlagCarrier != null && redFlagCarrier.equals(p.getUniqueId())
-                && currentMap.getRedReturnLocation() != null
-                && p.getLocation().distance(currentMap.getRedReturnLocation()) < 3) {
-            captureFlag(TeamColor.RED);
+        if (this.currentGameMode != GameMode.CAPTURE_THE_FLAG) {
             return;
         }
-        if (team == TeamColor.BLUE && blueFlagCarrier != null && blueFlagCarrier.equals(p.getUniqueId())
-                && currentMap.getBlueReturnLocation() != null
-                && p.getLocation().distance(currentMap.getBlueReturnLocation()) < 3) {
-            captureFlag(TeamColor.BLUE);
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        if (System.currentTimeMillis() - this.inGameStartTime < 10000L) {
+            return;
+        }
+        if (this.currentMap == null) {
+            return;
+        }
+        TeamColor team = this.getTeamOf(p);
+        if (team == null) {
+            return;
+        }
+        Long pickupCd = this.ctfPickupCooldown.get(p.getUniqueId());
+        if (pickupCd != null && System.currentTimeMillis() - pickupCd < 5000L) {
+            return;
+        }
+        if (team == TeamColor.RED && !this.redFlagTaken && this.currentMap.getRedFlagLocation() != null && p.getLocation().distance(this.currentMap.getRedFlagLocation()) < 2.0) {
+            this.redFlagTaken = true;
+            this.redFlagCarrier = p.getUniqueId();
+            this.redFlagDropTime = -1L;
+            if (this.currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
+                this.currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
+            }
+            p.sendMessage("\u00a7c\ud83c\udff4 \u8d64\u306e\u65d7\u3092\u596a\u53d6\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
+        }
+        if (team == TeamColor.BLUE && !this.blueFlagTaken && this.currentMap.getBlueFlagLocation() != null && p.getLocation().distance(this.currentMap.getBlueFlagLocation()) < 2.0) {
+            this.blueFlagTaken = true;
+            this.blueFlagCarrier = p.getUniqueId();
+            this.blueFlagDropTime = -1L;
+            if (this.currentMap.getBlueFlagLocation().getBlock().getType() == Material.CYAN_BANNER) {
+                this.currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
+            }
+            p.sendMessage("\u00a79\ud83c\udff4 \u9752\u306e\u65d7\u3092\u596a\u53d6\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
+        }
+        if (team == TeamColor.RED && this.redFlagCarrier != null && this.redFlagCarrier.equals(p.getUniqueId()) && this.currentMap.getRedReturnLocation() != null && p.getLocation().distance(this.currentMap.getRedReturnLocation()) < 3.0) {
+            this.captureFlag(TeamColor.RED);
+            return;
+        }
+        if (team == TeamColor.BLUE && this.blueFlagCarrier != null && this.blueFlagCarrier.equals(p.getUniqueId()) && this.currentMap.getBlueReturnLocation() != null && p.getLocation().distance(this.currentMap.getBlueReturnLocation()) < 3.0) {
+            this.captureFlag(TeamColor.BLUE);
             return;
         }
     }
 
     public void tryPickupDroppedFlag(Player p) {
-        if (currentGameMode != GameMode.CAPTURE_THE_FLAG) return;
-        if (state != GameState.IN_GAME) return;
-        TeamColor team = getTeamOf(p);
-        if (team == null) return;
-        Location loc = p.getLocation();
-
-        if (team == TeamColor.RED && !redFlagTaken && redFlagDropTime > 0 && currentMap != null
-                && currentMap.getRedFlagLocation() != null && loc.distance(currentMap.getRedFlagLocation()) < 2) {
-            resetRedFlag();
-            p.sendMessage("§c赤の旗を回収しました。");
+        if (this.currentGameMode != GameMode.CAPTURE_THE_FLAG) {
+            return;
         }
-        if (team == TeamColor.BLUE && !blueFlagTaken && blueFlagDropTime > 0 && currentMap != null
-                && currentMap.getBlueFlagLocation() != null && loc.distance(currentMap.getBlueFlagLocation()) < 2) {
-            resetBlueFlag();
-            p.sendMessage("§9青の旗を回収しました。");
+        if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        TeamColor team = this.getTeamOf(p);
+        if (team == null) {
+            return;
+        }
+        Location loc = p.getLocation();
+        if (team == TeamColor.RED && !this.redFlagTaken && this.redFlagDropTime > 0L && this.redFlagDropLoc != null && loc.distance(this.redFlagDropLoc) < 2.0) {
+            this.redFlagCarrier = p.getUniqueId();
+            this.redFlagTaken = true;
+            this.redFlagDropTime = -1L;
+            if (this.redFlagDropLoc != null) {
+                this.redFlagDropLoc.getBlock().setType(Material.AIR);
+                this.redFlagDropLoc = null;
+            }
+            p.sendMessage("\u00a7c\u8d64\u306e\u65d7\u3092\u62fe\u3044\u307e\u3057\u305f\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+        }
+        if (team == TeamColor.BLUE && !this.blueFlagTaken && this.blueFlagDropTime > 0L && this.blueFlagDropLoc != null && loc.distance(this.blueFlagDropLoc) < 2.0) {
+            this.blueFlagCarrier = p.getUniqueId();
+            this.blueFlagTaken = true;
+            this.blueFlagDropTime = -1L;
+            if (this.blueFlagDropLoc != null) {
+                this.blueFlagDropLoc.getBlock().setType(Material.AIR);
+                this.blueFlagDropLoc = null;
+            }
+            p.sendMessage("\u00a79\u9752\u306e\u65d7\u3092\u62fe\u3044\u307e\u3057\u305f\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
         }
     }
 
     private void captureFlag(TeamColor team) {
         if (team == TeamColor.RED) {
-            ctfRedCaptures++;
-            if (redFlagCarrier != null) ctfPickupCooldown.put(redFlagCarrier, System.currentTimeMillis());
-            redFlagCarrier = null;
-            redFlagTaken = false;
-            resetRedFlag();
-            Bukkit.broadcastMessage("§c§l🚩 赤チームが赤旗を奪取！ §8(" + ctfRedCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
+            ++this.ctfRedCaptures;
+            if (this.redFlagCarrier != null) {
+                this.ctfPickupCooldown.put(this.redFlagCarrier, System.currentTimeMillis());
+            }
+            this.redFlagCarrier = null;
+            this.redFlagTaken = false;
+            this.resetRedFlag();
+            if (this.blueFlagCarrier != null) {
+                Player bc = Bukkit.getPlayer((UUID)this.blueFlagCarrier);
+                if (bc != null) {
+                    bc.sendMessage("\u00a79\u76f8\u624b\u304c\u65d7\u3092\u596a\u53d6\u3057\u305f\u305f\u3081\u3001\u9752\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u307e\u3057\u305f");
+                }
+                this.resetBlueFlag();
+            }
+            Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udea9 \u8d64\u30c1\u30fc\u30e0\u304c\u8d64\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfRedCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
         } else {
-            ctfBlueCaptures++;
-            if (blueFlagCarrier != null) ctfPickupCooldown.put(blueFlagCarrier, System.currentTimeMillis());
-            blueFlagCarrier = null;
-            blueFlagTaken = false;
-            resetBlueFlag();
-            Bukkit.broadcastMessage("§9§l🚩 青チームが青旗を奪取！ §8(" + ctfBlueCaptures + "/" + plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")");
+            ++this.ctfBlueCaptures;
+            if (this.blueFlagCarrier != null) {
+                this.ctfPickupCooldown.put(this.blueFlagCarrier, System.currentTimeMillis());
+            }
+            this.blueFlagCarrier = null;
+            this.blueFlagTaken = false;
+            this.resetBlueFlag();
+            if (this.redFlagCarrier != null) {
+                Player rc = Bukkit.getPlayer((UUID)this.redFlagCarrier);
+                if (rc != null) {
+                    rc.sendMessage("\u00a7c\u76f8\u624b\u304c\u65d7\u3092\u596a\u53d6\u3057\u305f\u305f\u3081\u3001\u8d64\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u307e\u3057\u305f");
+                }
+                this.resetRedFlag();
+            }
+            Bukkit.broadcastMessage((String)("\u00a79\u00a7l\ud83d\udea9 \u9752\u30c1\u30fc\u30e0\u304c\u9752\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfBlueCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
         }
-        int toWin = plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3);
-        if (ctfRedCaptures >= toWin) { endGame(TeamColor.RED, WinCondition.OBJECTIVE); }
-        else if (ctfBlueCaptures >= toWin) { endGame(TeamColor.BLUE, WinCondition.OBJECTIVE); }
+        int toWin = this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3);
+        if (this.ctfRedCaptures >= toWin) {
+            this.endGame(TeamColor.RED, WinCondition.OBJECTIVE);
+        } else if (this.ctfBlueCaptures >= toWin) {
+            this.endGame(TeamColor.BLUE, WinCondition.OBJECTIVE);
+        }
         for (Player pl : Bukkit.getOnlinePlayers()) {
-            pl.playSound(pl.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+            pl.playSound(pl.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
         }
     }
 
     private void dropFlag(UUID carrierUuid) {
-        if (carrierUuid.equals(redFlagCarrier)) {
-            redFlagCarrier = null;
-            redFlagTaken = false;
-            redFlagDropTime = System.currentTimeMillis();
-            Player p = Bukkit.getPlayer(carrierUuid);
-            if (p != null && currentMap != null) {
-                Location dropLoc = findAirAbove(p.getLocation());
+        Location dropLoc;
+        Player p;
+        if (carrierUuid.equals(this.redFlagCarrier)) {
+            this.redFlagCarrier = null;
+            this.redFlagTaken = false;
+            this.redFlagDropTime = System.currentTimeMillis();
+            p = Bukkit.getPlayer((UUID)carrierUuid);
+            if (p != null && this.currentMap != null) {
+                dropLoc = this.findAirAbove(p.getLocation());
                 dropLoc.getBlock().setType(Material.RED_BANNER);
-                p.sendMessage("§c赤の旗を落としました！");
+                this.redFlagDropLoc = dropLoc.clone();
+                p.sendMessage("\u00a7c\u8d64\u306e\u65d7\u3092\u843d\u3068\u3057\u307e\u3057\u305f\uff01");
             }
         }
-        if (carrierUuid.equals(blueFlagCarrier)) {
-            blueFlagCarrier = null;
-            blueFlagTaken = false;
-            blueFlagDropTime = System.currentTimeMillis();
-            Player p = Bukkit.getPlayer(carrierUuid);
-            if (p != null && currentMap != null) {
-                Location dropLoc = findAirAbove(p.getLocation());
+        if (carrierUuid.equals(this.blueFlagCarrier)) {
+            this.blueFlagCarrier = null;
+            this.blueFlagTaken = false;
+            this.blueFlagDropTime = System.currentTimeMillis();
+            p = Bukkit.getPlayer((UUID)carrierUuid);
+            if (p != null && this.currentMap != null) {
+                dropLoc = this.findAirAbove(p.getLocation());
                 dropLoc.getBlock().setType(Material.CYAN_BANNER);
-                p.sendMessage("§9青の旗を落としました！");
+                this.blueFlagDropLoc = dropLoc.clone();
+                p.sendMessage("\u00a79\u9752\u306e\u65d7\u3092\u843d\u3068\u3057\u307e\u3057\u305f\uff01");
             }
         }
     }
 
     private Location findAirAbove(Location base) {
-        Location loc = base.clone().add(0, 1, 0);
-        while (loc.getBlock().getType().isSolid() && loc.getY() < loc.getWorld().getMaxHeight() - 1) {
-            loc = loc.add(0, 1, 0);
+        Location loc = base.clone().add(0.0, 1.0, 0.0);
+        while (loc.getBlock().getType().isSolid() && loc.getY() < (double)(loc.getWorld().getMaxHeight() - 1)) {
+            loc = loc.add(0.0, 1.0, 0.0);
         }
         return loc;
     }
 
     private void resetRedFlag() {
-        redFlagTaken = false;
-        redFlagCarrier = null;
-        redFlagDropTime = -1;
-        if (ctfRedFlagSpawn != null) {
-            ctfRedFlagSpawn.getBlock().setType(Material.RED_BANNER);
-        } else if (currentMap != null && currentMap.getRedFlagLocation() != null) {
-            currentMap.getRedFlagLocation().getBlock().setType(Material.RED_BANNER);
+        this.redFlagTaken = false;
+        this.redFlagCarrier = null;
+        this.redFlagDropTime = -1L;
+        if (this.redFlagDropLoc != null) {
+            this.redFlagDropLoc.getBlock().setType(Material.AIR);
+            this.redFlagDropLoc = null;
+        }
+        if (this.ctfRedFlagSpawn != null) {
+            this.ctfRedFlagSpawn.getBlock().setType(Material.RED_BANNER);
+        } else if (this.currentMap != null && this.currentMap.getRedFlagLocation() != null) {
+            this.currentMap.getRedFlagLocation().getBlock().setType(Material.RED_BANNER);
         }
     }
 
     private void resetBlueFlag() {
-        blueFlagTaken = false;
-        blueFlagCarrier = null;
-        blueFlagDropTime = -1;
-        if (ctfBlueFlagSpawn != null) {
-            ctfBlueFlagSpawn.getBlock().setType(Material.CYAN_BANNER);
-        } else if (currentMap != null && currentMap.getBlueFlagLocation() != null) {
-            currentMap.getBlueFlagLocation().getBlock().setType(Material.CYAN_BANNER);
+        this.blueFlagTaken = false;
+        this.blueFlagCarrier = null;
+        this.blueFlagDropTime = -1L;
+        if (this.blueFlagDropLoc != null) {
+            this.blueFlagDropLoc.getBlock().setType(Material.AIR);
+            this.blueFlagDropLoc = null;
+        }
+        if (this.ctfBlueFlagSpawn != null) {
+            this.ctfBlueFlagSpawn.getBlock().setType(Material.CYAN_BANNER);
+        } else if (this.currentMap != null && this.currentMap.getBlueFlagLocation() != null) {
+            this.currentMap.getBlueFlagLocation().getBlock().setType(Material.CYAN_BANNER);
         }
     }
 
-    // ─────────────────────────────────────────────
-    // Getters
-    // ─────────────────────────────────────────────
-
-    public GameState getState() { return state; }
-    public MapConfig getCurrentMap() { return currentMap; }
-    public int getCenterY() {
-        if (currentMap == null || currentMap.getCenter() == null) return 0;
-        return currentMap.getCenter().getBlockY();
+    public GameState getState() {
+        return this.state;
     }
-    public long getInGameStartTime() { return inGameStartTime; }
-    public List<UUID> getRedTeam() { return redTeam; }
-    public List<UUID> getBlueTeam() { return blueTeam; }
-    public Set<UUID> getSpectators() { return spectators; }
-    public int getCurrentRound()  { return currentRound; }
-    public int getRoundWinsRed()  { return roundWinsRed; }
-    public int getRoundWinsBlue() { return roundWinsBlue; }
-    public int getWinsToWin()     { return WINS_TO_WIN; }
-    public Map<UUID, Integer> getKills() { return kills; }
-    public Map<UUID, Integer> getDeaths() { return deaths; }
-    public MatchStats getMatchStats() { return matchStats; }
 
-    public GameMode getCurrentGameMode() { return currentGameMode; }
-    public int getTdmKillsRed()  { return tdmKillsRed; }
-    public int getTdmKillsBlue() { return tdmKillsBlue; }
-    public long getTdmStartTime() { return tdmStartTime; }
+    public MapConfig getCurrentMap() {
+        return this.currentMap;
+    }
 
-    public int getDomPointsRed() { return domPointsRed; }
-    public int getDomPointsBlue() { return domPointsBlue; }
+    public int getCenterY() {
+        if (this.currentMap == null || this.currentMap.getCenter() == null) {
+            return 0;
+        }
+        return this.currentMap.getCenter().getBlockY();
+    }
 
-    public int getCtfRedCaptures() { return ctfRedCaptures; }
-    public int getCtfBlueCaptures() { return ctfBlueCaptures; }
+    public List<UUID> getRedTeam() {
+        return this.redTeam;
+    }
 
-    /** スコアボード用: チームの生存人数 (プレイヤー + BOT) */
+    public List<UUID> getBlueTeam() {
+        return this.blueTeam;
+    }
+
+    public List<UUID> getAllParticipantsFFA() {
+        return new ArrayList<UUID>(this.ffaParticipants);
+    }
+
+    public Set<UUID> getSpectators() {
+        return this.spectators;
+    }
+
+    public int getCurrentRound() {
+        return this.currentRound;
+    }
+
+    public int getRoundWinsRed() {
+        return this.roundWinsRed;
+    }
+
+    public int getRoundWinsBlue() {
+        return this.roundWinsBlue;
+    }
+
+    public int getWinsToWin() {
+        return 3;
+    }
+
+    public Map<UUID, Integer> getKills() {
+        return this.kills;
+    }
+
+    public Map<UUID, Integer> getDeaths() {
+        return this.deaths;
+    }
+
+    public MatchStats getMatchStats() {
+        return this.matchStats;
+    }
+
+    public GameMode getCurrentGameMode() {
+        return this.currentGameMode;
+    }
+
+    public int getTdmKillsRed() {
+        return this.tdmKillsRed;
+    }
+
+    public int getTdmKillsBlue() {
+        return this.tdmKillsBlue;
+    }
+
+    public long getTdmStartTime() {
+        return this.tdmStartTime;
+    }
+
+    public int getDomPointsRed() {
+        return this.domPointsRed;
+    }
+
+    public int getDomPointsBlue() {
+        return this.domPointsBlue;
+    }
+
+    public int getCtfRedCaptures() {
+        return this.ctfRedCaptures;
+    }
+
+    public int getCtfBlueCaptures() {
+        return this.ctfBlueCaptures;
+    }
+
+    public NbsPlayer getSelectedBgm() {
+        return this.selectedBgm;
+    }
+
+    public void setSelectedBgm(NbsPlayer bgm) {
+        this.selectedBgm = bgm;
+    }
+
+    public void setSelectedBgmByName(String name) {
+        for (NbsPlayer song : this.plugin.getSongs()) {
+            if (!song.getName().equalsIgnoreCase(name)) continue;
+            this.selectedBgm = song;
+            return;
+        }
+    }
+
+    public int getFFAAliveCount() {
+        return this.ffaParticipants.size() - this.ffaEliminated.size();
+    }
+
+    public int getFFAKills(UUID uid) {
+        return this.ffaKills.getOrDefault(uid, 0);
+    }
+
+    public int getFFATimeRemaining() {
+        return this.ffaTimeLimit;
+    }
+
+    public int getFFAAliveTotal() {
+        return this.ffaParticipants.size();
+    }
+
     public int getAliveCount(TeamColor team) {
-        List<UUID> t = team == TeamColor.RED ? redTeam : blueTeam;
+        List<UUID> t = team == TeamColor.RED ? this.redTeam : this.blueTeam;
         int count = 0;
         for (UUID uid : t) {
-            if (plugin.getBotManager().getBotTeam(uid) != null) {
-                // BOT: BotManagerで生存チェック
-                continue; // aliveCountはBotManager側で加算
-            }
-            Player p = Bukkit.getPlayer(uid);
-            if (!deadPlayers.contains(uid)) count++;
+            if (this.plugin.getBotManager().getBotTeam(uid) != null) continue;
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (this.deadPlayers.contains(uid)) continue;
+            ++count;
         }
-        count += plugin.getBotManager().getAliveBotCount(team);
-        return count;
+        return count += this.plugin.getBotManager().getAliveBotCount(team);
     }
 
     private void announceBigPlay(Player killer, int streak) {
         if (streak == 5) {
-            Bukkit.broadcastMessage("§4§l☠ " + killer.getName() + " §cが PENTA KILL を達成！ §4☠");
+            Bukkit.broadcastMessage((String)("\u00a74\u00a7l\u2620 " + killer.getName() + " \u00a7c\u304c PENTA KILL \u3092\u9054\u6210\uff01 \u00a74\u2620"));
             for (Player p : Bukkit.getOnlinePlayers()) {
                 p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.7f, 0.8f);
             }
         } else if (streak >= 3) {
-            Bukkit.broadcastMessage("§6§l★ " + killer.getName() + " §eが " + streak + "連続キル！");
+            Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2605 " + killer.getName() + " \u00a7e\u304c " + streak + "\u9023\u7d9a\u30ad\u30eb\uff01"));
         }
     }
 
-    /** スコアボード用: UUID→KitType マップ */
     public Map<UUID, KitType> getPlayerKits() {
-        Map<UUID, KitType> result = new java.util.HashMap<>();
-        for (var entry : playerKit.entrySet()) {
-            try { result.put(entry.getKey(), KitType.valueOf(entry.getValue())); }
-            catch (Exception ignored) {}
+        HashMap<UUID, KitType> result = new HashMap<UUID, KitType>();
+        for (Map.Entry<UUID, String> entry : this.playerKit.entrySet()) {
+            try {
+                result.put(entry.getKey(), KitType.valueOf(entry.getValue()));
+            }
+            catch (Exception exception) {}
         }
         return result;
     }
 }
+

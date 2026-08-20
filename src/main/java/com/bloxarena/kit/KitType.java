@@ -1,89 +1,48 @@
+/*
+ * Decompiled with CFR 0.152.
+ */
 package com.bloxarena.kit;
 
+import com.bloxarena.kit.KitRole;
+
 public enum KitType {
-    // === Duelist ===
-    BLADE     ("ブレード",    "§6⚔ ブレード §7(Duelist)",     "正面の1v1で負けない王道ファイター", KitRole.DUELIST,
-               "君は「剣豪」だ。剣を振るい、敵陣を切り裂け。"),
-    BREAKER   ("ブレイカー",  "§c🪓 ブレイカー §7(Duelist)",  "斧スキルで突進し敵陣を崩す機動型", KitRole.DUELIST,
-               "君は「破壊者」だ。その突撃で全てを破壊しろ。"),
-    NINJA     ("ニンジャ",    "§2🥷 ニンジャ §7(Duelist)",    "透明化スキルで敵の背後を取る奇襲型", KitRole.DUELIST,
-               "君は「影法師」だ。敵の裏を取り、攪乱せよ。"),
-    BERSERKER ("バーサーカー","§4⚡ バーサーカー §7(Duelist)", "連続爆発スキルで制圧する超攻撃型", KitRole.DUELIST,
-               "君は「戦鬼」だ。怒りを解き放ち、敵を粉砕せよ。"),
-    SNIPER    ("スナイパー",  "§7🎯 スナイパー §7(Duelist)",  "狙撃眼で敵をマークし一撃必殺", KitRole.DUELIST,
-               "君は「神射手」だ。狙い澄まし、一撃で仕留めろ。"),
-    COUNTER   ("カウンター",  "§9🗡 カウンター §7(Duelist)",  "パリィで相手を無力化するタイミング型", KitRole.DUELIST,
-               "君は「断罪者」だ。敵の攻撃を見切り、その刃で裁け。"),
-    PYRO      ("パイロ",      "§6🔥 パイロ §7(Duelist)",      "炎の剣と弓＋業炎スキルで焼き尽くす", KitRole.DUELIST,
-               "君は「火葬者」だ。業火を纏い、敵を灰燼へ帰せ。"),
-    JESTER    ("ジェスター",  "§e🃏 ジェスター §7(Duelist)",  "疾走スキルとエンパで翻弄する高機動斧使い", KitRole.DUELIST,
-               "君は「欺瞞者」だ。敵を欺き、戦場を嘲笑え。"),
-    VAMPIRE   ("ヴァンパイア","§4🩸 ヴァンパイア §7(Duelist)","吸血ゲージを溜めて段階強化する変身形", KitRole.DUELIST,
-               "君は「吸血騎」だ。血の力を解き放ち、敵を絶望へ沈めよ。"),
-    BOMBER    ("ボマー",      "§c💣 ボマー §7(Duelist)",      "地雷を設置し任意起爆するトラップ型", KitRole.DUELIST,
-               "君は「爆轟」だ。爆炎を操り、敵を吹き飛ばせ。"),
-    COOK      ("料理人",      "§6🍳 料理人 §7(Duelist)",      "ランダム食材から料理を作りバフ/デバフを撒く", KitRole.DUELIST,
-               "君は「美食家」だ。至高の料理で、仲間を勝利へ導け。"),
-    // GLIDER retired
-    // GLIDER    ("グライダー",...),
-
-    GRANG     ("グラング",     "§7🛡 グラング §7(Duelist)",     "盾チャージで突撃する機動要塞", KitRole.DUELIST,
-               "君は「鋼騎」だ。鋼鉄の意志で、敵陣を突破せよ。"),
-
-    // === Initiator ===
-    SCOUT     ("スカウト",    "§a🏹 スカウト §7(Initiator)",  "リコンボルトで敵位置を可視化する偵察役", KitRole.INITIATOR,
-               "君は「千里眼」だ。敵を暴き、味方へ勝機をもたらせ。"),
-    FLASHER   ("フラッシャー","§b💥 フラッシャー §7(Initiator)","フラッシュバン球で敵を盲目化し突破口を作る", KitRole.INITIATOR,
-               "君は「閃光」だ。光で敵の視界を奪え。"),
-    MARKSMAN  ("マークスマン","§c🏹 マークスマン §7(Initiator)","ヘヴィーボルトで敵のHP上限を削る", KitRole.INITIATOR,
-               "君は「魔弾の射手」だ。魔弾を放ち、敵の命を撃ち抜け。"),
-    SUNDANCE  ("サンダンス",  "§b⚡ サンダンス §7(Initiator)","リボルビングクロスボウで弾幕を張る", KitRole.INITIATOR,
-               "君は「荒野の決闘者」だ。一瞬の隙が、勝敗を決める。"),
-    SWAPPER   ("スワッパー",  "§5🔄 スワッパー §7(Initiator)","相手との位置を即座に入れ替える撹乱型", KitRole.INITIATOR,
-               "君は「転換者」だ。敵の位置を入れ替え、戦況を覆せ。"),
-    STICKER   ("ステッカー",  "§3🎣 ステッカー §7(Initiator)","グラップルで敵を引き寄せる捕獲型", KitRole.INITIATOR,
-               "君は「万有の手」だ。敵を引き寄せ、逃げ場を奪え。"),
-    DECOY     ("デコイ",      "§8👥 デコイ §7(Initiator)",    "自身の分身を生成し透明化する欺瞞型", KitRole.INITIATOR,
-               "君は「攪乱者」だ。敵を惑わせ、戦場を支配せよ。"),
-    WHIRLWIND ("ワールウィンド","§f🌪 ワールウィンド §7(Initiator)","気流で敵を押し出し＋追尾球で打ち上げる風使い", KitRole.INITIATOR,
-               "君は「旋風」だ。風を纏い、敵を空へ舞い上げろ。"),
-    NILGIRITAR("ニルギリタール","§f🌀 ニルギリタール §7(Initiator)","クロスボウ＋近接で盾貫通ダメージを与える風穴使い", KitRole.INITIATOR,
-               "君は「風穴を開ける者」だ。防御を貫き、敵を穿て。"),
-
-    // === Controller ===
-    ROCKETER  ("ロケッター",  "§e🚀 ロケッター §7(Controller)","メガロケットで大爆発を起こすエリア制圧役", KitRole.CONTROLLER,
-               "君は「砲撃手」だ。爆轟を響かせ、敵陣を壊滅させよ。"),
-    ALCHEMIST ("アルケミスト","§d🧪 アルケミスト §7(Controller)","再調合でポーションを補充し空間ごと支配", KitRole.CONTROLLER,
-               "君は「錬金術師」だ。秘薬を操り、戦局を掌握せよ。"),
-    ENGINEER  ("エンジニア",  "§6🔧 エンジニア §7(Controller)","レーザータレットを設置する制圧型", KitRole.CONTROLLER,
-               "君は「機構師」だ。機械を従え、戦場そのものを支配せよ。"),
-    RESTRICTIONER ("リストリクショナー","§8⛓ リストリクショナー §7(Controller)","自身ごと対象を拘束するロック型", KitRole.CONTROLLER,
-               "君は「拘束者」だ。敵を縛り上げ、勝機を創り出せ。"),
-    TRANSPORTER("トランスポーター","§3🌀 トランスポーター §7(Controller)","双方向ポータルを設置する移動型", KitRole.CONTROLLER,
-               "君は「境界渡り」だ。空間を繋ぎ、新たな戦場を切り拓け。"),
-    KREUTZ    ("クロイツ",    "§5🃏 クロイツ §7(Controller)",  "魔法カードを引き様々な効果を発動する魔術師", KitRole.CONTROLLER,
-               "君は「魔法使い」だ。運命のカードを引き、戦場を掌握せよ。"),
-    // MIMIC retired - keep code
-    MIMIC     ("ミミック",    "§5🔄 ミミック §7(Controller)",  "敵のスキルをコピーする模倣型", KitRole.CONTROLLER,
-               "君は「模倣者」だ。敵の力を奪い、その牙を敵へ返せ。"),
-    NECRO     ("ネクロ",       "§8💀 ネクロ §7(Controller)",   "スケルトン3部隊を召喚・指揮する屍体舞踏者", KitRole.CONTROLLER,
-               "君は「死体舞踏者」だ。死者を従え、死の舞踏会を始めよ。"),
-
-    // === Sentinel ===
-    TRAPPER   ("トラッパー",  "§3🪤 トラッパー §7(Sentinel)", "不可視の罠で敵を行動不能にする防衛型", KitRole.SENTINEL,
-               "君は「罠師」だ。罠を巡らせ、敵を狩り尽くせ。"),
-    GUARDIAN  ("ガーディアン","§f🛡 ガーディアン §7(Sentinel)","鉄壁スキルで一定時間無敵化する盾役", KitRole.SENTINEL,
-               "君は「不沈艦」だ。いかなる猛攻にも沈まず、戦線を支え続けろ。"),
-    MEDIC     ("メディック",  "§5❤ メディック §7(Sentinel)",  "フィールドケアで味方を範囲回復する支援型", KitRole.SENTINEL,
-               "君は「生命線」だ。仲間を救い、戦線を繋ぎ止めよ。"),
-    SUPPORTER ("サポーター",  "§a💊 サポーター §7(Sentinel)", "再調達でバフポーションを補充し戦場を支える", KitRole.SENTINEL,
-               "君は「加護者」だ。仲間へ力を授け、勝利へ導け。"),
-    PHANTOM   ("ファントム",  "§7👻 ファントム §7(Sentinel)", "霊体化で透明＋無敵になる回避型", KitRole.SENTINEL,
-               "君は「幻影」だ。姿を晦まし、敵を翻弄せよ。"),
-    ANCHOR    ("アンカー",    "§9⚓ アンカー §7(Sentinel)",   "磁場で周囲の敵を減速させる制圧型", KitRole.SENTINEL,
-               "君は「停滞者」だ。領域を展開し、敵の進軍を封じよ。"),
-    RELEASER  ("リリーサー",  "§e💢 リリーサー §7(Sentinel)",   "バースト系スキル特化。大爆発＋小爆発を駆使", KitRole.SENTINEL,
-               "君は「解放者」だ。秘めたる力を解き放ち、全てを吹き飛ばせ。");
+    BLADE("\u30d6\u30ec\u30fc\u30c9", "\u00a76\u2694 \u30d6\u30ec\u30fc\u30c9 \u00a77(Duelist)", "\u6b63\u9762\u306e1v1\u3067\u8ca0\u3051\u306a\u3044\u738b\u9053\u30d5\u30a1\u30a4\u30bf\u30fc", KitRole.DUELIST, "\u541b\u306f\u300c\u5263\u8c6a\u300d\u3060\u3002\u5263\u3092\u632f\u308b\u3044\u3001\u6575\u9663\u3092\u5207\u308a\u88c2\u3051\u3002"),
+    BREAKER("\u30d6\u30ec\u30a4\u30ab\u30fc", "\u00a7c\ud83e\ude93 \u30d6\u30ec\u30a4\u30ab\u30fc \u00a77(Duelist)", "\u65a7\u30b9\u30ad\u30eb\u3067\u7a81\u9032\u3057\u6575\u9663\u3092\u5d29\u3059\u6a5f\u52d5\u578b", KitRole.DUELIST, "\u541b\u306f\u300c\u7834\u58ca\u8005\u300d\u3060\u3002\u305d\u306e\u7a81\u6483\u3067\u5168\u3066\u3092\u7834\u58ca\u3057\u308d\u3002"),
+    NINJA("\u30cb\u30f3\u30b8\u30e3", "\u00a72\ud83e\udd77 \u30cb\u30f3\u30b8\u30e3 \u00a77(Duelist)", "\u900f\u660e\u5316\u30b9\u30ad\u30eb\u3067\u6575\u306e\u80cc\u5f8c\u3092\u53d6\u308b\u5947\u8972\u578b", KitRole.DUELIST, "\u541b\u306f\u300c\u5f71\u6cd5\u5e2b\u300d\u3060\u3002\u6575\u306e\u88cf\u3092\u53d6\u308a\u3001\u652a\u4e71\u305b\u3088\u3002"),
+    BERSERKER("\u30d0\u30fc\u30b5\u30fc\u30ab\u30fc", "\u00a74\u26a1 \u30d0\u30fc\u30b5\u30fc\u30ab\u30fc \u00a77(Duelist)", "\u9023\u7d9a\u7206\u767a\u30b9\u30ad\u30eb\u3067\u5236\u5727\u3059\u308b\u8d85\u653b\u6483\u578b", KitRole.DUELIST, "\u541b\u306f\u300c\u6226\u9b3c\u300d\u3060\u3002\u6012\u308a\u3092\u89e3\u304d\u653e\u3061\u3001\u6575\u3092\u7c89\u7815\u305b\u3088\u3002"),
+    SNIPER("\u30b9\u30ca\u30a4\u30d1\u30fc", "\u00a77\ud83c\udfaf \u30b9\u30ca\u30a4\u30d1\u30fc \u00a77(Duelist)", "\u72d9\u6483\u773c\u3067\u6575\u3092\u30de\u30fc\u30af\u3057\u4e00\u6483\u5fc5\u6bba", KitRole.DUELIST, "\u541b\u306f\u300c\u795e\u5c04\u624b\u300d\u3060\u3002\u72d9\u3044\u6f84\u307e\u3057\u3001\u4e00\u6483\u3067\u4ed5\u7559\u3081\u308d\u3002"),
+    COUNTER("\u30ab\u30a6\u30f3\u30bf\u30fc", "\u00a79\ud83d\udde1 \u30ab\u30a6\u30f3\u30bf\u30fc \u00a77(Duelist)", "\u30d1\u30ea\u30a3\u3067\u76f8\u624b\u3092\u7121\u529b\u5316\u3059\u308b\u30bf\u30a4\u30df\u30f3\u30b0\u578b", KitRole.DUELIST, "\u541b\u306f\u300c\u65ad\u7f6a\u8005\u300d\u3060\u3002\u6575\u306e\u653b\u6483\u3092\u898b\u5207\u308a\u3001\u305d\u306e\u5203\u3067\u88c1\u3051\u3002"),
+    PYRO("\u30d1\u30a4\u30ed", "\u00a76\ud83d\udd25 \u30d1\u30a4\u30ed \u00a77(Duelist)", "\u708e\u306e\u5263\u3068\u5f13\uff0b\u696d\u708e\u30b9\u30ad\u30eb\u3067\u713c\u304d\u5c3d\u304f\u3059", KitRole.DUELIST, "\u541b\u306f\u300c\u706b\u846c\u8005\u300d\u3060\u3002\u696d\u706b\u3092\u7e8f\u3044\u3001\u6575\u3092\u7070\u71fc\u3078\u5e30\u305b\u3002"),
+    LANCER("\u30e9\u30f3\u30b5\u30fc", "\u00a7b\ud83d\udde1 \u30e9\u30f3\u30b5\u30fc \u00a77(Duelist)", "\u523a\u7a81\u3067\u9577\u3044\u30ea\u30fc\u30c1\u304b\u3089\u6575\u3092\u8cab\u304f\u69cd\u4f7f\u3044", KitRole.DUELIST, "\u541b\u306f\u300c\u69cd\u4f7f\u3044\u300d\u3060\u3002\u9593\u5408\u3044\u3092\u5236\u3057\u3001\u6575\u3092\u8cab\u3051\u3002"),
+    JESTER("\u30b8\u30a7\u30b9\u30bf\u30fc", "\u00a7e\ud83c\udccf \u30b8\u30a7\u30b9\u30bf\u30fc \u00a77(Duelist)", "\u75be\u8d70\u30b9\u30ad\u30eb\u3068\u30a8\u30f3\u30d1\u3067\u7ffb\u5f04\u3059\u308b\u9ad8\u6a5f\u52d5\u65a7\u4f7f\u3044", KitRole.DUELIST, "\u541b\u306f\u300c\u6b3a\u779e\u8005\u300d\u3060\u3002\u6575\u3092\u6b3a\u304d\u3001\u6226\u5834\u3092\u5632\u7b11\u3048\u3002"),
+    VAMPIRE("\u30f4\u30a1\u30f3\u30d1\u30a4\u30a2", "\u00a74\ud83e\ude78 \u30f4\u30a1\u30f3\u30d1\u30a4\u30a2 \u00a77(Duelist)", "\u5438\u8840\u30b2\u30fc\u30b8\u3092\u6e9c\u3081\u3066\u6bb5\u968e\u5f37\u5316\u3059\u308b\u5909\u8eab\u5f62", KitRole.DUELIST, "\u541b\u306f\u300c\u5438\u8840\u9a0e\u300d\u3060\u3002\u8840\u306e\u529b\u3092\u89e3\u304d\u653e\u3061\u3001\u6575\u3092\u7d76\u671b\u3078\u6c88\u3081\u3088\u3002"),
+    BOMBER("\u30dc\u30de\u30fc", "\u00a7c\ud83d\udca3 \u30dc\u30de\u30fc \u00a77(Duelist)", "\u5730\u96f7\u3092\u8a2d\u7f6e\u3057\u4efb\u610f\u8d77\u7206\u3059\u308b\u30c8\u30e9\u30c3\u30d7\u578b", KitRole.DUELIST, "\u541b\u306f\u300c\u7206\u8f5f\u300d\u3060\u3002\u7206\u708e\u3092\u64cd\u308a\u3001\u6575\u3092\u5439\u304d\u98db\u3070\u305b\u3002"),
+    COOK("\u6599\u7406\u4eba", "\u00a76\ud83c\udf73 \u6599\u7406\u4eba \u00a77(Duelist)", "\u30e9\u30f3\u30c0\u30e0\u98df\u6750\u304b\u3089\u6599\u7406\u3092\u4f5c\u308a\u30d0\u30d5/\u30c7\u30d0\u30d5\u3092\u6492\u304f", KitRole.DUELIST, "\u541b\u306f\u300c\u7f8e\u98df\u5bb6\u300d\u3060\u3002\u81f3\u9ad8\u306e\u6599\u7406\u3067\u3001\u4ef2\u9593\u3092\u52dd\u5229\u3078\u5c0e\u3051\u3002"),
+    GRANG("\u30b0\u30e9\u30f3\u30b0", "\u00a77\ud83d\udee1 \u30b0\u30e9\u30f3\u30b0 \u00a77(Duelist)", "\u76fe\u30c1\u30e3\u30fc\u30b8\u3067\u7a81\u6483\u3059\u308b\u6a5f\u52d5\u8981\u585e", KitRole.DUELIST, "\u541b\u306f\u300c\u92fc\u9a0e\u300d\u3060\u3002\u92fc\u9244\u306e\u610f\u5fd7\u3067\u3001\u6575\u9663\u3092\u7a81\u7834\u305b\u3088\u3002"),
+    SCOUT("\u30b9\u30ab\u30a6\u30c8", "\u00a7a\ud83c\udff9 \u30b9\u30ab\u30a6\u30c8 \u00a77(Initiator)", "\u30ea\u30b3\u30f3\u30dc\u30eb\u30c8\u3067\u6575\u4f4d\u7f6e\u3092\u53ef\u8996\u5316\u3059\u308b\u5075\u5bdf\u5f79", KitRole.INITIATOR, "\u541b\u306f\u300c\u5343\u91cc\u773c\u300d\u3060\u3002\u6575\u3092\u66b4\u304d\u3001\u5473\u65b9\u3078\u52dd\u6a5f\u3092\u3082\u305f\u3089\u305b\u3002"),
+    FLASHER("\u30d5\u30e9\u30c3\u30b7\u30e3\u30fc", "\u00a7b\ud83d\udca5 \u30d5\u30e9\u30c3\u30b7\u30e3\u30fc \u00a77(Initiator)", "\u30d5\u30e9\u30c3\u30b7\u30e5\u30d0\u30f3\u7403\u3067\u6575\u3092\u76f2\u76ee\u5316\u3057\u7a81\u7834\u53e3\u3092\u4f5c\u308b", KitRole.INITIATOR, "\u541b\u306f\u300c\u9583\u5149\u300d\u3060\u3002\u5149\u3067\u6575\u306e\u8996\u754c\u3092\u596a\u3048\u3002"),
+    MARKSMAN("\u30de\u30fc\u30af\u30b9\u30de\u30f3", "\u00a7c\ud83c\udff9 \u30de\u30fc\u30af\u30b9\u30de\u30f3 \u00a77(Initiator)", "\u30d8\u30f4\u30a3\u30fc\u30dc\u30eb\u30c8\u3067\u6575\u306eHP\u4e0a\u9650\u3092\u524a\u308b", KitRole.INITIATOR, "\u541b\u306f\u300c\u9b54\u5f3e\u306e\u5c04\u624b\u300d\u3060\u3002\u9b54\u5f3e\u3092\u653e\u3061\u3001\u6575\u306e\u547d\u3092\u6483\u3061\u629c\u3051\u3002"),
+    SUNDANCE("\u30b5\u30f3\u30c0\u30f3\u30b9", "\u00a7b\u26a1 \u30b5\u30f3\u30c0\u30f3\u30b9 \u00a77(Initiator)", "\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u30af\u30ed\u30b9\u30dc\u30a6\u3067\u5f3e\u5e55\u3092\u5f35\u308b", KitRole.INITIATOR, "\u541b\u306f\u300c\u8352\u91ce\u306e\u6c7a\u95d8\u8005\u300d\u3060\u3002\u4e00\u77ac\u306e\u9699\u304c\u3001\u52dd\u6557\u3092\u6c7a\u3081\u308b\u3002"),
+    SWAPPER("\u30b9\u30ef\u30c3\u30d1\u30fc", "\u00a75\ud83d\udd04 \u30b9\u30ef\u30c3\u30d1\u30fc \u00a77(Initiator)", "\u76f8\u624b\u3068\u306e\u4f4d\u7f6e\u3092\u5373\u5ea7\u306b\u5165\u308c\u66ff\u3048\u308b\u64b9\u4e71\u578b", KitRole.INITIATOR, "\u541b\u306f\u300c\u8ee2\u63db\u8005\u300d\u3060\u3002\u6575\u306e\u4f4d\u7f6e\u3092\u5165\u308c\u66ff\u3048\u3001\u6226\u6cc1\u3092\u8986\u305b\u3002"),
+    STICKER("\u30b9\u30c6\u30c3\u30ab\u30fc", "\u00a73\ud83c\udfa3 \u30b9\u30c6\u30c3\u30ab\u30fc \u00a77(Initiator)", "\u30b0\u30e9\u30c3\u30d7\u30eb\u3067\u6575\u3092\u5f15\u304d\u5bc4\u305b\u308b\u6355\u7372\u578b", KitRole.INITIATOR, "\u541b\u306f\u300c\u4e07\u6709\u306e\u624b\u300d\u3060\u3002\u6575\u3092\u5f15\u304d\u5bc4\u305b\u3001\u9003\u3052\u5834\u3092\u596a\u3048\u3002"),
+    DECOY("\u30c7\u30b3\u30a4", "\u00a78\ud83d\udc65 \u30c7\u30b3\u30a4 \u00a77(Initiator)", "\u81ea\u8eab\u306e\u5206\u8eab\u3092\u751f\u6210\u3057\u900f\u660e\u5316\u3059\u308b\u6b3a\u779e\u578b", KitRole.INITIATOR, "\u541b\u306f\u300c\u652a\u4e71\u8005\u300d\u3060\u3002\u6575\u3092\u60d1\u308f\u305b\u3001\u6226\u5834\u3092\u652f\u914d\u305b\u3088\u3002"),
+    WHIRLWIND("\u30ef\u30fc\u30eb\u30a6\u30a3\u30f3\u30c9", "\u00a7f\ud83c\udf2a \u30ef\u30fc\u30eb\u30a6\u30a3\u30f3\u30c9 \u00a77(Initiator)", "\u6c17\u6d41\u3067\u6575\u3092\u62bc\u3057\u51fa\u3057\uff0b\u8ffd\u5c3e\u7403\u3067\u6253\u3061\u4e0a\u3052\u308b\u98a8\u4f7f\u3044", KitRole.INITIATOR, "\u541b\u306f\u300c\u65cb\u98a8\u300d\u3060\u3002\u98a8\u3092\u7e8f\u3044\u3001\u6575\u3092\u7a7a\u3078\u821e\u3044\u4e0a\u3052\u308d\u3002"),
+    NILGIRITAR("\u30cb\u30eb\u30ae\u30ea\u30bf\u30fc\u30eb", "\u00a7f\ud83c\udf00 \u30cb\u30eb\u30ae\u30ea\u30bf\u30fc\u30eb \u00a77(Initiator)", "\u30af\u30ed\u30b9\u30dc\u30a6\uff0b\u8fd1\u63a5\u3067\u76fe\u8cab\u901a\u30c0\u30e1\u30fc\u30b8\u3092\u4e0e\u3048\u308b\u98a8\u7a74\u4f7f\u3044", KitRole.INITIATOR, "\u541b\u306f\u300c\u98a8\u7a74\u3092\u958b\u3051\u308b\u8005\u300d\u3060\u3002\u9632\u5fa1\u3092\u8cab\u304d\u3001\u6575\u3092\u7a7f\u3066\u3002"),
+    MISTRAL("\u30df\u30b9\u30c8\u30e9\u30eb", "\u00a7f\ud83c\udf2c \u30df\u30b9\u30c8\u30e9\u30eb \u00a77(Initiator)", "\u70c8\u98a8\u7832\u3067\u6575\u3092\u72ed\u304f\u78ba\u5b9f\u306b\u5439\u304d\u98db\u3070\u3059\u66b4\u98a8\u4f7f\u3044", KitRole.INITIATOR, "\u541b\u306f\u300c\u66b4\u98a8\u300d\u3060\u3002"),
+    ROCKETER("\u30ed\u30b1\u30c3\u30c6\u30a3\u30a2", "\u00a7e\ud83d\ude80 \u30ed\u30b1\u30c3\u30c6\u30a3\u30a2 \u00a77(Controller)", "\u30e1\u30ac\u30ed\u30b1\u30c3\u30c8\u3067\u5927\u7206\u767a\u3092\u8d77\u3053\u3059\u30a8\u30ea\u30a2\u5236\u5727\u5f79", KitRole.CONTROLLER, "\u541b\u306f\u300c\u7832\u6483\u624b\u300d\u3060\u3002\u7206\u8f5f\u3092\u97ff\u304b\u305b\u3001\u6575\u9663\u3092\u58ca\u6ec5\u3055\u305b\u3088\u3002"),
+    ALCHEMIST("\u30a2\u30eb\u30b1\u30df\u30b9\u30c8", "\u00a7d\ud83e\uddea \u30a2\u30eb\u30b1\u30df\u30b9\u30c8 \u00a77(Controller)", "\u518d\u8abf\u5408\u3067\u30dd\u30fc\u30b7\u30e7\u30f3\u3092\u88dc\u5145\u3057\u7a7a\u9593\u3054\u3068\u652f\u914d", KitRole.CONTROLLER, "\u541b\u306f\u300c\u932c\u91d1\u8853\u5e2b\u300d\u3060\u3002\u79d8\u85ac\u3092\u64cd\u308a\u3001\u6226\u5c40\u3092\u638c\u63e1\u305b\u3088\u3002"),
+    ENGINEER("\u30a8\u30f3\u30b8\u30cb\u30a2", "\u00a76\ud83d\udd27 \u30a8\u30f3\u30b8\u30cb\u30a2 \u00a77(Controller)", "\u30ec\u30fc\u30b6\u30fc\u30bf\u30ec\u30c3\u30c8\u3092\u8a2d\u7f6e\u3059\u308b\u5236\u5727\u578b", KitRole.CONTROLLER, "\u541b\u306f\u300c\u6a5f\u69cb\u5e2b\u300d\u3060\u3002\u6a5f\u68b0\u3092\u5f93\u3048\u3001\u6226\u5834\u305d\u306e\u3082\u306e\u3092\u652f\u914d\u305b\u3088\u3002"),
+    RESTRICTIONER("\u30ea\u30b9\u30c8\u30ea\u30af\u30b7\u30e7\u30ca\u30fc", "\u00a78\u26d3 \u30ea\u30b9\u30c8\u30ea\u30af\u30b7\u30e7\u30ca\u30fc \u00a77(Controller)", "\u81ea\u8eab\u3054\u3068\u5bfe\u8c61\u3092\u62d8\u675f\u3059\u308b\u30ed\u30c3\u30af\u578b", KitRole.CONTROLLER, "\u541b\u306f\u300c\u62d8\u675f\u8005\u300d\u3060\u3002\u6575\u3092\u7e1b\u308a\u4e0a\u3052\u3001\u52dd\u6a5f\u3092\u5275\u308a\u51fa\u305b\u3002"),
+    TRANSPORTER("\u30c8\u30e9\u30f3\u30b9\u30dd\u30fc\u30bf\u30fc", "\u00a73\ud83c\udf00 \u30c8\u30e9\u30f3\u30b9\u30dd\u30fc\u30bf\u30fc \u00a77(Controller)", "\u53cc\u65b9\u5411\u30dd\u30fc\u30bf\u30eb\u3092\u8a2d\u7f6e\u3059\u308b\u79fb\u52d5\u578b", KitRole.CONTROLLER, "\u541b\u306f\u300c\u5883\u754c\u6e21\u308a\u300d\u3060\u3002\u7a7a\u9593\u3092\u7e4b\u304e\u3001\u65b0\u305f\u306a\u6226\u5834\u3092\u5207\u308a\u62d3\u3051\u3002"),
+    KREUTZ("\u30af\u30ed\u30a4\u30c4", "\u00a75\ud83c\udccf \u30af\u30ed\u30a4\u30c4 \u00a77(Controller)", "\u9b54\u6cd5\u30ab\u30fc\u30c9\u3092\u5f15\u304d\u69d8\u3005\u306a\u52b9\u679c\u3092\u767a\u52d5\u3059\u308b\u9b54\u8853\u5e2b", KitRole.CONTROLLER, "\u541b\u306f\u300c\u9b54\u6cd5\u4f7f\u3044\u300d\u3060\u3002\u904b\u547d\u306e\u30ab\u30fc\u30c9\u3092\u5f15\u304d\u3001\u6226\u5834\u3092\u638c\u63e1\u305b\u3088\u3002"),
+    NECRO("\u30cd\u30af\u30ed", "\u00a78\ud83d\udc80 \u30cd\u30af\u30ed \u00a77(Controller)", "\u30b9\u30b1\u30eb\u30c8\u30f33\u90e8\u968a\u3092\u53ec\u559a\u30fb\u6307\u63ee\u3059\u308b\u5c4d\u4f53\u821e\u8e0f\u8005", KitRole.CONTROLLER, "\u541b\u306f\u300c\u6b7b\u4f53\u821e\u8e0f\u8005\u300d\u3060\u3002\u6b7b\u8005\u3092\u5f93\u3048\u3001\u6b7b\u306e\u821e\u8e0f\u4f1a\u3092\u59cb\u3081\u3088\u3002"),
+    TRAPPER("\u30c8\u30e9\u30c3\u30d1\u30fc", "\u00a73\ud83e\udea4 \u30c8\u30e9\u30c3\u30d1\u30fc \u00a77(Sentinel)", "\u4e0d\u53ef\u8996\u306e\u7f60\u3067\u6575\u3092\u884c\u52d5\u4e0d\u80fd\u306b\u3059\u308b\u9632\u885b\u578b", KitRole.SENTINEL, "\u541b\u306f\u300c\u7f60\u5e2b\u300d\u3060\u3002\u7f60\u3092\u5de1\u3089\u305b\u3001\u6575\u3092\u72e9\u308a\u5c3d\u304f\u305b\u3002"),
+    GUARDIAN("\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3", "\u00a7f\ud83d\udee1 \u30ac\u30fc\u30c7\u30a3\u30a2\u30f3 \u00a77(Sentinel)", "\u9244\u58c1\u30b9\u30ad\u30eb\u3067\u4e00\u5b9a\u6642\u9593\u7121\u6575\u5316\u3059\u308b\u76fe\u5f79", KitRole.SENTINEL, "\u541b\u306f\u300c\u4e0d\u6c88\u8266\u300d\u3060\u3002\u3044\u304b\u306a\u308b\u731b\u653b\u306b\u3082\u6c88\u307e\u305a\u3001\u6226\u7dda\u3092\u652f\u3048\u7d9a\u3051\u308d\u3002"),
+    MEDIC("\u30e1\u30c7\u30a3\u30c3\u30af", "\u00a75\u2764 \u30e1\u30c7\u30a3\u30c3\u30af \u00a77(Sentinel)", "\u30d5\u30a3\u30fc\u30eb\u30c9\u30b1\u30a2\u3067\u5473\u65b9\u3092\u7bc4\u56f2\u56de\u5fa9\u3059\u308b\u652f\u63f4\u578b", KitRole.SENTINEL, "\u541b\u306f\u300c\u751f\u547d\u7dda\u300d\u3060\u3002\u4ef2\u9593\u3092\u6551\u3044\u3001\u6226\u7dda\u3092\u7e4b\u304e\u6b62\u3081\u3088\u3002"),
+    SUPPORTER("\u30b5\u30dd\u30fc\u30bf\u30fc", "\u00a7a\ud83d\udc8a \u30b5\u30dd\u30fc\u30bf\u30fc \u00a77(Sentinel)", "\u518d\u8abf\u9054\u3067\u30d0\u30d5\u30dd\u30fc\u30b7\u30e7\u30f3\u3092\u88dc\u5145\u3057\u6226\u5834\u3092\u652f\u3048\u308b", KitRole.SENTINEL, "\u541b\u306f\u300c\u52a0\u8b77\u8005\u300d\u3060\u3002\u4ef2\u9593\u3078\u529b\u3092\u6388\u3051\u3001\u52dd\u5229\u3078\u5c0e\u3051\u3002"),
+    PHANTOM("\u30d5\u30a1\u30f3\u30c8\u30e0", "\u00a77\ud83d\udc7b \u30d5\u30a1\u30f3\u30c8\u30e0 \u00a77(Sentinel)", "\u970a\u4f53\u5316\u3067\u900f\u660e\uff0b\u7121\u6575\u306b\u306a\u308b\u56de\u907f\u578b", KitRole.SENTINEL, "\u541b\u306f\u300c\u5e7b\u5f71\u300d\u3060\u3002\u59ff\u3092\u6666\u307e\u3057\u3001\u6575\u3092\u7ffb\u5f04\u305b\u3088\u3002"),
+    ANCHOR("\u30a2\u30f3\u30ab\u30fc", "\u00a79\u2693 \u30a2\u30f3\u30ab\u30fc \u00a77(Sentinel)", "\u78c1\u5834\u3067\u5468\u56f2\u306e\u6575\u3092\u6e1b\u901f\u3055\u305b\u308b\u5236\u5727\u578b", KitRole.SENTINEL, "\u541b\u306f\u300c\u505c\u6ede\u8005\u300d\u3060\u3002\u9818\u57df\u3092\u5c55\u958b\u3057\u3001\u6575\u306e\u9032\u8ecd\u3092\u5c01\u3058\u3088\u3002"),
+    RELEASER("\u30ea\u30ea\u30fc\u30b5\u30fc", "\u00a7e\ud83d\udca2 \u30ea\u30ea\u30fc\u30b5\u30fc \u00a77(Sentinel)", "\u30d0\u30fc\u30b9\u30c8\u7cfb\u30b9\u30ad\u30eb\u7279\u5316\u3002\u5927\u7206\u767a\uff0b\u5c0f\u7206\u767a\u3092\u99c6\u4f7f", KitRole.SENTINEL, "\u541b\u306f\u300c\u89e3\u653e\u8005\u300d\u3060\u3002\u79d8\u3081\u305f\u308b\u529b\u3092\u89e3\u304d\u653e\u3061\u3001\u5168\u3066\u3092\u5439\u304d\u98db\u3070\u305b\u3002");
 
     private final String name;
     private final String displayName;
@@ -91,7 +50,7 @@ public enum KitType {
     private final String lore;
     private final KitRole role;
 
-    KitType(String name, String displayName, String description, KitRole role, String lore) {
+    private KitType(String name, String displayName, String description, KitRole role, String lore) {
         this.name = name;
         this.displayName = displayName;
         this.description = description;
@@ -99,9 +58,24 @@ public enum KitType {
         this.lore = lore;
     }
 
-    public String getName() { return name; }
-    public String getDisplayName() { return displayName; }
-    public String getDescription() { return description; }
-    public String getLore() { return lore; }
-    public KitRole getRole() { return role; }
+    public String getName() {
+        return this.name;
+    }
+
+    public String getDisplayName() {
+        return this.displayName;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public String getLore() {
+        return this.lore;
+    }
+
+    public KitRole getRole() {
+        return this.role;
+    }
 }
+

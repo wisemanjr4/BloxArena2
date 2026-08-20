@@ -1,242 +1,293 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  net.kyori.adventure.text.Component
+ *  org.bukkit.Bukkit
+ *  org.bukkit.Material
+ *  org.bukkit.NamespacedKey
+ *  org.bukkit.Sound
+ *  org.bukkit.entity.Player
+ *  org.bukkit.inventory.ItemStack
+ *  org.bukkit.inventory.meta.ItemMeta
+ *  org.bukkit.persistence.PersistentDataType
+ *  org.bukkit.plugin.Plugin
+ *  org.bukkit.scheduler.BukkitTask
+ */
 package com.bloxarena.kit;
 
 import com.bloxarena.BloxArenaPlugin;
 import com.bloxarena.game.GameManager;
 import com.bloxarena.game.TeamColor;
-import org.bukkit.*;
+import com.bloxarena.kit.KitBuilder;
+import com.bloxarena.kit.KitType;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
-
-/**
- * ホットバー型キット選択（統合版互換）
- * スロット0=前ページ、1〜7=キット、8=次ページ
- * 右クリックで選択・ページ切り替え
- */
 public class KitSelectGUI {
-
-    // 後方互換のため残す（GameListeners の instanceof チェック等で使用）
     public static final String GUI_TITLE = "__hotbar__";
-
     private static final int KITS_PER_PAGE = 7;
-
     private final BloxArenaPlugin plugin;
     private final GameManager gm;
-
     private final NamespacedKey KIT_KEY;
     private final NamespacedKey NAV_KEY;
-
-    private final Set<UUID> confirmed  = new HashSet<>();
-    private final Set<UUID> allPlayers = new HashSet<>();
-    private final Map<UUID, Integer> pages = new HashMap<>();
-
+    private final Set<UUID> confirmed = new HashSet<UUID>();
+    private final Set<UUID> allPlayers = new HashSet<UUID>();
+    private final Map<UUID, Integer> pages = new HashMap<UUID, Integer>();
     private BukkitTask timeoutTask;
     private BukkitTask watchdogTask;
+    private BukkitTask countdownTask;
     private boolean done = false;
 
     public KitSelectGUI(BloxArenaPlugin plugin, GameManager gm) {
-        this.plugin  = plugin;
-        this.gm      = gm;
-        this.KIT_KEY = new NamespacedKey(plugin, "ks_kit");
-        this.NAV_KEY = new NamespacedKey(plugin, "ks_nav");
+        this.plugin = plugin;
+        this.gm = gm;
+        this.KIT_KEY = new NamespacedKey((Plugin)plugin, "ks_kit");
+        this.NAV_KEY = new NamespacedKey((Plugin)plugin, "ks_nav");
     }
-
-    // ─── 公開API ───
 
     public void openForAll(List<UUID> redTeam, List<UUID> blueTeam, int timeoutSeconds) {
-        allPlayers.addAll(redTeam);
-        allPlayers.addAll(blueTeam);
-
-        for (UUID uid : allPlayers) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) renderHotbar(p);
+        this.allPlayers.addAll(redTeam);
+        this.allPlayers.addAll(blueTeam);
+        for (UUID uid : this.allPlayers) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            this.renderHotbar(p);
         }
-
-        // ウォッチドッグ: 毎秒ホットバーが壊れていないか確認・再描画
-        watchdogTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (done) { watchdogTask.cancel(); return; }
-            for (UUID uid : allPlayers) {
-                if (confirmed.contains(uid)) continue;
-                Player p = Bukkit.getPlayer(uid);
-                if (p != null && p.isOnline() && !hasHotbarRendered(p)) renderHotbar(p);
+        this.watchdogTask = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, () -> {
+            if (this.done) {
+                this.watchdogTask.cancel();
+                return;
+            }
+            for (UUID uid : this.allPlayers) {
+                Player p;
+                if (this.confirmed.contains(uid) || (p = Bukkit.getPlayer((UUID)uid)) == null || !p.isOnline() || this.hasHotbarRendered(p)) continue;
+                this.renderHotbar(p);
             }
         }, 20L, 20L);
-
-        // タイムアウト
-        timeoutTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            for (UUID uid : allPlayers) {
-                if (!confirmed.contains(uid)) {
-                    Player p = Bukkit.getPlayer(uid);
-                    if (p != null) autoSelectKit(p);
+        int[] remaining = new int[]{timeoutSeconds};
+        this.countdownTask = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, () -> {
+            if (this.done) {
+                this.countdownTask.cancel();
+                return;
+            }
+            for (UUID uid : this.allPlayers) {
+                Player p;
+                if (this.confirmed.contains(uid) || (p = Bukkit.getPlayer((UUID)uid)) == null) continue;
+                p.sendActionBar((Component)Component.text((String)("\u00a7e\u30ad\u30c3\u30c8\u9078\u629e \u6b8b\u308a \u00a7c" + remaining[0] + "\u00a7e \u79d2")));
+            }
+            remaining[0] = remaining[0] - 1;
+        }, 0L, 20L);
+        this.timeoutTask = Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            for (UUID uid : this.allPlayers) {
+                Player p;
+                if (this.confirmed.contains(uid) || (p = Bukkit.getPlayer((UUID)uid)) == null) continue;
+                this.autoSelectKit(p);
+            }
+            if (!this.done) {
+                this.done = true;
+                if (this.watchdogTask != null) {
+                    this.watchdogTask.cancel();
+                    this.watchdogTask = null;
                 }
+                if (this.countdownTask != null) {
+                    this.countdownTask.cancel();
+                    this.countdownTask = null;
+                }
+                this.giveKitsToAll();
+                this.gm.onKitSelectDone();
             }
-            if (!done) {
-                done = true;
-                giveKitsToAll();
-                gm.onKitSelectDone();
-            }
-        }, timeoutSeconds * 20L);
+        }, (long)timeoutSeconds * 20L);
     }
 
-    /** ホットバーのキットアイテムを右クリックしたときに呼ぶ */
     public void onInteract(Player p) {
-        if (confirmed.contains(p.getUniqueId())) return;
-        if (done) return;
-
+        if (this.confirmed.contains(p.getUniqueId())) {
+            return;
+        }
+        if (this.done) {
+            return;
+        }
         ItemStack held = p.getInventory().getItemInMainHand();
-        if (held == null || held.getType() == Material.AIR) return;
+        if (held == null || held.getType() == Material.AIR) {
+            return;
+        }
         ItemMeta meta = held.getItemMeta();
-        if (meta == null) return;
-
-        // ナビゲーションボタン
-        String nav = meta.getPersistentDataContainer().get(NAV_KEY, PersistentDataType.STRING);
+        if (meta == null) {
+            return;
+        }
+        String nav = (String)meta.getPersistentDataContainer().get(this.NAV_KEY, PersistentDataType.STRING);
         if (nav != null) {
-            int page = pages.getOrDefault(p.getUniqueId(), 0);
-            int maxPage = (KitType.values().length - 1) / KITS_PER_PAGE;
-            if ("PREV".equals(nav) && page > 0) pages.put(p.getUniqueId(), page - 1);
-            if ("NEXT".equals(nav) && page < maxPage) pages.put(p.getUniqueId(), page + 1);
-            renderHotbar(p);
+            int page = this.pages.getOrDefault(p.getUniqueId(), 0);
+            int maxPage = (KitType.values().length - 1) / 7;
+            if ("PREV".equals(nav) && page > 0) {
+                this.pages.put(p.getUniqueId(), page - 1);
+            }
+            if ("NEXT".equals(nav) && page < maxPage) {
+                this.pages.put(p.getUniqueId(), page + 1);
+            }
+            this.renderHotbar(p);
             return;
         }
-
-        // キット選択
-        String kitName = meta.getPersistentDataContainer().get(KIT_KEY, PersistentDataType.STRING);
-        if (kitName == null) return;
-
-        KitType kit = findKit(kitName);
-        if (kit == null) return;
-
-        if (gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) {
-            p.sendMessage("§cそのキットはチームメンバーが選択済みです。");
+        String kitName = (String)meta.getPersistentDataContainer().get(this.KIT_KEY, PersistentDataType.STRING);
+        if (kitName == null) {
             return;
         }
-
-        // 確定
-        gm.setPlayerKit(p.getUniqueId(), kit.name());
-        plugin.getStatsManager().addKitPick(p.getUniqueId(), kit.name());
-        confirmed.add(p.getUniqueId());
-        TeamColor team = gm.getTeamOf(p);
-        if (team != null) KitBuilder.giveKit(p, kit, team, plugin);
-        p.sendMessage("§a" + kit.getDisplayName() + " §aを選択しました！");
-        p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.2f);
-
-        refreshForTeam(p.getUniqueId());
-        checkAllSelected();
+        KitType kit = this.findKit(kitName);
+        if (kit == null) {
+            return;
+        }
+        if (this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) {
+            p.sendMessage("\u00a7c\u305d\u306e\u30ad\u30c3\u30c8\u306f\u30c1\u30fc\u30e0\u30e1\u30f3\u30d0\u30fc\u304c\u9078\u629e\u6e08\u307f\u3067\u3059\u3002");
+            return;
+        }
+        this.gm.setPlayerKit(p.getUniqueId(), kit.name());
+        this.plugin.getStatsManager().addKitPick(p.getUniqueId(), kit.name());
+        this.confirmed.add(p.getUniqueId());
+        TeamColor team = this.gm.getKitTeam(p.getUniqueId());
+        if (team != null) {
+            KitBuilder.giveKit(p, kit, team, this.plugin);
+        }
+        p.sendMessage("\u00a7a" + kit.getDisplayName() + " \u00a7a\u3092\u9078\u629e\u3057\u307e\u3057\u305f\uff01");
+        p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.2f);
+        this.refreshForTeam(p.getUniqueId());
+        this.checkAllSelected();
     }
 
-    /** インベントリが閉じられても無視（ホットバー方式では不要） */
-    public void onInventoryClose(Player p) { /* no-op */ }
-
-    // ─── 内部処理 ───
+    public void onInventoryClose(Player p) {
+    }
 
     private void renderHotbar(Player p) {
-        int page = pages.getOrDefault(p.getUniqueId(), 0);
-        KitType[] kits = java.util.Arrays.stream(KitType.values()).filter(k -> k != KitType.MIMIC).toArray(KitType[]::new);
-        int start = page * KITS_PER_PAGE;
-        int maxPage = (kits.length - 1) / KITS_PER_PAGE;
-
-        // ホットバー（0〜8）だけ書き換え
-        for (int slot = 0; slot < 9; slot++) p.getInventory().setItem(slot, null);
-
-        // 前ページボタン
-        if (page > 0) p.getInventory().setItem(0, navItem("§e§l◀ 前のページ", "PREV"));
-
-        // キット（最大7個）
-        for (int i = 0; i < KITS_PER_PAGE; i++) {
-            int ki = start + i;
-            if (ki >= kits.length) break;
-            p.getInventory().setItem(i + 1, kitItem(p, kits[ki]));
+        int ki;
+        int page = this.pages.getOrDefault(p.getUniqueId(), 0);
+        KitType[] kits = KitType.values();
+        int start = page * 7;
+        int maxPage = (kits.length - 1) / 7;
+        for (int slot = 0; slot < 9; ++slot) {
+            p.getInventory().setItem(slot, null);
         }
-
-        // 次ページボタン
-        if (page < maxPage) p.getInventory().setItem(8, navItem("§e§l次のページ ▶", "NEXT"));
-
-        // タイトルバー代わりのメッセージ（初回のみ）
-        if (!pages.containsKey(p.getUniqueId())) {
-            p.sendMessage("§6§lキットを選択: §f右クリックで選択 §7| §eページ: " + (page + 1) + "/" + (maxPage + 1));
+        if (page > 0) {
+            p.getInventory().setItem(0, this.navItem("\u00a7e\u00a7l\u25c0 \u524d\u306e\u30da\u30fc\u30b8", "PREV"));
         }
-        pages.put(p.getUniqueId(), page);
+        for (int i = 0; i < 7 && (ki = start + i) < kits.length; ++i) {
+            p.getInventory().setItem(i + 1, this.kitItem(p, kits[ki]));
+        }
+        if (page < maxPage) {
+            p.getInventory().setItem(8, this.navItem("\u00a7e\u00a7l\u6b21\u306e\u30da\u30fc\u30b8 \u25b6", "NEXT"));
+        }
+        if (!this.pages.containsKey(p.getUniqueId())) {
+            p.sendMessage("\u00a76\u00a7l\u30ad\u30c3\u30c8\u3092\u9078\u629e: \u00a7f\u53f3\u30af\u30ea\u30c3\u30af\u3067\u9078\u629e \u00a77| \u00a7e\u30da\u30fc\u30b8: " + (page + 1) + "/" + (maxPage + 1));
+        }
+        this.pages.put(p.getUniqueId(), page);
     }
 
     private boolean hasHotbarRendered(Player p) {
-        ItemStack item = p.getInventory().getItem(1); // slot1にキットがあるか
-        if (item == null || item.getItemMeta() == null) return false;
-        return item.getItemMeta().getPersistentDataContainer().has(KIT_KEY, PersistentDataType.STRING);
+        ItemStack item = p.getInventory().getItem(1);
+        if (item == null || item.getItemMeta() == null) {
+            return false;
+        }
+        return item.getItemMeta().getPersistentDataContainer().has(this.KIT_KEY, PersistentDataType.STRING);
     }
 
     private void refreshForTeam(UUID selectedBy) {
-        TeamColor team = gm.getTeamOf(Bukkit.getPlayer(selectedBy));
-        if (team == null) return;
-        List<UUID> teammates = team == TeamColor.RED ? gm.getRedTeam() : gm.getBlueTeam();
+        TeamColor team = this.gm.getTeamOf(Bukkit.getPlayer((UUID)selectedBy));
+        if (team == null) {
+            return;
+        }
+        List<UUID> teammates = team == TeamColor.RED ? this.gm.getRedTeam() : this.gm.getBlueTeam();
         for (UUID uid : teammates) {
-            if (confirmed.contains(uid)) continue;
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) renderHotbar(p);
+            Player p;
+            if (this.confirmed.contains(uid) || (p = Bukkit.getPlayer((UUID)uid)) == null) continue;
+            this.renderHotbar(p);
         }
     }
 
     private void checkAllSelected() {
-        if (done) return;
-        if (confirmed.containsAll(allPlayers)) {
-            done = true;
-            if (timeoutTask  != null) { timeoutTask.cancel();  timeoutTask  = null; }
-            if (watchdogTask != null) { watchdogTask.cancel(); watchdogTask = null; }
-            giveKitsToAll();
-            gm.onKitSelectDone();
+        if (this.done) {
+            return;
+        }
+        if (this.confirmed.containsAll(this.allPlayers)) {
+            this.done = true;
+            if (this.timeoutTask != null) {
+                this.timeoutTask.cancel();
+                this.timeoutTask = null;
+            }
+            if (this.watchdogTask != null) {
+                this.watchdogTask.cancel();
+                this.watchdogTask = null;
+            }
+            if (this.countdownTask != null) {
+                this.countdownTask.cancel();
+                this.countdownTask = null;
+            }
+            this.giveKitsToAll();
+            this.gm.onKitSelectDone();
         }
     }
 
     private void giveKitsToAll() {
-        for (UUID uid : allPlayers) {
-            Player p = Bukkit.getPlayer(uid);
+        for (UUID uid : this.allPlayers) {
+            TeamColor team;
+            Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            String kitName = gm.getPlayerKit(uid);
-            KitType kit = findKit(kitName);
-            if (kit == null) kit = KitType.BLADE;
-            TeamColor team = gm.getTeamOf(p);
-            if (team == null) continue;
+            String kitName = this.gm.getPlayerKit(uid);
+            KitType kit = this.findKit(kitName);
+            if (kit == null) {
+                kit = KitType.BLADE;
+            }
+            if ((team = this.gm.getKitTeam(p.getUniqueId())) == null) continue;
             p.setItemOnCursor(null);
-            KitBuilder.giveKit(p, kit, team, plugin);
+            KitBuilder.giveKit(p, kit, team, this.plugin);
         }
     }
 
     private void autoSelectKit(Player p) {
-        if (confirmed.contains(p.getUniqueId())) return;
-        for (KitType kit : KitType.values()) {
-            if (kit == KitType.MIMIC) continue;
-            if (!gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) {
-                gm.setPlayerKit(p.getUniqueId(), kit.name());
-                confirmed.add(p.getUniqueId());
-                TeamColor t = gm.getTeamOf(p);
-                if (t != null) KitBuilder.giveKit(p, kit, t, plugin);
-                p.sendMessage("§e自動選択: §a" + kit.getDisplayName());
-                return;
-            }
+        if (this.confirmed.contains(p.getUniqueId())) {
+            return;
         }
-        gm.setPlayerKit(p.getUniqueId(), KitType.BLADE.name());
-        confirmed.add(p.getUniqueId());
+        for (KitType kit : KitType.values()) {
+            if (this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) continue;
+            this.gm.setPlayerKit(p.getUniqueId(), kit.name());
+            this.confirmed.add(p.getUniqueId());
+            TeamColor t = this.gm.getKitTeam(p.getUniqueId());
+            if (t != null) {
+                KitBuilder.giveKit(p, kit, t, this.plugin);
+            }
+            p.sendMessage("\u00a7e\u81ea\u52d5\u9078\u629e: \u00a7a" + kit.getDisplayName());
+            return;
+        }
+        this.gm.setPlayerKit(p.getUniqueId(), KitType.BLADE.name());
+        this.confirmed.add(p.getUniqueId());
     }
 
-    // ─── アイテム生成 ───
-
     private ItemStack kitItem(Player p, KitType kit) {
-        boolean taken = gm.isKitTakenInTeam(p.getUniqueId(), kit.name());
-        Material mat = taken ? Material.BARRIER : iconMaterial(kit);
+        boolean taken = this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name());
+        Material mat = taken ? Material.BARRIER : this.iconMaterial(kit);
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return item;
-        meta.setDisplayName(taken ? "§c§m" + kit.getName() + " §c(選択済み)" : kit.getDisplayName());
-        meta.setLore(Arrays.asList(
-            "§7" + kit.getDescription(),
-            "§f" + kit.getLore(),
-            taken ? "§c選択不可" : "§a► 右クリックで選択"
-        ));
+        if (meta == null) {
+            return item;
+        }
+        meta.setDisplayName((String)(taken ? "\u00a7c\u00a7m" + kit.getName() + " \u00a7c(\u9078\u629e\u6e08\u307f)" : kit.getDisplayName()));
+        meta.setLore(Arrays.asList("\u00a77" + kit.getDescription(), "\u00a7f" + kit.getLore(), taken ? "\u00a7c\u9078\u629e\u4e0d\u53ef" : "\u00a7a\u25ba \u53f3\u30af\u30ea\u30c3\u30af\u3067\u9078\u629e"));
         if (!taken) {
-            meta.getPersistentDataContainer().set(KIT_KEY, PersistentDataType.STRING, kit.name());
+            meta.getPersistentDataContainer().set(this.KIT_KEY, PersistentDataType.STRING, kit.name());
         }
         item.setItemMeta(meta);
         return item;
@@ -245,61 +296,73 @@ public class KitSelectGUI {
     private ItemStack navItem(String name, String navValue) {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return item;
+        if (meta == null) {
+            return item;
+        }
         meta.setDisplayName(name);
-        meta.setLore(Collections.singletonList("§7右クリックでページ切り替え"));
-        meta.getPersistentDataContainer().set(NAV_KEY, PersistentDataType.STRING, navValue);
+        meta.setLore(Collections.singletonList("\u00a77\u53f3\u30af\u30ea\u30c3\u30af\u3067\u30da\u30fc\u30b8\u5207\u308a\u66ff\u3048"));
+        meta.getPersistentDataContainer().set(this.NAV_KEY, PersistentDataType.STRING, navValue);
         item.setItemMeta(meta);
         return item;
     }
 
     private Material iconMaterial(KitType kit) {
         return switch (kit) {
-            case BLADE     -> Material.DIAMOND_SWORD;
-            case BREAKER   -> Material.DIAMOND_AXE;
-            case SCOUT     -> Material.BOW;
-            case FLASHER   -> Material.GLOWSTONE_DUST;
-            case ROCKETER  -> Material.FIREWORK_ROCKET;
+            case BLADE -> Material.DIAMOND_SWORD;
+            case BREAKER -> Material.DIAMOND_AXE;
+            case SCOUT -> Material.BOW;
+            case FLASHER -> Material.GLOWSTONE_DUST;
+            case ROCKETER -> Material.FIREWORK_ROCKET;
             case ALCHEMIST -> Material.BREWING_STAND;
-            case TRAPPER   -> Material.TRIPWIRE_HOOK;
-            case GUARDIAN  -> Material.TOTEM_OF_UNDYING;
-            case NINJA     -> Material.ENDER_PEARL;
+            case TRAPPER -> Material.TRIPWIRE_HOOK;
+            case GUARDIAN -> Material.TOTEM_OF_UNDYING;
+            case NINJA -> Material.ENDER_PEARL;
             case BERSERKER -> Material.NETHERITE_AXE;
-            case MEDIC     -> Material.TIPPED_ARROW;
-            case ENGINEER  -> Material.IRON_PICKAXE;
-            case SNIPER    -> Material.CROSSBOW;
-            case COUNTER   -> Material.IRON_SWORD;
-            case MARKSMAN  -> Material.SPECTRAL_ARROW;
-            case PYRO      -> Material.BLAZE_POWDER;
+            case MEDIC -> Material.TIPPED_ARROW;
+            case ENGINEER -> Material.IRON_PICKAXE;
+            case SNIPER -> Material.CROSSBOW;
+            case COUNTER -> Material.IRON_SWORD;
+            case MARKSMAN -> Material.SPECTRAL_ARROW;
+            case PYRO -> Material.BLAZE_POWDER;
+            case LANCER -> Material.IRON_SWORD;
             case SUPPORTER -> Material.NETHER_WART;
-            case JESTER    -> Material.RABBIT_FOOT;
-            case SUNDANCE  -> Material.LIGHTNING_ROD;
-            case VAMPIRE   -> Material.REDSTONE;
-            case BOMBER    -> Material.TNT;
-            case COOK      -> Material.COOKED_BEEF;
+            case JESTER -> Material.RABBIT_FOOT;
+            case SUNDANCE -> Material.LIGHTNING_ROD;
+            case VAMPIRE -> Material.REDSTONE;
+            case BOMBER -> Material.TNT;
+            case COOK -> Material.COOKED_BEEF;
             case WHIRLWIND -> Material.FEATHER;
             case NILGIRITAR -> Material.TRIDENT;
-            case SWAPPER   -> Material.ENDER_PEARL;
-            case STICKER   -> Material.FISHING_ROD;
-            case DECOY     -> Material.SKELETON_SKULL;
+            case MISTRAL -> Material.WHITE_WOOL;
+            case SWAPPER -> Material.ENDER_PEARL;
+            case STICKER -> Material.FISHING_ROD;
+            case DECOY -> Material.SKELETON_SKULL;
             case RESTRICTIONER -> Material.CHAIN;
             case TRANSPORTER -> Material.ENDER_EYE;
-            case KREUTZ    -> Material.BOOK;
-            case MIMIC     -> Material.ECHO_SHARD;
-            case PHANTOM   -> Material.PHANTOM_MEMBRANE;
-            case ANCHOR    -> Material.LODESTONE;
-            case RELEASER  -> Material.FIRE_CHARGE;
-            case GRANG     -> Material.SHIELD;
-            case NECRO     -> Material.SKELETON_SKULL;
+            case KREUTZ -> Material.BOOK;
+            case PHANTOM -> Material.PHANTOM_MEMBRANE;
+            case ANCHOR -> Material.LODESTONE;
+            case RELEASER -> Material.FIRE_CHARGE;
+            case GRANG -> Material.SHIELD;
+            case NECRO -> Material.SKELETON_SKULL;
+            default -> throw new IncompatibleClassChangeError();
         };
     }
 
     private KitType findKit(String name) {
-        if (name == null) return null;
-        try { return KitType.valueOf(name); } catch (IllegalArgumentException ignored) {}
-        for (KitType k : KitType.values()) {
-            if (k.getName().equals(name)) return k;
+        if (name == null) {
+            return null;
         }
-        return null;
+        try {
+            return KitType.valueOf(name);
+        }
+        catch (IllegalArgumentException illegalArgumentException) {
+            for (KitType k : KitType.values()) {
+                if (!k.getName().equals(name)) continue;
+                return k;
+            }
+            return null;
+        }
     }
 }
+

@@ -1,354 +1,427 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  net.kyori.adventure.text.Component
+ *  org.bukkit.Bukkit
+ *  org.bukkit.GameMode
+ *  org.bukkit.Location
+ *  org.bukkit.Sound
+ *  org.bukkit.World
+ *  org.bukkit.attribute.Attribute
+ *  org.bukkit.attribute.AttributeInstance
+ *  org.bukkit.boss.BarColor
+ *  org.bukkit.boss.BarFlag
+ *  org.bukkit.boss.BarStyle
+ *  org.bukkit.boss.BossBar
+ *  org.bukkit.configuration.file.FileConfiguration
+ *  org.bukkit.entity.Player
+ *  org.bukkit.plugin.Plugin
+ *  org.bukkit.potion.PotionEffect
+ *  org.bukkit.scheduler.BukkitRunnable
+ *  org.bukkit.scheduler.BukkitTask
+ */
 package com.bloxarena.lobby;
 
 import com.bloxarena.BloxArenaPlugin;
+import com.bloxarena.game.GameMode;
 import com.bloxarena.game.GameState;
 import com.bloxarena.map.MapConfig;
-import org.bukkit.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarFlag;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
-
-import org.bukkit.boss.BossBar;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-
 public class LobbyManager {
-
     private final BloxArenaPlugin plugin;
-
     private World waitingWorld;
     private Location waitingMin;
     private Location waitingMax;
     private Location lobbySpawn;
-
-    private final Set<UUID> waitingPlayers = new LinkedHashSet<>();
+    private final Set<UUID> waitingPlayers = new LinkedHashSet<UUID>();
     private BukkitTask countdownTask = null;
     private int currentCountdown = -1;
     private boolean continuousMode = false;
     private Location lobbyOobMin = null;
     private Location lobbyOobMax = null;
-
     private BossBar countdownBossBar = null;
-
     private static final int THRESHOLD_4 = 4;
     private static final int THRESHOLD_6 = 6;
 
     public LobbyManager(BloxArenaPlugin plugin) {
         this.plugin = plugin;
-        reload();
+        this.reload();
     }
 
     public void reload() {
-        FileConfiguration cfg = plugin.getConfig();
+        FileConfiguration cfg = this.plugin.getConfig();
         String worldName = cfg.getString("lobby.waiting_area.world", "world");
-        waitingWorld = Bukkit.getWorld(worldName);
-
-        waitingMin = readLoc(cfg, "lobby.waiting_area.min", worldName);
-        waitingMax = readLoc(cfg, "lobby.waiting_area.max", worldName);
-        lobbySpawn = readLoc(cfg, "lobby.spawn", worldName);
-
-        // ロビーOOB
+        this.waitingWorld = Bukkit.getWorld((String)worldName);
+        this.waitingMin = this.readLoc(cfg, "lobby.waiting_area.min", worldName);
+        this.waitingMax = this.readLoc(cfg, "lobby.waiting_area.max", worldName);
+        this.lobbySpawn = this.readLoc(cfg, "lobby.spawn", worldName);
         if (cfg.contains("lobby.oob.min.x")) {
-            lobbyOobMin = readLoc(cfg, "lobby.oob.min", worldName);
-            lobbyOobMax = readLoc(cfg, "lobby.oob.max", worldName);
+            this.lobbyOobMin = this.readLoc(cfg, "lobby.oob.min", worldName);
+            this.lobbyOobMax = this.readLoc(cfg, "lobby.oob.max", worldName);
         }
     }
 
     private Location readLoc(FileConfiguration cfg, String path, String worldName) {
-        World w = Bukkit.getWorld(worldName);
-        double x = cfg.getDouble(path + ".x", 0);
-        double y = cfg.getDouble(path + ".y", 64);
-        double z = cfg.getDouble(path + ".z", 0);
+        World w = Bukkit.getWorld((String)worldName);
+        double x = cfg.getDouble(path + ".x", 0.0);
+        double y = cfg.getDouble(path + ".y", 64.0);
+        double z = cfg.getDouble(path + ".z", 0.0);
         return new Location(w, x, y, z);
     }
 
-    // ─────────────────────────────────────────────
-    // 入退場
-    // ─────────────────────────────────────────────
-
     public void onPlayerEnter(Player p) {
-        if (plugin.getGameManager().getState() != GameState.WAITING) {
-            if (!plugin.getGameManager().isSpectator(p)) {
-                plugin.getGameManager().addSpectator(p);
-                p.sendMessage("§e試合が進行中です。観戦モードへ移行しました。");
+        AttributeInstance attr;
+        if (this.plugin.getGameManager().getState() != GameState.WAITING) {
+            if (!this.plugin.getGameManager().isSpectator(p)) {
+                this.plugin.getGameManager().addSpectator(p);
+                p.sendMessage("\u00a7e\u8a66\u5408\u304c\u9032\u884c\u4e2d\u3067\u3059\u3002\u89b3\u6226\u30e2\u30fc\u30c9\u3078\u79fb\u884c\u3057\u307e\u3057\u305f\u3002");
             }
             return;
         }
         if (!p.hasPermission("bloxarena.admin")) {
-            p.setGameMode(GameMode.ADVENTURE);
+            p.setGameMode(org.bukkit.GameMode.ADVENTURE);
         }
-        // ロビー回復
-        var attr = p.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH);
-        double maxHp = attr != null ? attr.getValue() : 20.0;
+        double maxHp = (attr = p.getAttribute(Attribute.GENERIC_MAX_HEALTH)) != null ? attr.getValue() : 20.0;
         p.setHealth(maxHp);
         p.setFoodLevel(20);
-        p.setSaturation(5f);
-        for (var eff : p.getActivePotionEffects()) p.removePotionEffect(eff.getType());
-        if (waitingPlayers.add(p.getUniqueId())) {
-            p.sendMessage("§a待機エリアに参加しました。 §7(" + waitingPlayers.size() + "人待機中)");
-            // キット一覧ガイドアイテムを配布（ホットバースロット8）
-            p.getInventory().setItem(8, plugin.getKitInfoGUI().makeGuideItem());
-            updateCountdown();
+        p.setSaturation(5.0f);
+        for (PotionEffect eff : p.getActivePotionEffects()) {
+            p.removePotionEffect(eff.getType());
+        }
+        if (this.waitingPlayers.add(p.getUniqueId())) {
+            p.sendMessage("\u00a7a\u5f85\u6a5f\u30a8\u30ea\u30a2\u306b\u53c2\u52a0\u3057\u307e\u3057\u305f\u3002 \u00a77(" + this.waitingPlayers.size() + "\u4eba\u5f85\u6a5f\u4e2d)");
+            p.getInventory().setItem(8, this.plugin.getKitInfoGUI().makeGuideItem());
+            this.updateCountdown();
         }
     }
 
     public void onPlayerExit(Player p) {
-        if (waitingPlayers.remove(p.getUniqueId())) {
-            if (plugin.getGameManager().getState() == GameState.WAITING) {
+        if (this.waitingPlayers.remove(p.getUniqueId())) {
+            if (this.plugin.getGameManager().getState() == GameState.WAITING) {
                 if (!p.hasPermission("bloxarena.admin")) {
-                    p.setGameMode(GameMode.SURVIVAL);
+                    p.setGameMode(org.bukkit.GameMode.SURVIVAL);
                 }
-                p.sendMessage("§c待機エリアから退出しました。");
+                p.sendMessage("\u00a7c\u5f85\u6a5f\u30a8\u30ea\u30a2\u304b\u3089\u9000\u51fa\u3057\u307e\u3057\u305f\u3002");
             }
-            updateCountdown();
+            this.updateCountdown();
         }
     }
 
     public void onPlayerQuit(Player p) {
-        waitingPlayers.remove(p.getUniqueId());
-        updateCountdown();
+        this.waitingPlayers.remove(p.getUniqueId());
+        this.updateCountdown();
     }
-
-    // ─────────────────────────────────────────────
-    // 待機エリア判定
-    // ─────────────────────────────────────────────
 
     public boolean isInWaitingArea(Location loc) {
-        if (waitingMin == null || waitingMax == null) return false;
-        if (waitingMin.getWorld() == null) return false;
-        if (loc.getWorld() == null || !waitingMin.getWorld().equals(loc.getWorld())) return false;
-        // min/max の大小関係を保証（ワンドで逆方向に選択した場合でも正しく判定）
-        double x = loc.getX(), y = loc.getY(), z = loc.getZ();
-        return x >= Math.min(waitingMin.getX(), waitingMax.getX())
-            && x <= Math.max(waitingMin.getX(), waitingMax.getX())
-            && y >= Math.min(waitingMin.getY(), waitingMax.getY())
-            && y <= Math.max(waitingMin.getY(), waitingMax.getY())
-            && z >= Math.min(waitingMin.getZ(), waitingMax.getZ())
-            && z <= Math.max(waitingMin.getZ(), waitingMax.getZ());
+        if (this.waitingMin == null || this.waitingMax == null) {
+            return false;
+        }
+        if (this.waitingMin.getWorld() == null) {
+            return false;
+        }
+        if (loc.getWorld() == null || !this.waitingMin.getWorld().equals((Object)loc.getWorld())) {
+            return false;
+        }
+        double x = loc.getX();
+        double y = loc.getY();
+        double z = loc.getZ();
+        return x >= Math.min(this.waitingMin.getX(), this.waitingMax.getX()) && x <= Math.max(this.waitingMin.getX(), this.waitingMax.getX()) && y >= Math.min(this.waitingMin.getY(), this.waitingMax.getY()) && y <= Math.max(this.waitingMin.getY(), this.waitingMax.getY()) && z >= Math.min(this.waitingMin.getZ(), this.waitingMax.getZ()) && z <= Math.max(this.waitingMin.getZ(), this.waitingMax.getZ());
     }
 
-    // ─────────────────────────────────────────────
-    // カウントダウン
-    // ─────────────────────────────────────────────
-
     private void updateCountdown() {
-        int count = waitingPlayers.size();
+        int count = this.waitingPlayers.size();
         if (count < 2) {
-            cancelCountdown();
+            this.cancelCountdown();
             return;
         }
-        int newTime = getCountdownTime(count);
-        if (countdownTask == null) {
-            startCountdown(newTime);
-        } else if (newTime < currentCountdown) {
-            cancelCountdown();
-            broadcastWaiting("§e人数増加！カウントダウンを §a" + newTime + "秒 §eに短縮します");
-            startCountdown(newTime);
+        int newTime = this.getCountdownTime(count);
+        if (this.countdownTask == null) {
+            this.startCountdown(newTime);
+        } else if (newTime < this.currentCountdown) {
+            this.cancelCountdown();
+            this.broadcastWaiting("\u00a7e\u4eba\u6570\u5897\u52a0\uff01\u30ab\u30a6\u30f3\u30c8\u30c0\u30a6\u30f3\u3092 \u00a7a" + newTime + "\u79d2 \u00a7e\u306b\u77ed\u7e2e\u3057\u307e\u3059");
+            this.startCountdown(newTime);
         }
     }
 
     private int getCountdownTime(int count) {
-        if (count >= THRESHOLD_4) return 30;
+        if (count >= 4) {
+            return 30;
+        }
         return 45;
     }
 
-    private void startCountdown(int seconds) {
-        currentCountdown = seconds;
-        String timeStr = seconds >= 60 ? (seconds / 60) + "分" : seconds + "秒";
-        broadcastWaiting("§a試合が §e" + timeStr + " §a後に開始します");
-
-        countdownTask = new BukkitRunnable() {
-            int remaining = seconds;
-            @Override
-            public void run() {
-                if (waitingPlayers.size() < 2) {
-                    cancel(); countdownTask = null; currentCountdown = -1; return;
-                }
-                currentCountdown = remaining;
-                if (countdownBossBar != null) {
-                    countdownBossBar.setProgress((double) remaining / seconds);
-                    countdownBossBar.setTitle("§e§l試合開始まで §6" + remaining + "§e 秒");
-                }
-                // ActionBar 常時表示
-                for (UUID uid : waitingPlayers) {
-                    Player p = Bukkit.getPlayer(uid);
-                    if (p != null) p.sendActionBar(
-                        net.kyori.adventure.text.Component.text("§e試合開始まで: §a" + remaining + "秒"));
-                }
-                if (remaining == 10) {
-                    broadcastTitle("§e⚔ まもなく開始！", "");
-                    broadcastSound(Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1f);
-                } else if (remaining <= 3 && remaining > 0) {
-                    broadcastTitle("§c" + remaining, "");
-                    broadcastSound(Sound.UI_BUTTON_CLICK, 1f, 1.2f);
-                }
-                if (remaining <= 0) {
-                    if (countdownBossBar != null) { countdownBossBar.removeAll(); countdownBossBar = null; }
-                    cancel(); countdownTask = null; currentCountdown = -1;
-                    launchGame(); return;
-                }
-                remaining--;
+    private void startCountdown(final int seconds) {
+        this.currentCountdown = seconds;
+        String timeStr = seconds >= 60 ? seconds / 60 + "\u5206" : seconds + "\u79d2";
+        this.broadcastWaiting("\u00a7a\u8a66\u5408\u304c \u00a7e" + timeStr + " \u00a7a\u5f8c\u306b\u958b\u59cb\u3057\u307e\u3059");
+        this.countdownTask = new BukkitRunnable(){
+            int remaining;
+            {
+                this.remaining = seconds;
             }
-        }.runTaskTimer(plugin, 0L, 20L);
 
-        countdownBossBar = Bukkit.createBossBar("§e§l試合開始まで...", BarColor.YELLOW, BarStyle.SOLID);
-        for (UUID uid : waitingPlayers) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) countdownBossBar.addPlayer(p);
+            public void run() {
+                if (LobbyManager.this.waitingPlayers.size() < 2) {
+                    this.cancel();
+                    LobbyManager.this.countdownTask = null;
+                    LobbyManager.this.currentCountdown = -1;
+                    return;
+                }
+                LobbyManager.this.currentCountdown = this.remaining;
+                if (LobbyManager.this.countdownBossBar != null) {
+                    LobbyManager.this.countdownBossBar.setProgress((double)this.remaining / (double)seconds);
+                    LobbyManager.this.countdownBossBar.setTitle("\u00a7e\u00a7l\u8a66\u5408\u958b\u59cb\u307e\u3067 \u00a76" + this.remaining + "\u00a7e \u79d2");
+                }
+                for (UUID uid : LobbyManager.this.waitingPlayers) {
+                    Player p = Bukkit.getPlayer((UUID)uid);
+                    if (p == null) continue;
+                    p.sendActionBar((Component)Component.text((String)("\u00a7e\u8a66\u5408\u958b\u59cb\u307e\u3067: \u00a7a" + this.remaining + "\u79d2")));
+                }
+                if (this.remaining == 10) {
+                    LobbyManager.this.broadcastTitle("\u00a7e\u2694 \u307e\u3082\u306a\u304f\u958b\u59cb\uff01", "");
+                    LobbyManager.this.broadcastSound(Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
+                } else if (this.remaining <= 3 && this.remaining > 0) {
+                    LobbyManager.this.broadcastTitle("\u00a7c" + this.remaining, "");
+                    LobbyManager.this.broadcastSound(Sound.UI_BUTTON_CLICK, 1.0f, 1.2f);
+                }
+                if (this.remaining <= 0) {
+                    if (LobbyManager.this.countdownBossBar != null) {
+                        LobbyManager.this.countdownBossBar.removeAll();
+                        LobbyManager.this.countdownBossBar = null;
+                    }
+                    this.cancel();
+                    LobbyManager.this.countdownTask = null;
+                    LobbyManager.this.currentCountdown = -1;
+                    LobbyManager.this.launchGame();
+                    return;
+                }
+                --this.remaining;
+            }
+        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
+        this.countdownBossBar = Bukkit.createBossBar((String)"\u00a7e\u00a7l\u8a66\u5408\u958b\u59cb\u307e\u3067...", (BarColor)BarColor.YELLOW, (BarStyle)BarStyle.SOLID, (BarFlag[])new BarFlag[0]);
+        for (UUID uid : this.waitingPlayers) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            this.countdownBossBar.addPlayer(p);
         }
     }
 
     private void cancelCountdown() {
-        if (countdownTask != null) { countdownTask.cancel(); countdownTask = null; }
-        if (countdownBossBar != null) { countdownBossBar.removeAll(); countdownBossBar = null; }
-        currentCountdown = -1;
+        if (this.countdownTask != null) {
+            this.countdownTask.cancel();
+            this.countdownTask = null;
+        }
+        if (this.countdownBossBar != null) {
+            this.countdownBossBar.removeAll();
+            this.countdownBossBar = null;
+        }
+        this.currentCountdown = -1;
     }
 
     private void launchGame() {
-        List<UUID> participants = new ArrayList<>(waitingPlayers);
-        waitingPlayers.clear();
-        // オフラインプレイヤーを除外（quitしたのに残っていた場合の対策）
-        participants.removeIf(uid -> org.bukkit.Bukkit.getPlayer(uid) == null);
-        com.bloxarena.game.GameMode mode = com.bloxarena.game.GameMode.random();
-        MapConfig map = plugin.getMapManager().selectMap(mode);
+        ArrayList<UUID> participants = new ArrayList<UUID>(this.waitingPlayers);
+        this.waitingPlayers.clear();
+        participants.removeIf(uid -> Bukkit.getPlayer((UUID)uid) == null);
+        GameMode mode = GameMode.random(participants.size());
+        MapConfig map = this.plugin.getMapManager().selectMap(mode);
         if (map == null) {
-            broadcastWaiting("§c使用可能なマップがありません。config.yml を確認してください。");
+            this.broadcastWaiting("\u00a7c\u4f7f\u7528\u53ef\u80fd\u306a\u30de\u30c3\u30d7\u304c\u3042\u308a\u307e\u305b\u3093\u3002config.yml \u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
             return;
         }
-        plugin.getGameManager().startGame(map, mode, participants);
+        this.plugin.getGameManager().startGame(map, mode, participants);
     }
 
-    // ─── ロビーOOB ───
-    public Location getLobbyOobMin() { return lobbyOobMin; }
-    public Location getLobbyOobMax() { return lobbyOobMax; }
-    public boolean hasLobbyOob()     { return lobbyOobMin != null && lobbyOobMax != null; }
+    public Location getLobbyOobMin() {
+        return this.lobbyOobMin;
+    }
+
+    public Location getLobbyOobMax() {
+        return this.lobbyOobMax;
+    }
+
+    public boolean hasLobbyOob() {
+        return this.lobbyOobMin != null && this.lobbyOobMax != null;
+    }
 
     public void setLobbyOob(Location min, Location max) {
         this.lobbyOobMin = min.clone();
         this.lobbyOobMax = max.clone();
-        FileConfiguration cfg = plugin.getConfig();
-        saveLoc(cfg, "lobby.oob.min.", min);
-        saveLoc(cfg, "lobby.oob.max.", max);
-        plugin.saveConfig();
+        FileConfiguration cfg = this.plugin.getConfig();
+        this.saveLoc(cfg, "lobby.oob.min.", min);
+        this.saveLoc(cfg, "lobby.oob.max.", max);
+        this.plugin.saveConfig();
     }
 
-        public void onGameEnd() { /* 試合終了後は自動でプレイヤーが戻ってくる */ }
+    public void onGameEnd() {
+    }
 
-    // ─── 連続試合モード ───
+    public boolean isContinuousMode() {
+        return this.continuousMode;
+    }
 
-    public boolean isContinuousMode() { return continuousMode; }
     public void setContinuousMode(boolean v) {
         this.continuousMode = v;
-        broadcastWaiting(v ? "§a連続試合モードが有効になりました。試合終了後に自動で次の試合が始まります。"
-                           : "§7連続試合モードが無効になりました。");
+        this.broadcastWaiting(v ? "\u00a7a\u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9\u304c\u6709\u52b9\u306b\u306a\u308a\u307e\u3057\u305f\u3002\u8a66\u5408\u7d42\u4e86\u5f8c\u306b\u81ea\u52d5\u3067\u6b21\u306e\u8a66\u5408\u304c\u59cb\u307e\u308a\u307e\u3059\u3002" : "\u00a77\u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9\u304c\u7121\u52b9\u306b\u306a\u308a\u307e\u3057\u305f\u3002");
     }
 
-    /** 試合終了後に呼ばれ、一定時間後に次の試合を自動開始する */
     public void startContinuousCountdown() {
-        if (countdownTask != null) countdownTask.cancel();
-        int delay = 15; // 秒
-        broadcastWaiting("§e次の試合まで §6" + delay + "秒...");
-        countdownBossBar = Bukkit.createBossBar("§e§l試合開始まで...", BarColor.YELLOW, BarStyle.SOLID);
-        for (UUID uid : waitingPlayers) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) countdownBossBar.addPlayer(p);
+        if (this.countdownTask != null) {
+            this.countdownTask.cancel();
         }
-        countdownTask = new BukkitRunnable() {
-            int t = delay;
-            @Override public void run() {
-                if (plugin.getGameManager().getState() != com.bloxarena.game.GameState.WAITING) { cancel(); return; }
-                t--;
-                if (countdownBossBar != null) {
-                    countdownBossBar.setProgress((double) t / delay);
-                    countdownBossBar.setTitle("§e§l試合開始まで §6" + t + "§e 秒");
+        final int delay = 15;
+        this.broadcastWaiting("\u00a7e\u6b21\u306e\u8a66\u5408\u307e\u3067 \u00a76" + delay + "\u79d2...");
+        this.countdownBossBar = Bukkit.createBossBar((String)"\u00a7e\u00a7l\u8a66\u5408\u958b\u59cb\u307e\u3067...", (BarColor)BarColor.YELLOW, (BarStyle)BarStyle.SOLID, (BarFlag[])new BarFlag[0]);
+        for (UUID uid : this.waitingPlayers) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            this.countdownBossBar.addPlayer(p);
+        }
+        this.countdownTask = new BukkitRunnable(){
+            int t;
+            {
+                this.t = delay;
+            }
+
+            public void run() {
+                if (LobbyManager.this.plugin.getGameManager().getState() != GameState.WAITING) {
+                    this.cancel();
+                    return;
                 }
-                if (t <= 0) {
-                    if (countdownBossBar != null) { countdownBossBar.removeAll(); countdownBossBar = null; }
-                    cancel();
-                    countdownTask = null; // タスク終了後にnull化（updateCountdown誤動作防止）
-                    java.util.List<java.util.UUID> participants =
-                        new java.util.ArrayList<>(getWaitingPlayers());
+                --this.t;
+                if (LobbyManager.this.countdownBossBar != null) {
+                    LobbyManager.this.countdownBossBar.setProgress((double)this.t / (double)delay);
+                    LobbyManager.this.countdownBossBar.setTitle("\u00a7e\u00a7l\u8a66\u5408\u958b\u59cb\u307e\u3067 \u00a76" + this.t + "\u00a7e \u79d2");
+                }
+                if (this.t <= 0) {
+                    if (LobbyManager.this.countdownBossBar != null) {
+                        LobbyManager.this.countdownBossBar.removeAll();
+                        LobbyManager.this.countdownBossBar = null;
+                    }
+                    this.cancel();
+                    LobbyManager.this.countdownTask = null;
+                    ArrayList<UUID> participants = new ArrayList<UUID>(LobbyManager.this.getWaitingPlayers());
                     if (participants.size() < 2) {
-                        broadcastWaiting("§c人数が足りないため次の試合を開始できません。");
+                        LobbyManager.this.broadcastWaiting("\u00a7c\u4eba\u6570\u304c\u8db3\u308a\u306a\u3044\u305f\u3081\u6b21\u306e\u8a66\u5408\u3092\u958b\u59cb\u3067\u304d\u307e\u305b\u3093\u3002");
                         return;
                     }
-                    com.bloxarena.game.GameMode mode = com.bloxarena.game.GameMode.random();
-                    com.bloxarena.map.MapConfig map = plugin.getMapManager().selectMap(mode);
-                    if (map == null) { broadcastWaiting("§c使用可能なマップがありません。"); return; }
-                    plugin.getGameManager().startGame(map, mode, participants);
-                } else if (t <= 5 || t % 5 == 0) {
-                    broadcastWaiting("§e次の試合まで §6" + t + "秒...");
+                    GameMode mode = GameMode.random(participants.size());
+                    MapConfig map = LobbyManager.this.plugin.getMapManager().selectMap(mode);
+                    if (map == null) {
+                        LobbyManager.this.broadcastWaiting("\u00a7c\u4f7f\u7528\u53ef\u80fd\u306a\u30de\u30c3\u30d7\u304c\u3042\u308a\u307e\u305b\u3093\u3002");
+                        return;
+                    }
+                    LobbyManager.this.plugin.getGameManager().startGame(map, mode, participants);
+                } else if (this.t <= 5 || this.t % 5 == 0) {
+                    LobbyManager.this.broadcastWaiting("\u00a7e\u6b21\u306e\u8a66\u5408\u307e\u3067 \u00a76" + this.t + "\u79d2...");
                 }
             }
-        }.runTaskTimer(plugin, 20L, 20L);
+        }.runTaskTimer((Plugin)this.plugin, 20L, 20L);
     }
 
-    // ─────────────────────────────────────────────
-    // ユーティリティ
-    // ─────────────────────────────────────────────
-
     private void saveLoc(FileConfiguration cfg, String prefix, Location loc) {
-        cfg.set(prefix + "x", loc.getX());
-        cfg.set(prefix + "y", loc.getY());
-        cfg.set(prefix + "z", loc.getZ());
+        cfg.set(prefix + "x", (Object)loc.getX());
+        cfg.set(prefix + "y", (Object)loc.getY());
+        cfg.set(prefix + "z", (Object)loc.getZ());
     }
 
     private void broadcastWaiting(String msg) {
-        for (UUID uid : waitingPlayers) {
-            Player p = Bukkit.getPlayer(uid); if (p != null) p.sendMessage(msg);
-        }
-    }
-    private void broadcastTitle(String title, String sub) {
-        for (UUID uid : waitingPlayers) {
-            Player p = Bukkit.getPlayer(uid); if (p != null) p.sendTitle(title, sub, 5, 30, 5);
-        }
-    }
-    private void broadcastSound(Sound sound, float vol, float pitch) {
-        for (UUID uid : waitingPlayers) {
-            Player p = Bukkit.getPlayer(uid);
-            if (p != null) p.playSound(p.getLocation(), sound, vol, pitch);
+        for (UUID uid : this.waitingPlayers) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.sendMessage(msg);
         }
     }
 
-    // ─────────────────────────────────────────────
-    // 座標設定 (コマンドから呼ばれる)
-    // ─────────────────────────────────────────────
+    private void broadcastTitle(String title, String sub) {
+        for (UUID uid : this.waitingPlayers) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.sendTitle(title, sub, 5, 30, 5);
+        }
+    }
+
+    private void broadcastSound(Sound sound, float vol, float pitch) {
+        for (UUID uid : this.waitingPlayers) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.playSound(p.getLocation(), sound, vol, pitch);
+        }
+    }
 
     public void setWaitingAreaMin(Location loc) {
         this.waitingMin = loc.clone();
-        plugin.getConfig().set("lobby.waiting_area.world", loc.getWorld().getName());
-        plugin.getConfig().set("lobby.waiting_area.min.x", loc.getBlockX());
-        plugin.getConfig().set("lobby.waiting_area.min.y", loc.getBlockY());
-        plugin.getConfig().set("lobby.waiting_area.min.x", loc.getBlockX());
-        plugin.getConfig().set("lobby.waiting_area.min.y", loc.getBlockY());
-        plugin.getConfig().set("lobby.waiting_area.min.z", loc.getBlockZ());
-        plugin.saveConfig();
+        this.plugin.getConfig().set("lobby.waiting_area.world", (Object)loc.getWorld().getName());
+        this.plugin.getConfig().set("lobby.waiting_area.min.x", (Object)loc.getBlockX());
+        this.plugin.getConfig().set("lobby.waiting_area.min.y", (Object)loc.getBlockY());
+        this.plugin.getConfig().set("lobby.waiting_area.min.x", (Object)loc.getBlockX());
+        this.plugin.getConfig().set("lobby.waiting_area.min.y", (Object)loc.getBlockY());
+        this.plugin.getConfig().set("lobby.waiting_area.min.z", (Object)loc.getBlockZ());
+        this.plugin.saveConfig();
     }
 
     public void setWaitingAreaMax(Location loc) {
         this.waitingMax = loc.clone();
-        plugin.getConfig().set("lobby.waiting_area.max.x", loc.getBlockX());
-        plugin.getConfig().set("lobby.waiting_area.max.y", loc.getBlockY());
-        plugin.getConfig().set("lobby.waiting_area.max.z", loc.getBlockZ());
-        plugin.saveConfig();
+        this.plugin.getConfig().set("lobby.waiting_area.max.x", (Object)loc.getBlockX());
+        this.plugin.getConfig().set("lobby.waiting_area.max.y", (Object)loc.getBlockY());
+        this.plugin.getConfig().set("lobby.waiting_area.max.z", (Object)loc.getBlockZ());
+        this.plugin.saveConfig();
     }
 
     public void setLobbySpawn(Location loc) {
         this.lobbySpawn = loc.clone();
-        plugin.getConfig().set("lobby.spawn.world", loc.getWorld().getName());
-        plugin.getConfig().set("lobby.spawn.x", loc.getX());
-        plugin.getConfig().set("lobby.spawn.y", loc.getY());
-        plugin.getConfig().set("lobby.spawn.z", loc.getZ());
-        plugin.saveConfig();
+        this.plugin.getConfig().set("lobby.spawn.world", (Object)loc.getWorld().getName());
+        this.plugin.getConfig().set("lobby.spawn.x", (Object)loc.getX());
+        this.plugin.getConfig().set("lobby.spawn.y", (Object)loc.getY());
+        this.plugin.getConfig().set("lobby.spawn.z", (Object)loc.getZ());
+        this.plugin.saveConfig();
     }
 
-    public Location getLobbySpawn()   { return lobbySpawn; }
-    public Location getWaitingMin()   { return waitingMin; }
-    public Location getWaitingMax()   { return waitingMax; }
-    public World    getWaitingWorld()  { return waitingWorld; }
-    public Set<UUID> getWaitingPlayers() { return Collections.unmodifiableSet(waitingPlayers); }
-    public int getCurrentCountdown()  { return currentCountdown; }
+    public Location getLobbySpawn() {
+        return this.lobbySpawn;
+    }
+
+    public Location getWaitingMin() {
+        return this.waitingMin;
+    }
+
+    public Location getWaitingMax() {
+        return this.waitingMax;
+    }
+
+    public World getWaitingWorld() {
+        return this.waitingWorld;
+    }
+
+    public Set<UUID> getWaitingPlayers() {
+        return Collections.unmodifiableSet(this.waitingPlayers);
+    }
+
+    public int getCurrentCountdown() {
+        return this.currentCountdown;
+    }
 }
+
