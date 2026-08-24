@@ -347,6 +347,12 @@ public class KitEditorGUI {
             case RELEASER -> Material.FIRE_CHARGE;
             case GRANG -> Material.SHIELD;
             case NECRO -> Material.SKELETON_SKULL;
+            case BULWARK -> Material.IRON_BLOCK;
+            case TIMEKEEPER -> Material.CLOCK;
+            case AEGIS -> Material.SHIELD;
+            case HEXER -> Material.ENCHANTING_TABLE;
+            case REFLECTOR -> Material.LIGHT_BLUE_STAINED_GLASS;
+            case GLACIES -> Material.PACKED_ICE;
             default -> throw new IncompatibleClassChangeError();
         };
     }

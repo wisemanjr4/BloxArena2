@@ -48,8 +48,11 @@ import com.bloxarena.game.TeamColor;
 import com.bloxarena.kit.KitBuilder;
 import com.bloxarena.kit.KitRole;
 import com.bloxarena.kit.KitType;
+import com.bloxarena.map.MapConfig;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -79,6 +82,7 @@ import org.bukkit.entity.EvokerFangs;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Snowball;
 import org.bukkit.inventory.ItemStack;
@@ -150,6 +154,13 @@ public class SkillManager {
     private final Set<UUID> piercingRecently = new HashSet<UUID>();
     private final Map<UUID, Integer> marksmanBoltCount = new HashMap<UUID, Integer>();
     private final Map<UUID, Long> grangBurstCooldown = new HashMap<UUID, Long>();
+    private final Map<UUID, List<Location>> activeWalls = new HashMap<UUID, List<Location>>();
+    private final Map<UUID, Long> wallPlacedTime = new HashMap<UUID, Long>();
+    private final Map<UUID, Deque<Snapshot>> timeSnapshots = new HashMap<UUID, Deque<Snapshot>>();
+    private final Set<Entity> frozenProjectiles = new HashSet<Entity>();
+    private final Map<UUID, Bond> activeBonds = new HashMap<UUID, Bond>();
+    private final List<HexField> activeHexFields = new ArrayList<HexField>();
+    private final Map<UUID, Long> mirrorEndTime = new HashMap<UUID, Long>();
     private final String[] KREUTZ_CARDS = new String[]{"\u30d5\u30a1\u30a4\u30a2\u30dc\u30fc\u30eb", "\u30a2\u30a4\u30b9\u30e9\u30f3\u30b9", "\u30b5\u30f3\u30c0\u30fc", "\u30b7\u30fc\u30eb\u30c9", "\u30d2\u30fc\u30eb", "\u30ab\u30fc\u30b9", "\u30b0\u30e9\u30d3\u30c6\u30a3", "\u30c1\u30a7\u30a4\u30f3", "\u30dd\u30a4\u30ba\u30f3\u30af\u30e9\u30a6\u30c9", "\u30b9\u30d4\u30fc\u30c9\u30d6\u30fc\u30b9\u30c8", "\u30ea\u30fc\u30d7", "\u30a6\u30a3\u30fc\u30af\u30cd\u30b9", "\u30de\u30a4\u30f3\u30c9", "\u30c1\u30a7\u30a4\u30f3\u30e9\u30a4\u30c8\u30cb\u30f3\u30b0", "\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7", "\u30d5\u30a1\u30f3\u30b0", "\u30d4\u30a2\u30c3\u30b7\u30f3\u30b0"};
 
     public SkillManager(BloxArenaPlugin plugin) {
@@ -227,6 +238,14 @@ public class SkillManager {
             if (!(p2.getHealth() > 20.0)) continue;
             p2.setHealth(20.0);
         }
+        for (UUID wu : new HashSet<UUID>(this.activeWalls.keySet())) {
+            this.removeWall(wu);
+        }
+        this.timeSnapshots.clear();
+        this.activeBonds.clear();
+        this.frozenProjectiles.clear();
+        this.activeHexFields.clear();
+        this.mirrorEndTime.clear();
         if (this.antiBetrayalTask != null) {
             this.antiBetrayalTask.cancel();
             this.antiBetrayalTask = null;
@@ -299,6 +318,14 @@ public class SkillManager {
         this.vampireGauge.clear();
         this.vampireBloodMode.clear();
         this.maxHpReduced.clear();
+        for (UUID wu : new HashSet<UUID>(this.activeWalls.keySet())) {
+            this.removeWall(wu);
+        }
+        this.timeSnapshots.clear();
+        this.activeBonds.clear();
+        this.frozenProjectiles.clear();
+        this.activeHexFields.clear();
+        this.mirrorEndTime.clear();
         for (Player p2 : Bukkit.getOnlinePlayers()) {
             p2.setInvulnerable(false);
             if (p2.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
@@ -369,6 +396,9 @@ public class SkillManager {
             }
             if ("COOK".equals(kitName) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.COOK) {
                 this.cookThrowFood(p);
+            }
+            if ("TIMEKEEPER".equals(kitName) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.TIMEKEEPER) {
+                this.timekeeperClockStop(p);
             }
         }
         if (meta.getPersistentDataContainer().has(this.KEY_VAMPIRE_SKILL, PersistentDataType.STRING) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.VAMPIRE && p.isSneaking()) {
@@ -1095,6 +1125,67 @@ public class SkillManager {
                 this.comboLastHit.remove(e2.getKey());
             }
         });
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!this.gm.isParticipant(player) || this.gm.getPlayerKitType(player.getUniqueId()) != KitType.TIMEKEEPER) {
+                continue;
+            }
+            this.timeSnapshots.computeIfAbsent(player.getUniqueId(), k -> new ArrayDeque<Snapshot>()).addFirst(new Snapshot(player.getLocation().clone(), player.getHealth()));
+            Deque<Snapshot> snaps = this.timeSnapshots.get(player.getUniqueId());
+            while (snaps.size() > 5) {
+                snaps.removeLast();
+            }
+        }
+        for (Entity e : new ArrayList<Entity>(this.frozenProjectiles)) {
+            if (!e.isValid()) {
+                this.frozenProjectiles.remove(e);
+                continue;
+            }
+            e.setVelocity(new Vector(0.0, 0.0, 0.0));
+            e.getWorld().spawnParticle(Particle.CRIT_MAGIC, e.getLocation(), 2, 0.1, 0.1, 0.1, 0.0);
+        }
+        for (Map.Entry<UUID, Bond> entry : new HashMap<UUID, Bond>(this.activeBonds).entrySet()) {
+            UUID allyUid = entry.getKey();
+            Bond bond = entry.getValue();
+            if (System.currentTimeMillis() > bond.endTime) {
+                this.activeBonds.remove(allyUid);
+                continue;
+            }
+            Player ally = Bukkit.getPlayer(allyUid);
+            Player owner = Bukkit.getPlayer(bond.ownerUid);
+            if (ally == null || owner == null || !ally.isOnline() || !owner.isOnline() || owner.getWorld() != ally.getWorld() || owner.getLocation().distance(ally.getLocation()) > 15.0) {
+                this.activeBonds.remove(allyUid);
+                continue;
+            }
+            Location a = owner.getEyeLocation();
+            Location b = ally.getEyeLocation();
+            for (double t = 0.0; t <= 1.0; t += 0.1) {
+                Location pl = a.clone().add(b.toVector().subtract(a.toVector()).multiply(t));
+                owner.getWorld().spawnParticle(Particle.REDSTONE, pl, 1, 0.0, 0.0, 0.0, 0.0, new Particle.DustOptions(Color.RED, 1.0f));
+            }
+        }
+        this.activeHexFields.removeIf(f -> System.currentTimeMillis() > f.endTime);
+        for (HexField field : this.activeHexFields) {
+            if (field.center.getWorld() == null) {
+                continue;
+            }
+            for (int i = 0; i < 4; ++i) {
+                double angle = Math.toRadians((double)(this.tickCounter * 2 % 360) + i * 90.0);
+                Location pl = field.center.clone().add(Math.cos(angle) * 5.0, 1.0, Math.sin(angle) * 5.0);
+                field.center.getWorld().spawnParticle(Particle.SPELL_MOB, pl, 2, 0.1, 0.1, 0.1, 0.0);
+            }
+            field.center.getWorld().spawnParticle(Particle.PORTAL, field.center.clone().add(0.0, 1.0, 0.0), 5, 4.0, 0.5, 4.0, 0.0);
+        }
+        for (UUID uid : new HashSet<UUID>(this.mirrorEndTime.keySet())) {
+            Player p2 = Bukkit.getPlayer(uid);
+            if (p2 == null || !p2.isOnline()) {
+                this.mirrorEndTime.remove(uid);
+                continue;
+            }
+            if (System.currentTimeMillis() < this.mirrorEndTime.get(uid)) {
+                p2.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20, 1, false, true));
+                p2.getWorld().spawnParticle(Particle.CRIT_MAGIC, p2.getLocation().add(0.0, 1.5, 0.0), 5, 0.3, 0.3, 0.3, 0.0);
+            }
+        }
     }
 
     private void forceTargetEnemies() {
@@ -1331,6 +1422,10 @@ public class SkillManager {
             p.sendMessage("\u00a7c\u30c7\u30c3\u30c9\u30ed\u30c3\u30af\u4e2d\u306f\u30b9\u30ad\u30eb\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
             return;
         }
+        if (this.inEnemyHexField(p)) {
+            p.sendActionBar((Component)Component.text((String)"\u00a75\u00a7l\u546a\u7e1b\u9818\u57df\u5185\uff01\u30b9\u30ad\u30eb\u4f7f\u7528\u4e0d\u53ef"));
+            return;
+        }
         if (this.gm.isFlagCarrier(p.getUniqueId()) && (kit == KitType.BREAKER || kit == KitType.NINJA || kit == KitType.JESTER || kit == KitType.KREUTZ || kit == KitType.VAMPIRE)) {
             p.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u79fb\u52d5\u30b9\u30ad\u30eb\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
             return;
@@ -1481,6 +1576,30 @@ public class SkillManager {
                 this.necroSkill(p);
                 break;
             }
+            case BULWARK: {
+                this.bulwarkSkill(p);
+                break;
+            }
+            case TIMEKEEPER: {
+                this.timekeeperSkill(p);
+                break;
+            }
+            case AEGIS: {
+                this.aegisSkill(p);
+                break;
+            }
+            case HEXER: {
+                this.hexerSkill(p);
+                break;
+            }
+            case REFLECTOR: {
+                this.reflectorSkill(p);
+                break;
+            }
+            case GLACIES: {
+                this.glaciesSkill(p);
+                break;
+            }
         }
         this.plugin.getTutorialManager().checkSkillUsed(p);
     }
@@ -1496,6 +1615,10 @@ public class SkillManager {
     private void useBurst(Player p) {
         if (this.deadlockedPlayers.contains(p.getUniqueId())) {
             p.sendMessage("\u00a7c\u30c7\u30c3\u30c9\u30ed\u30c3\u30af\u4e2d\u306f\u30d0\u30fc\u30b9\u30c8\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            return;
+        }
+        if (this.inEnemyHexField(p)) {
+            p.sendActionBar((Component)Component.text((String)"\u00a75\u00a7l\u546a\u7e1b\u9818\u57df\u5185\uff01\u30d0\u30fc\u30b9\u30c8\u4f7f\u7528\u4e0d\u53ef"));
             return;
         }
         if (this.burstUsed.contains(p.getUniqueId())) {
@@ -3258,6 +3381,265 @@ public class SkillManager {
         }.runTaskTimer((Plugin)this.plugin, 400L, 400L);
     }
 
+    private void bulwarkSkill(Player p) {
+        UUID uid = p.getUniqueId();
+        if (this.activeWalls.containsKey(uid)) {
+            long placedTime = this.wallPlacedTime.getOrDefault(uid, System.currentTimeMillis());
+            long elapsed = (System.currentTimeMillis() - placedTime) / 1000L;
+            if (elapsed >= 8L) {
+                this.setCooldown(uid, 10000L);
+            }
+            this.removeWall(uid);
+            p.sendMessage("\u00a77[\u30d6\u30eb\u30ef\u30fc\u30af] \u58c1\u3092\u89e3\u9664\u3057\u307e\u3057\u305f");
+            return;
+        }
+        this.setCooldown(uid, 20000L);
+        World w = p.getWorld();
+        if (w == null) {
+            return;
+        }
+        TeamColor team = this.gm.getTeamOf(p);
+        Material mat = team == TeamColor.RED ? Material.RED_TERRACOTTA : Material.LIGHT_BLUE_TERRACOTTA;
+        Vector dir = p.getLocation().getDirection().setY(0).normalize();
+        if (dir.lengthSquared() < 0.01) {
+            dir = new Vector(0.0, 0.0, 1.0);
+        }
+        Location base = p.getLocation().getBlock().getLocation().clone().add(0.5, 0.0, 0.5).add(dir.clone().multiply(2.0));
+        Vector side = dir.clone().crossProduct(new Vector(0.0, 1.0, 0.0)).normalize();
+        List<Location> placed = new ArrayList<Location>();
+        if (p.isSneaking()) {
+            for (int dx = -2; dx <= 2; ++dx) {
+                for (int dz = -2; dz <= 2; ++dz) {
+                    Location loc = base.clone().add(side.clone().multiply(dx)).add(dir.clone().multiply(dz));
+                    if (this.canPlaceWall(loc, p)) {
+                        loc.getBlock().setType(mat);
+                        placed.add(loc.clone());
+                    }
+                }
+            }
+            p.sendMessage("\u00a77[\u30d6\u30eb\u30ef\u30fc\u30af] \u5e73\u9762\u5c55\u958b\uff01");
+        } else {
+            for (int dx = -2; dx <= 2; ++dx) {
+                for (int dy = 0; dy <= 2; ++dy) {
+                    Location loc = base.clone().add(side.clone().multiply(dx)).add(0.0, (double)dy, 0.0);
+                    if (this.canPlaceWall(loc, p)) {
+                        loc.getBlock().setType(mat);
+                        placed.add(loc.clone());
+                    }
+                }
+            }
+            p.sendMessage("\u00a77[\u30d6\u30eb\u30ef\u30fc\u30af] \u30a6\u30a9\u30fc\u30eb\u5c55\u958b\uff01");
+        }
+        this.activeWalls.put(uid, placed);
+        this.wallPlacedTime.put(uid, System.currentTimeMillis());
+        w.playSound(p.getLocation(), Sound.BLOCK_STONE_PLACE, 1.0f, 0.8f);
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.removeWall(uid), 200L);
+    }
+
+    private boolean canPlaceWall(Location loc, Player p) {
+        if (loc.getBlock().getType() != Material.AIR) {
+            return false;
+        }
+        for (Entity e : loc.getWorld().getNearbyEntities(loc, 0.5, 0.5, 0.5)) {
+            if (e instanceof Player && this.gm.isParticipant((Player)e)) {
+                return false;
+            }
+        }
+        MapConfig map = this.gm.getCurrentMap();
+        if (map != null && map.getCenter() != null) {
+            Location c = map.getCenter();
+            if (c.getWorld() == loc.getWorld() && Math.abs(loc.getX() - c.getX()) < 4.0 && Math.abs(loc.getZ() - c.getZ()) < 4.0 && Math.abs(loc.getY() - c.getY()) < 4.0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void removeWall(UUID uid) {
+        List<Location> blocks = this.activeWalls.remove(uid);
+        this.wallPlacedTime.remove(uid);
+        if (blocks != null) {
+            for (Location loc : blocks) {
+                if (loc.getWorld() != null && loc.getBlock().getType().name().endsWith("_TERRACOTTA")) {
+                    loc.getBlock().setType(Material.AIR);
+                }
+            }
+        }
+    }
+
+    private void timekeeperSkill(Player p) {
+        if (this.isOnCooldown(p.getUniqueId())) {
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 30000L);
+        Deque<Snapshot> snaps = this.timeSnapshots.get(p.getUniqueId());
+        if (snaps == null || snaps.isEmpty()) {
+            p.sendMessage("\u00a77[\u30bf\u30a4\u30e0\u30ad\u30fc\u30d1\u30fc] \u30ea\u30ef\u30a4\u30f3\u30c9\u3059\u308b\u30b9\u30ca\u30c3\u30d7\u30b7\u30e7\u30c3\u30c8\u304c\u3042\u308a\u307e\u305b\u3093");
+            return;
+        }
+        Snapshot snap = snaps.peekLast();
+        if (snap == null || snap.loc == null || snap.loc.getWorld() == null) {
+            p.sendMessage("\u00a77[\u30bf\u30a4\u30e0\u30ad\u30fc\u30d1\u30fc] \u30ea\u30ef\u30a4\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8\u304c\u7121\u52b9\u3067\u3059");
+            return;
+        }
+        p.teleport(snap.loc.clone());
+        double max = p.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null ? p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue() : 20.0;
+        p.setHealth(Math.min(max + 10.0, snap.health));
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.5f);
+        p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation().add(0.0, 1.0, 0.0), 30, 0.5, 1.0, 0.5, 0.1);
+        p.sendMessage("\u00a7b\u00a7l\u30ea\u30ef\u30a4\u30f3\u30c9\uff01");
+    }
+
+    private void timekeeperClockStop(Player p) {
+        if (this.isOnCooldown(p.getUniqueId())) {
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 15000L);
+        World w = p.getWorld();
+        List<Entity> toFreeze = new ArrayList<Entity>();
+        for (Entity e : w.getNearbyEntities(p.getLocation(), 6.0, 6.0, 6.0)) {
+            if (e instanceof Projectile && e.isValid()) {
+                toFreeze.add(e);
+            }
+        }
+        for (Entity e : toFreeze) {
+            this.frozenProjectiles.add(e);
+        }
+        UUID uid = p.getUniqueId();
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            for (Entity e : toFreeze) {
+                if (e.isValid()) {
+                    this.frozenProjectiles.remove(e);
+                    e.setVelocity(e.getVelocity().multiply(1.5));
+                } else {
+                    this.frozenProjectiles.remove(e);
+                }
+            }
+        }, 100L);
+        w.spawnParticle(Particle.SPELL_INSTANT, p.getLocation().add(0.0, 1.0, 0.0), 30, 6.0, 3.0, 6.0, 0.1);
+        w.playSound(p.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1.0f, 1.5f);
+        p.sendMessage("\u00a7b\u00a7l\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7\uff01\u00a77\u5468\u56f26m\u306e\u5f3e\u306e\u6642\u9593\u3092\u6b62\u3081\u305f");
+    }
+
+    private void aegisSkill(Player p) {
+        if (this.isOnCooldown(p.getUniqueId())) {
+            return;
+        }
+        Player ally = this.getTargetInSight(p, 15);
+        if (ally == null || this.gm.getTeamOf(ally) != this.gm.getTeamOf(p)) {
+            p.sendMessage("\u00a7c\u30dc\u30f3\u30c9\u3067\u304d\u308b\u53cb\u65b9\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\uff08\u534a\u5f8415m\u5185\uff09");
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 22000L);
+        long endTime = System.currentTimeMillis() + 8000L;
+        this.activeBonds.put(ally.getUniqueId(), new Bond(p.getUniqueId(), endTime));
+        p.sendMessage("\u00a7f\u00a7l\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9\uff01 \u00a77" + ally.getName() + " \u306e\u53d7\u3051\u305f\u30c0\u30e1\u30fc\u30b8\u306e50%\u3092\u4ee3\u66ff\u306b\u53d7\u3051\u307e\u3059\uff088\u79d2\u9593\uff09");
+        ally.sendMessage("\u00a7f" + p.getName() + " \u304c\u3042\u306a\u305f\u306b\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9\u3092\u7d50\u3093\u3067\u3044\u307e\u3059\uff088\u79d2\u9593\uff09");
+        p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.5f);
+    }
+
+    public Player getBondOwner(UUID victimUid) {
+        Bond bond = this.activeBonds.get(victimUid);
+        if (bond == null || System.currentTimeMillis() > bond.endTime) {
+            this.activeBonds.remove(victimUid);
+            return null;
+        }
+        Player owner = Bukkit.getPlayer(bond.ownerUid);
+        if (owner == null) {
+            return null;
+        }
+        Player victim = Bukkit.getPlayer(victimUid);
+        if (victim != null && owner.getWorld() == victim.getWorld() && owner.getLocation().distance(victim.getLocation()) > 15.0) {
+            this.activeBonds.remove(victimUid);
+            return null;
+        }
+        return owner;
+    }
+
+    private void hexerSkill(Player p) {
+        if (this.isOnCooldown(p.getUniqueId())) {
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 24000L);
+        Vector dir = p.getLocation().getDirection().normalize();
+        Location center = p.getEyeLocation().clone().add(dir.clone().multiply(5.0));
+        center.setY(p.getLocation().getY());
+        this.activeHexFields.add(new HexField(center.clone(), p.getUniqueId(), System.currentTimeMillis() + 12000L));
+        p.sendMessage("\u00a75\u00a7l\u546a\u7e1b\u9818\u57df\uff01\u00a77\u534a\u5f845m\u5185\u306e\u6575\u306f\u30b9\u30ad\u30eb\u30fb\u30d0\u30fc\u30b9\u30c8\u4f7f\u7528\u4e0d\u53ef\uff0812\u79d2\u9593\uff09");
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 0.8f);
+    }
+
+    private boolean inEnemyHexField(Player p) {
+        for (HexField field : this.activeHexFields) {
+            if (System.currentTimeMillis() > field.endTime) {
+                continue;
+            }
+            if (field.owner.equals(p.getUniqueId())) {
+                continue;
+            }
+            TeamColor ownerTeam = this.gm.getTeam(field.owner);
+            if (ownerTeam != null && ownerTeam == this.gm.getTeamOf(p)) {
+                continue;
+            }
+            if (field.center.getWorld() == p.getWorld() && field.center.distance(p.getLocation()) <= 5.0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void reflectorSkill(Player p) {
+        if (this.isOnCooldown(p.getUniqueId())) {
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 20000L);
+        this.mirrorEndTime.put(p.getUniqueId(), System.currentTimeMillis() + 3000L);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1, false, true));
+        p.sendMessage("\u00a7d\u00a7l\u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9\uff01\u00a77\u767a\u5c04\u7269\u3092\u53cd\u5c04\u3057\u307e\u3059\uff083\u79d2\u9593\uff09");
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+        UUID uid = p.getUniqueId();
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.mirrorEndTime.remove(uid), 60L);
+    }
+
+    public boolean isMirrorActive(UUID uid) {
+        Long end = this.mirrorEndTime.get(uid);
+        if (end != null && System.currentTimeMillis() < end) {
+            return true;
+        }
+        this.mirrorEndTime.remove(uid);
+        return false;
+    }
+
+    private void glaciesSkill(Player p) {
+        if (this.isOnCooldown(p.getUniqueId())) {
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 14000L);
+        Vector dir = p.getLocation().getDirection().normalize();
+        World w = p.getWorld();
+        w.playSound(p.getLocation(), Sound.BLOCK_GLASS_BREAK, 1.0f, 1.5f);
+        w.spawnParticle(Particle.SNOW_SHOVEL, p.getEyeLocation(), 30, 0.2, 0.2, 0.2, 0.2);
+        for (Player t : w.getPlayers()) {
+            if (!this.gm.isParticipant(t) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p) || this.gm.isSpectator(t)) {
+                continue;
+            }
+            Vector toTarget = t.getLocation().toVector().subtract(p.getLocation().toVector());
+            double dist = toTarget.length();
+            if (dist > 6.0) {
+                continue;
+            }
+            Vector norm = toTarget.clone().normalize();
+            if (dir.dot(norm) < Math.cos(Math.toRadians(45.0))) {
+                continue;
+            }
+            t.damage(3.0, (Entity)p);
+            t.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 2, false, true));
+            t.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 40, 1, false, true));
+            t.getWorld().spawnParticle(Particle.SNOW_SHOVEL, t.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.5, 0.3, 0.1);
+        }
+        p.sendMessage("\u00a7b\u00a7l\u30d5\u30ed\u30b9\u30c8\u30b9\u30c8\u30e9\u30a4\u30af\uff01");
+    }
+
     private void setCooldown(UUID uid, long millis) {
         this.skillCooldowns.put(uid, System.currentTimeMillis() + millis);
     }
@@ -3352,6 +3734,18 @@ public class SkillManager {
         this.storedArmor.remove(uid);
         this.phantomEnd.remove(uid);
         this.nilgiritarMarks.remove(uid);
+        this.removeWall(uid);
+        this.timeSnapshots.remove(uid);
+        this.activeBonds.entrySet().removeIf(en -> en.getValue().ownerUid.equals(uid) || en.getKey().equals(uid));
+        this.activeHexFields.removeIf(f -> f.owner.equals(uid));
+        this.frozenProjectiles.removeIf(e -> {
+            if (!e.isValid()) {
+                return true;
+            }
+            ProjectileSource src = e instanceof Projectile ? ((Projectile)e).getShooter() : null;
+            return src instanceof Player && ((Player)src).getUniqueId().equals(uid);
+        });
+        this.mirrorEndTime.remove(uid);
     }
 
     static class ReconData {
@@ -3408,6 +3802,38 @@ public class SkillManager {
             this.loc = l;
             this.isTeleport = false;
             this.placeTime = System.currentTimeMillis();
+        }
+    }
+
+    static class Snapshot {
+        final Location loc;
+        final double health;
+
+        Snapshot(Location loc, double health) {
+            this.loc = loc;
+            this.health = health;
+        }
+    }
+
+    static class Bond {
+        final UUID ownerUid;
+        final long endTime;
+
+        Bond(UUID ownerUid, long endTime) {
+            this.ownerUid = ownerUid;
+            this.endTime = endTime;
+        }
+    }
+
+    static class HexField {
+        final Location center;
+        final UUID owner;
+        final long endTime;
+
+        HexField(Location center, UUID owner, long endTime) {
+            this.center = center;
+            this.owner = owner;
+            this.endTime = endTime;
         }
     }
 }

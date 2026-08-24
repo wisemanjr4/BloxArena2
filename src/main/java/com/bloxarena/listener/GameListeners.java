@@ -575,6 +575,21 @@ implements Listener {
         if (this.plugin.getSkillManager().isGuardBroken(victim.getUniqueId())) {
             victim.setCooldown(Material.SHIELD, 60);
         }
+        if (this.gm.getPlayerKitType(victim.getUniqueId()) == KitType.REFLECTOR && this.plugin.getSkillManager().isMirrorActive(victim.getUniqueId()) && e.getDamager() instanceof Projectile) {
+            Projectile proj = (Projectile)e.getDamager();
+            if (proj.getShooter() instanceof Player) {
+                Player src = (Player)proj.getShooter();
+                if (victimTeam != null && victimTeam != this.gm.getTeamOf(src)) {
+                    e.setCancelled(true);
+                    src.damage(e.getDamage(), (Entity)victim);
+                    src.setVelocity(src.getLocation().toVector().subtract(victim.getLocation().toVector()).normalize().multiply(1.2).setY(0.2));
+                    src.getWorld().spawnParticle(Particle.CRIT_MAGIC, src.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.3, 0.3, 0.1);
+                    victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.5f);
+                    victim.sendMessage("\u00a7d\u00a7l\u53cd\u5c04\uff01");
+                    return;
+                }
+            }
+        }
         if ((botTeam = e.getDamager()) instanceof Player) {
             attacker2 = (Player)botTeam;
             if (victimTeam != null && this.gm.getTeamOf(attacker2) != victimTeam) {
@@ -628,6 +643,15 @@ implements Listener {
                 victim.getPersistentDataContainer().remove(new NamespacedKey((Plugin)this.plugin, "kreutz_pierced"));
                 attacker.sendMessage("\u00a75\u00a7l\u30d4\u30a2\u30c3\u30b7\u30f3\u30b0\uff01\u00a77\u9632\u5177\u8cab\u901a+2\u30c0\u30e1\u30fc\u30b8\uff01");
             }
+        }
+        Player bondOwner = this.plugin.getSkillManager().getBondOwner(victim.getUniqueId());
+        if (bondOwner != null && victim != bondOwner) {
+            double original = e.getDamage();
+            double redirected = original / 2.0;
+            e.setDamage(original - redirected);
+            Entity damageSource = e.getDamager();
+            bondOwner.damage(redirected, damageSource);
+            bondOwner.getWorld().spawnParticle(Particle.REDSTONE, bondOwner.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.0, new Particle.DustOptions(org.bukkit.Color.RED, 1.0f));
         }
     }
 

@@ -346,6 +346,12 @@ public class KitSelectGUI {
             case RELEASER -> Material.FIRE_CHARGE;
             case GRANG -> Material.SHIELD;
             case NECRO -> Material.SKELETON_SKULL;
+            case BULWARK -> Material.CRACKED_STONE_BRICKS;
+            case TIMEKEEPER -> Material.CLOCK;
+            case AEGIS -> Material.SHIELD;
+            case HEXER -> Material.BREWING_STAND;
+            case REFLECTOR -> Material.STONE;
+            case GLACIES -> Material.PACKED_ICE;
             default -> throw new IncompatibleClassChangeError();
         };
     }

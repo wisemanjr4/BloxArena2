@@ -343,6 +343,40 @@ public class KitBuilder {
             case NECRO: {
                 list.add(new ItemStack(Material.WOODEN_SWORD));
                 list.add(new ItemStack(Material.NETHER_STAR));
+                break;
+            }
+            case BULWARK: {
+                list.add(new ItemStack(Material.IRON_SWORD));
+                list.add(new ItemStack(Material.SHIELD));
+                list.add(new ItemStack(Material.NETHER_STAR));
+                break;
+            }
+            case TIMEKEEPER: {
+                list.add(new ItemStack(Material.STONE_SWORD));
+                list.add(new ItemStack(Material.NETHER_STAR));
+                break;
+            }
+            case AEGIS: {
+                list.add(new ItemStack(Material.IRON_SWORD));
+                list.add(new ItemStack(Material.SHIELD));
+                list.add(new ItemStack(Material.NETHER_STAR));
+                break;
+            }
+            case HEXER: {
+                list.add(new ItemStack(Material.WOODEN_SWORD));
+                list.add(new ItemStack(Material.NETHER_STAR));
+                break;
+            }
+            case REFLECTOR: {
+                list.add(new ItemStack(Material.STONE_SWORD));
+                list.add(new ItemStack(Material.SHIELD));
+                list.add(new ItemStack(Material.NETHER_STAR));
+                break;
+            }
+            case GLACIES: {
+                list.add(new ItemStack(Material.STONE_SWORD));
+                list.add(new ItemStack(Material.NETHER_STAR));
+                break;
             }
         }
         while (list.size() < 36) {
@@ -505,6 +539,31 @@ public class KitBuilder {
             }
             case NECRO: {
                 KitBuilder.giveNecro(player, plugin);
+                break;
+            }
+            case BULWARK: {
+                KitBuilder.giveBulwark(player, plugin);
+                break;
+            }
+            case TIMEKEEPER: {
+                KitBuilder.giveTimekeeper(player, plugin);
+                break;
+            }
+            case AEGIS: {
+                KitBuilder.giveAegis(player, plugin);
+                break;
+            }
+            case HEXER: {
+                KitBuilder.giveHexer(player, plugin);
+                break;
+            }
+            case REFLECTOR: {
+                KitBuilder.giveReflector(player, plugin);
+                break;
+            }
+            case GLACIES: {
+                KitBuilder.giveGlacies(player, plugin);
+                break;
             }
         }
     }
@@ -984,6 +1043,57 @@ public class KitBuilder {
         KitBuilder.giveIronArmor(player);
     }
 
+    private static void giveBulwark(Player player, BloxArenaPlugin plugin) {
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.IRON_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.SHIELD)});
+        if (plugin != null) {
+            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.BULWARK, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30a6\u30a9\u30fc\u30eb\u5c55\u958b")});
+        }
+        KitBuilder.giveIronArmor(player);
+    }
+
+    private static void giveTimekeeper(Player player, BloxArenaPlugin plugin) {
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
+        if (plugin != null) {
+            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.TIMEKEEPER, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ea\u30ef\u30a4\u30f3\u30c9+\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7")});
+        }
+        KitBuilder.giveLeatherArmor(player);
+    }
+
+    private static void giveAegis(Player player, BloxArenaPlugin plugin) {
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.IRON_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.SHIELD)});
+        if (plugin != null) {
+            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.AEGIS, "\u00a7a\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9")});
+        }
+        KitBuilder.giveIronArmor(player);
+    }
+
+    private static void giveHexer(Player player, BloxArenaPlugin plugin) {
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.WOODEN_SWORD)});
+        if (plugin != null) {
+            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.HEXER, "\u00a75\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u546a\u7e1b\u9818\u57df")});
+        }
+        KitBuilder.giveLeatherArmor(player);
+    }
+
+    private static void giveReflector(Player player, BloxArenaPlugin plugin) {
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.SHIELD)});
+        if (plugin != null) {
+            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.REFLECTOR, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9")});
+        }
+        KitBuilder.giveChainArmor(player);
+    }
+
+    private static void giveGlacies(Player player, BloxArenaPlugin plugin) {
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
+        if (plugin != null) {
+            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.GLACIES, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d5\u30ed\u30b9\u30c8\u30b9\u30c8\u30e9\u30a4\u30af")});
+        }
+        KitBuilder.giveLeatherArmor(player);
+    }
+
     private static void giveIronArmor(Player p) {
         p.getInventory().setHelmet(new ItemStack(Material.IRON_HELMET));
         p.getInventory().setChestplate(new ItemStack(Material.IRON_CHESTPLATE));
@@ -1342,6 +1452,12 @@ public class KitBuilder {
             case ANCHOR -> "\u78c1\u5834\u5c55\u958b - \u534a\u5f845m\u6575\u5927\u5e45\u6e1b\u901f 15\u79d2";
             case GRANG -> "\u6a5f\u52d5\u7a81\u6483 - \u76fe\u30b7\u30d5\u30c8\u3067\u30c1\u30e3\u30fc\u30b8(\u6700\u592710\u79d2) \u96e2\u3059\u3068\u7a81\u9032";
             case NECRO -> "\u5c4d\u4f53\u821e\u8e0f - \u30b9\u30b1\u30eb\u30c8\u30f33\u4f53\u53ec\u559a \u53f3\u30af\u30ea\u3067\u79fb\u52d5 \u30b7\u30d5\u30c8\u53f3\u30af\u30ea\u3067\u547c\u623b";
+            case BULWARK -> "\u30a6\u30a9\u30fc\u30eb\u5c55\u958b - \u58c1\u3092\u5c55\u958b\u3057\u5473\u65b9\u3092\u5b88\u308b\u9632\u885b\u30b9\u30ad\u30eb";
+            case TIMEKEEPER -> "\u30ea\u30ef\u30a4\u30f3\u30c9+\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7 - \u6642\u3092\u623b\u3057\u5468\u56f2\u306e\u6642\u9593\u3092\u6b62\u3081\u308b";
+            case AEGIS -> "\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9 - \u5473\u65b9\u3068\u7d42\u3092\u7d50\u3073\u30c0\u30e1\u30fc\u30b8\u3092\u80a9\u4ee3\u308f\u308a";
+            case HEXER -> "\u546a\u7e1b\u9818\u57df - \u9818\u57df\u5185\u306e\u6575\u3092\u62d8\u675f\u3057\u5f31\u4f53\u5316";
+            case REFLECTOR -> "\u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9 - \u653b\u6483\u3092\u53cd\u5c04\u3059\u308b\u30b9\u30bf\u30f3\u30b9";
+            case GLACIES -> "\u30d5\u30ed\u30b9\u30c8\u30b9\u30c8\u30e9\u30a4\u30af - \u6575\u3092\u51cd\u7d50\u3055\u305b\u308b\u6c37\u6483";
             default -> throw new IncompatibleClassChangeError();
         };
     }
@@ -1354,6 +1470,9 @@ public class KitBuilder {
             case GRANG -> "\u76ae\u88c5\u5099\uff0b\u76fe";
             case VAMPIRE -> "\u9244\u88c5\u5099(HP\u5909\u52d5)";
             case SUPPORTER -> "\u9244\u88c5\u5099";
+            case BULWARK, AEGIS -> "\u9244\u88c5\u5099\uff0b\u76fe";
+            case TIMEKEEPER, HEXER, GLACIES -> "\u76ae\u88c5\u5099";
+            case REFLECTOR -> "\u9396\u88c5\u5099\uff0b\u76fe";
             default -> throw new IncompatibleClassChangeError();
         };
     }
