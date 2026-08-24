@@ -46,6 +46,7 @@ import com.bloxarena.game.GameManager;
 import com.bloxarena.game.GameState;
 import com.bloxarena.game.TeamColor;
 import com.bloxarena.kit.KitBuilder;
+import com.bloxarena.kit.KitRole;
 import com.bloxarena.kit.KitType;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -1508,6 +1509,8 @@ public class SkillManager {
         this.burstUsed.add(p.getUniqueId());
         p.getInventory().remove(Material.HEART_OF_THE_SEA);
         this.plugin.getTutorialManager().checkBurstUsed(p);
+        KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
+        KitRole role = kit != null ? kit.getRole() : KitRole.DUELIST;
         Location loc = p.getLocation();
         World w = p.getWorld();
         if (w == null) {
@@ -1517,21 +1520,48 @@ public class SkillManager {
         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 10, 1, false, true));
         w.playSound(loc, Sound.BLOCK_BEACON_DEACTIVATE, 2.0f, 2.0f);
         p.sendMessage("\u00a7c\u00a7l\u30d0\u30fc\u30b9\u30c8\u767a\u52d5\uff01");
+        double range = 6.0;
+        double knockback = 1.5;
+        if (role == KitRole.INITIATOR) {
+            range = 7.0;
+        } else if (role == KitRole.CONTROLLER) {
+            range = 8.0;
+        } else if (role == KitRole.DUELIST) {
+            knockback = 1.8;
+        }
+        final double fRange = range;
+        final double fKnockback = knockback;
+        final KitRole fRole = role;
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             p.removePotionEffect(PotionEffectType.LEVITATION);
             p.setInvulnerable(false);
-            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1, false, true));
+            int selfWeaknessAmp = 1;
+            if (fRole == KitRole.SENTINEL) {
+                selfWeaknessAmp = 0;
+                p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1, false, true));
+                p.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 100, 1, false, true));
+            }
+            if (fRole == KitRole.DUELIST) {
+                p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 100, 1, false, true));
+            } else if (fRole == KitRole.INITIATOR) {
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 100, 2, false, true));
+                p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, 1, false, true));
+            }
+            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, selfWeaknessAmp, false, true));
             Location loc2 = p.getLocation();
             w.createExplosion(loc2, 0.0f, false, false, (Entity)p);
             w.spawnParticle(Particle.EXPLOSION_LARGE, loc2, 8, 1.5, 1.0, 1.5, 0.1);
             w.spawnParticle(Particle.CLOUD, loc2.clone().add(0.0, 1.0, 0.0), 30, 2.0, 1.0, 2.0, 0.05);
             w.playSound(loc2, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.8f);
-            for (Entity e : w.getNearbyEntities(loc2, 6.0, 3.0, 6.0)) {
+            for (Entity e : w.getNearbyEntities(loc2, fRange, 3.0, fRange)) {
                 Player target;
                 if (!(e instanceof Player) || !this.gm.isParticipant(target = (Player)e) || this.gm.getTeamOf(target) == this.gm.getTeamOf(p)) continue;
                 target.damage(3.0, (Entity)p);
-                target.setVelocity(target.getLocation().toVector().subtract(loc2.toVector()).normalize().multiply(1.5).setY(0.5));
+                target.setVelocity(target.getLocation().toVector().subtract(loc2.toVector()).normalize().multiply(fKnockback).setY(0.5));
                 target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 1, false, true));
+                if (fRole == KitRole.CONTROLLER) {
+                    target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 1, false, true));
+                }
             }
             this.gm.setNoFallDamage(p.getUniqueId());
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.gm.clearNoFallDamage(p.getUniqueId()), 100L);

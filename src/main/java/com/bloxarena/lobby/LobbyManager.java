@@ -29,7 +29,11 @@ import com.bloxarena.game.GameState;
 import com.bloxarena.map.MapConfig;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
@@ -65,6 +69,10 @@ public class LobbyManager {
     private BossBar countdownBossBar = null;
     private static final int THRESHOLD_4 = 4;
     private static final int THRESHOLD_6 = 6;
+    private final Map<UUID, Integer> pendingVotes = new HashMap<UUID, Integer>();
+    private List<Object[]> voteOptions = new ArrayList<Object[]>();
+    private BukkitTask voteTask = null;
+    private List<UUID> voteParticipants = new ArrayList<UUID>();
 
     public LobbyManager(BloxArenaPlugin plugin) {
         this.plugin = plugin;
@@ -246,13 +254,124 @@ public class LobbyManager {
         ArrayList<UUID> participants = new ArrayList<UUID>(this.waitingPlayers);
         this.waitingPlayers.clear();
         participants.removeIf(uid -> Bukkit.getPlayer((UUID)uid) == null);
-        GameMode mode = GameMode.random(participants.size());
-        MapConfig map = this.plugin.getMapManager().selectMap(mode);
-        if (map == null) {
+        if (participants.size() < 2) {
+            this.broadcastWaiting("\u00a7c\u4eba\u6570\u304c\u8db3\u308a\u306a\u3044\u305f\u3081\u8a66\u5408\u3092\u958b\u59cb\u3067\u304d\u307e\u305b\u3093\u3002");
+            return;
+        }
+        this.startVoting(participants);
+    }
+
+    private void startVoting(final List<UUID> participants) {
+        this.cancelVoting();
+        this.voteParticipants = new ArrayList<UUID>(participants);
+        this.pendingVotes.clear();
+        this.voteOptions.clear();
+        GameMode mode0 = GameMode.random(participants.size());
+        GameMode mode1 = GameMode.random(participants.size());
+        GameMode mode2 = GameMode.random(participants.size());
+        MapConfig map0 = this.plugin.getMapManager().selectMap(mode0);
+        MapConfig map1 = this.plugin.getMapManager().selectMap(mode1);
+        MapConfig map2 = this.plugin.getMapManager().selectMap(mode2);
+        if (map0 == null) {
             this.broadcastWaiting("\u00a7c\u4f7f\u7528\u53ef\u80fd\u306a\u30de\u30c3\u30d7\u304c\u3042\u308a\u307e\u305b\u3093\u3002config.yml \u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
             return;
         }
+        this.voteOptions.add(new Object[]{map0, mode0});
+        if (map1 != null) {
+            this.voteOptions.add(new Object[]{map1, mode1});
+        }
+        if (map2 != null) {
+            this.voteOptions.add(new Object[]{map2, mode2});
+        }
+        for (UUID uid : participants) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.sendMessage("\u00a76\u00a7l[\u6295\u7968] \u00a77\u30de\u30c3\u30d7/\u30e2\u30fc\u30c9\u3092\u9078\u3093\u3067\u306d\uff01 \u00a78(/ba vote <1|2|3>)");
+            for (int i = 0; i < this.voteOptions.size(); ++i) {
+                Object[] opt = this.voteOptions.get(i);
+                MapConfig mc = (MapConfig)opt[0];
+                GameMode gm = (GameMode)opt[1];
+                p.sendMessage("\u00a7e" + (i + 1) + ". \u00a7f" + mc.getDisplayName() + " \u00a77- " + gm.getDisplayName());
+            }
+        }
+        this.broadcastWaiting("\u00a7e20\u79d2\u3067\u7d50\u679c\u767a\u8868\uff01 \u00a77\u6295\u7968\u3057\u306a\u3044\u5834\u5408\u306f\u30e9\u30f3\u30c0\u30e0\u306b\u306a\u308a\u307e\u3059\u3002");
+        this.voteTask = new BukkitRunnable(){
+            public void run() {
+                LobbyManager.this.finishVoting();
+            }
+        }.runTaskLater((Plugin)this.plugin, 400L);
+    }
+
+    private void finishVoting() {
+        this.voteTask = null;
+        if (this.voteParticipants.isEmpty()) {
+            return;
+        }
+        int[] counts = new int[this.voteOptions.size()];
+        for (Integer choice : this.pendingVotes.values()) {
+            if (choice >= 1 && choice <= this.voteOptions.size()) {
+                int n = choice - 1;
+                counts[n] = counts[n] + 1;
+            }
+        }
+        int best = -1;
+        int bestCount = 0;
+        boolean tie = false;
+        for (int i = 0; i < counts.length; ++i) {
+            if (counts[i] > bestCount) {
+                bestCount = counts[i];
+                best = i;
+                tie = false;
+            } else if (counts[i] == bestCount && bestCount > 0) {
+                tie = true;
+            }
+        }
+        Object[] chosen;
+        if (best < 0 || bestCount == 0 || tie) {
+            chosen = this.voteOptions.get(new Random().nextInt(this.voteOptions.size()));
+            this.broadcastWaiting("\u00a7e\u6295\u7968\u4e0d\u8db3\u307e\u305f\u306f\u5f15\u304d\u5206\u3051\u306e\u305f\u3081\u3001\u30e9\u30f3\u30c0\u30e0\u3067\u6c7a\u5b9a\u3057\u307e\u3057\u305f\u3002");
+        } else {
+            chosen = this.voteOptions.get(best);
+            this.broadcastWaiting("\u00a7a\u6295\u7968\u7d50\u679c: \u9078\u629e\u3055\u308c\u305f\u306e\u306f \u00a7e" + (best + 1) + "\u756a\u76ee \u00a7a\u3067\u3059\uff01");
+        }
+        MapConfig map = (MapConfig)chosen[0];
+        GameMode mode = (GameMode)chosen[1];
+        List<UUID> participants = new ArrayList<UUID>(this.voteParticipants);
+        this.voteParticipants.clear();
+        this.pendingVotes.clear();
+        this.voteOptions.clear();
+        if (map == null) {
+            this.broadcastWaiting("\u00a7c\u4f7f\u7528\u53ef\u80fd\u306a\u30de\u30c3\u30d7\u304c\u3042\u308a\u307e\u305b\u3093\u3002");
+            return;
+        }
         this.plugin.getGameManager().startGame(map, mode, participants);
+    }
+
+    private void cancelVoting() {
+        if (this.voteTask != null) {
+            this.voteTask.cancel();
+            this.voteTask = null;
+        }
+        this.pendingVotes.clear();
+        this.voteParticipants.clear();
+        this.voteOptions.clear();
+    }
+
+    public boolean castVote(Player p, int choice) {
+        if (this.voteTask == null || this.voteParticipants.isEmpty()) {
+            return false;
+        }
+        if (choice < 1 || choice > this.voteOptions.size()) {
+            p.sendMessage("\u00a7c1\u301c" + this.voteOptions.size() + "\u306e\u6295\u7968\u756a\u53f7\u3092\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+            return false;
+        }
+        if (!this.voteParticipants.contains(p.getUniqueId())) {
+            p.sendMessage("\u00a7c\u73fe\u5728\u6295\u7968\u3067\u304d\u307e\u305b\u3093\u3002");
+            return false;
+        }
+        this.pendingVotes.put(p.getUniqueId(), choice);
+        p.sendMessage("\u00a7a\u6295\u7968\u3057\u307e\u3057\u305f: \u00a7e" + choice + "\u756a\u76ee");
+        return true;
     }
 
     public Location getLobbyOobMin() {

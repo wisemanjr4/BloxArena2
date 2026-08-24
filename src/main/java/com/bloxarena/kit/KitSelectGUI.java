@@ -285,7 +285,8 @@ public class KitSelectGUI {
             return item;
         }
         meta.setDisplayName((String)(taken ? "\u00a7c\u00a7m" + kit.getName() + " \u00a7c(\u9078\u629e\u6e08\u307f)" : kit.getDisplayName()));
-        meta.setLore(Arrays.asList("\u00a77" + kit.getDescription(), "\u00a7f" + kit.getLore(), taken ? "\u00a7c\u9078\u629e\u4e0d\u53ef" : "\u00a7a\u25ba \u53f3\u30af\u30ea\u30c3\u30af\u3067\u9078\u629e"));
+        int mastery = this.plugin.getStatsManager().getKitMasteryLevel(p.getUniqueId(), kit.name());
+        meta.setLore(Arrays.asList("\u00a77" + kit.getDescription(), "\u00a7f" + kit.getLore(), "\u00a77\u30de\u30b9\u30bf\u30ea\u30fcLv." + mastery, taken ? "\u00a7c\u9078\u629e\u4e0d\u53ef" : "\u00a7a\u25ba \u53f3\u30af\u30ea\u30c3\u30af\u3067\u9078\u629e"));
         if (!taken) {
             meta.getPersistentDataContainer().set(this.KIT_KEY, PersistentDataType.STRING, kit.name());
         }

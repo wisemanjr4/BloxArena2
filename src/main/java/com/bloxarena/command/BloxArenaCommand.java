@@ -404,12 +404,71 @@ TabCompleter {
                 sender.sendMessage("\u00a77\u52dd\u5229: \u00a7f" + s.wins + "  \u6557\u5317: \u00a7f" + s.losses + "  \u00a77\u52dd\u7387: \u00a7f" + String.format("%.1f", s.getWinRate()) + "%");
                 sender.sendMessage("\u00a77\u7dcf\u30c0\u30e1\u30fc\u30b8: \u00a7f" + String.format("%.1f", s.damage));
                 if (s.kitCounts.isEmpty()) break;
+                Map<String, Integer> mastery = sm.getKitMasteryLevels(target.getUniqueId());
                 List<Map.Entry<String, Integer>> topKits = s.kitCounts.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue())).limit(5L).collect(Collectors.toList());
                 List<String> parts = new ArrayList<String>();
                 for (Map.Entry<String, Integer> e2 : topKits) {
-                    parts.add("\u00a7e" + e2.getKey() + "\u00a77:\u00a7f" + String.valueOf(e2.getValue()));
+                    int level = mastery.getOrDefault(e2.getKey(), 0);
+                    parts.add("\u00a7e" + e2.getKey() + " \u00a77Lv." + level + " \u00a77(" + e2.getValue() + "\u56ce)");
+                }
+                String bestKit = null;
+                int bestLevel = 0;
+                for (Map.Entry<String, Integer> me : mastery.entrySet()) {
+                    if (me.getValue() > bestLevel) {
+                        bestLevel = me.getValue();
+                        bestKit = me.getKey();
+                    }
+                }
+                if (bestKit != null) {
+                    sender.sendMessage("\u00a77\u6700\u9ad8\u30de\u30b9\u30bf\u30ea\u30fc: " + sm.getKitMasteryTitle(bestKit, bestLevel));
                 }
                 sender.sendMessage("\u00a77\u3088\u304f\u4f7f\u3046\u30ad\u30c3\u30c8: " + String.join("  ", parts));
+                break;
+            }
+            case "mastery": {
+                OfflinePlayer target;
+                if (args.length >= 2) {
+                    target = Bukkit.getOfflinePlayerIfCached((String)args[1]);
+                    if (target == null) {
+                        sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + args[1]);
+                        return true;
+                    }
+                } else if (sender instanceof Player) {
+                    Player p = (Player)sender;
+                    target = p;
+                } else {
+                    sender.sendMessage("\u00a7c\u4f7f\u7528\u6cd5: /ba mastery <name>");
+                    return true;
+                }
+                StatsManager sm = this.plugin.getStatsManager();
+                PlayerStats s = sm.getStats(target.getUniqueId());
+                Map<String, Integer> levels = sm.getKitMasteryLevels(target.getUniqueId());
+                sender.sendMessage("\u00a76\u00a7l=== " + target.getName() + " \u306e\u30de\u30b9\u30bf\u30ea\u30fc ===");
+                sender.sendMessage("\u00a77\u7dcf\u30ad\u30c3\u30c8\u4f7f\u7528: \u00a7f" + levels.size() + "\u7a2e\u985e");
+                String bestKit = null;
+                int bestLevel = 0;
+                for (Map.Entry<String, Integer> me : levels.entrySet()) {
+                    if (me.getValue() > bestLevel) {
+                        bestLevel = me.getValue();
+                        bestKit = me.getKey();
+                    }
+                }
+                if (bestKit != null) {
+                    sender.sendMessage("\u00a77\u6700\u9ad8\u30ec\u30d9\u30eb\u30ad\u30c3\u30c8: " + sm.getKitMasteryTitle(bestKit, bestLevel));
+                }
+                List<Map.Entry<String, Integer>> sorted = levels.entrySet().stream().sorted((e1, e2) -> {
+                    int c = Integer.compare(e2.getValue(), e1.getValue());
+                    if (c != 0) {
+                        return c;
+                    }
+                    return Integer.compare(s.kitCounts.getOrDefault(e2.getKey(), 0), s.kitCounts.getOrDefault(e1.getKey(), 0));
+                }).limit(3L).collect(Collectors.toList());
+                sender.sendMessage("\u00a76\u00a7l=== Top 3 \u30de\u30b9\u30bf\u30ea\u30fc\u30ad\u30c3\u30c8 ===");
+                int rank = 1;
+                for (Map.Entry<String, Integer> me : sorted) {
+                    int count = s.kitCounts.getOrDefault(me.getKey(), 0);
+                    sender.sendMessage("\u00a77#" + rank++ + " " + sm.getKitMasteryTitle(me.getKey(), me.getValue()) + " \u00a77(" + count + "\u56ce)");
+                }
                 break;
             }
             case "top": {
@@ -993,6 +1052,20 @@ TabCompleter {
                 sender.sendMessage("\u00a7c\u66f2\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + searchName + " \u00a77(/ba bgm list \u3067\u4e00\u89a7\u8868\u793a)");
                 break;
             }
+            case "vote": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    return true;
+                }
+                Player p = (Player)sender;
+                if (args.length < 2) {
+                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba vote <1|2|3>");
+                    return true;
+                }
+                int choice = this.parseInt(args[1], -1);
+                this.plugin.getLobbyManager().castVote(p, choice);
+                break;
+            }
             case "version": {
                 sender.sendMessage("\u00a76\u00a7lBloxArena II \u00a7f\u00a7lWarriors of NextGen");
                 sender.sendMessage("\u00a77Version: \u00a7f" + this.plugin.getDescription().getVersion());
@@ -1066,6 +1139,7 @@ TabCompleter {
         s.sendMessage("\u00a7e/ba bot add [n] \u00a77- \u30c6\u30b9\u30c8\u7528BOT\u3092\u8ffd\u52a0\uff08\u8a66\u5408\u958b\u59cb\u524d\uff09");
         s.sendMessage("\u00a7e/ba bot clear \u00a77- BOT\u3092\u3059\u3079\u3066\u524a\u9664");
         s.sendMessage("\u00a7e/ba stats [player] \u00a77- \u7d71\u8a08\u3092\u8868\u793a");
+        s.sendMessage("\u00a7e/ba mastery [player] \u00a77- \u30de\u30b9\u30bf\u30ea\u30fc\u6982\u8981\u3092\u8868\u793a");
         s.sendMessage("\u00a7e/ba top [kills|wins|kd|damage|kits] \u00a77- \u30e9\u30f3\u30ad\u30f3\u30b0\u8868\u793a");
         s.sendMessage("\u00a7e/ba continuous <on|off> \u00a77- \u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9\u5207\u308a\u66ff\u3048");
         s.sendMessage("\u00a7e/ba setmapname <mapId> <\u540d\u524d> \u00a77- \u30de\u30c3\u30d7\u306e\u8868\u793a\u540d\u3092\u8a2d\u5b9a");
@@ -1083,7 +1157,7 @@ TabCompleter {
 
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("start", "stop", "wand", "setwaitingarea", "setlobby", "addmap", "info", "setspawnzone", "setcenter", "setmaplobby", "setmap", "setmapname", "kitedit", "kits", "bot", "stats", "top", "continuous", "setgate", "gatematl", "setoob", "spectate", "reload", "status", "admin", "upgrade", "convert", "test", "debug", "tutorial", "oob", "bgm", "version");
+            return Arrays.asList("start", "stop", "wand", "setwaitingarea", "setlobby", "addmap", "info", "setspawnzone", "setcenter", "setmaplobby", "setmap", "setmapname", "kitedit", "kits", "bot", "stats", "mastery", "top", "continuous", "setgate", "gatematl", "setoob", "spectate", "reload", "status", "admin", "upgrade", "convert", "test", "debug", "tutorial", "oob", "bgm", "vote", "version");
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase()) {
@@ -1092,6 +1166,7 @@ TabCompleter {
                 case "top" -> Arrays.asList("kills", "wins", "kd", "damage", "kits");
                 case "bot" -> Arrays.asList("add", "clear", "list");
                 case "continuous" -> Arrays.asList("on", "off");
+                case "vote" -> Arrays.asList("1", "2", "3");
                 case "tutorial" -> Arrays.asList("setup", "stop", "leave", "next");
                 case "oob" -> Collections.emptyList();
                 case "setgate" -> Arrays.asList("red", "blue");

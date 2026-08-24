@@ -33,6 +33,7 @@ public class StatsManager {
     private final Map<UUID, PlayerStats> cache = new HashMap<UUID, PlayerStats>();
     private final Map<UUID, Map<String, Integer>> playerKitUsage = new HashMap<UUID, Map<String, Integer>>();
     private final Set<UUID> debugPlayers = new HashSet<UUID>();
+    private static final int[] MASTERY_THRESHOLDS = new int[]{1, 5, 15, 30, 50, 75, 100, 150, 200, 300};
 
     public StatsManager(BloxArenaPlugin plugin) {
         this.plugin = plugin;
@@ -155,6 +156,50 @@ public class StatsManager {
             }
         }
         return total.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue())).limit(limit).collect(Collectors.toList());
+    }
+
+    public int getKitMasteryLevel(UUID player, String kitName) {
+        int uses = this.get(player).kitCounts.getOrDefault(kitName, 0);
+        int level = 0;
+        for (int threshold : MASTERY_THRESHOLDS) {
+            if (uses >= threshold) {
+                ++level;
+            } else {
+                break;
+            }
+        }
+        return level;
+    }
+
+    public String getKitMasteryTitle(String kitName, int level) {
+        return this.getKitMasteryColor(level) + kitName + " \u00a77[Lv." + level + "]";
+    }
+
+    public String getKitMasteryColor(int level) {
+        if (level >= 10) {
+            return "\u00a7c";
+        }
+        if (level >= 8) {
+            return "\u00a76";
+        }
+        if (level >= 5) {
+            return "\u00a7b";
+        }
+        if (level >= 3) {
+            return "\u00a72";
+        }
+        if (level >= 1) {
+            return "\u00a77";
+        }
+        return "\u00a78";
+    }
+
+    public Map<String, Integer> getKitMasteryLevels(UUID player) {
+        Map<String, Integer> levels = new HashMap<String, Integer>();
+        for (String kitName : this.get(player).kitCounts.keySet()) {
+            levels.put(kitName, this.getKitMasteryLevel(player, kitName));
+        }
+        return levels;
     }
 
     public boolean toggleDebug(UUID uuid) {
