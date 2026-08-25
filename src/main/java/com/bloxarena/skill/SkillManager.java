@@ -2048,13 +2048,13 @@ public class SkillManager {
                 break;
             }
             case "\u30b0\u30e9\u30d3\u30c6\u30a3": {
-                for (Entity e2 : p.getWorld().getNearbyEntities(p.getLocation(), 8.0, 3.0, 8.0)) {
+                for (Entity e2 : p.getWorld().getNearbyEntities(p.getLocation(), 10.0, 3.0, 10.0)) {
                     Player t2;
                     if (!(e2 instanceof Player) || !this.gm.isParticipant(t2 = (Player)e2) || this.gm.getTeamOf(t2) == this.gm.getTeamOf(p)) continue;
                     t2.setVelocity(p.getLocation().toVector().subtract(t2.getLocation().toVector()).normalize().multiply(2.5).setY(0.8));
                     t2.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 40, 3, false, true));
                 }
-                p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation(), 30, 4.0, 1.0, 4.0, 0.05);
+                p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation(), 40, 5.0, 1.0, 5.0, 0.05);
                 p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
                 break;
             }
@@ -2085,7 +2085,7 @@ public class SkillManager {
                 break;
             }
             case "\u30ea\u30fc\u30d7": {
-                Vector ld = p.getLocation().getDirection().normalize().multiply(4.0).setY(0.8);
+                Vector ld = p.getLocation().getDirection().normalize().multiply(3.4).setY(0.8);
                 p.setVelocity(ld);
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 60, 0, false, true));
                 p.getWorld().playSound(p.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 1.0f, 1.5f);
@@ -2137,7 +2137,7 @@ public class SkillManager {
                             this.cancel();
                             return;
                         }
-                        Location loc = start.clone().add(dir.clone().multiply(this.t));
+                        Location loc = start.clone().add(dir.clone().multiply(this.t)).subtract(0.0, 1.0, 0.0);
                         loc.getWorld().spawn(loc, EvokerFangs.class);
                     }
                 }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
