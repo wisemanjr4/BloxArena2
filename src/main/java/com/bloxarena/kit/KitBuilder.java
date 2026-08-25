@@ -123,8 +123,12 @@ public class KitBuilder {
             }
             case LANCER: {
                 ItemStack sword = new ItemStack(Material.IRON_SWORD);
+                ItemMeta sm = sword.getItemMeta();
+                if (sm != null) {
+                    sm.setLore(List.of("\u00a77\u53f3\u30af\u30ea\u30c3\u30af\u3067\u523a\u7a81\u30b9\u30ad\u30eb\u767a\u52d5"));
+                    sword.setItemMeta(sm);
+                }
                 list.add(sword);
-                list.add(new ItemStack(Material.NETHER_STAR));
                 break;
             }
             case JESTER: {
@@ -700,10 +704,13 @@ public class KitBuilder {
     }
 
     private static void giveLancer(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.IRON_SWORD)});
-        if (plugin != null) {
-            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.LANCER, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u523a\u7a81")});
+        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        ItemMeta sm = sword.getItemMeta();
+        if (sm != null) {
+            sm.setLore(List.of("\u00a77\u53f3\u30af\u30ea\u30c3\u30af\u3067\u523a\u7a81\u30b9\u30ad\u30eb\u767a\u52d5"));
+            sword.setItemMeta(sm);
         }
+        player.getInventory().addItem(new ItemStack[]{sword});
         KitBuilder.giveChainArmor(player);
     }
 
@@ -1079,7 +1086,7 @@ public class KitBuilder {
     }
 
     private static void giveBulwark(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.IRON_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.DIAMOND_SWORD)});
         player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.SHIELD)});
         if (plugin != null) {
             player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.BULWARK, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30a6\u30a9\u30fc\u30eb\u5c55\u958b")});
@@ -1088,15 +1095,15 @@ public class KitBuilder {
     }
 
     private static void giveTimekeeper(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.IRON_SWORD)});
         if (plugin != null) {
             player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.TIMEKEEPER, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ea\u30ef\u30a4\u30f3\u30c9+\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7")});
         }
-        KitBuilder.giveLeatherArmor(player);
+        KitBuilder.giveChainArmor(player);
     }
 
     private static void giveAegis(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.IRON_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.DIAMOND_SWORD)});
         player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.SHIELD)});
         if (plugin != null) {
             player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.AEGIS, "\u00a7a\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9")});
@@ -1105,28 +1112,28 @@ public class KitBuilder {
     }
 
     private static void giveHexer(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.WOODEN_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
         if (plugin != null) {
             player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.HEXER, "\u00a75\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u546a\u7e1b\u9818\u57df")});
-        }
-        KitBuilder.giveLeatherArmor(player);
-    }
-
-    private static void giveReflector(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
-        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.SHIELD)});
-        if (plugin != null) {
-            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.REFLECTOR, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9")});
         }
         KitBuilder.giveChainArmor(player);
     }
 
+    private static void giveReflector(Player player, BloxArenaPlugin plugin) {
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.IRON_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.SHIELD)});
+        if (plugin != null) {
+            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.REFLECTOR, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9")});
+        }
+        KitBuilder.giveIronArmor(player);
+    }
+
     private static void giveGlacies(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.IRON_SWORD)});
         if (plugin != null) {
             player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.GLACIES, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d5\u30ed\u30b9\u30c8\u30b9\u30c8\u30e9\u30a4\u30af")});
         }
-        KitBuilder.giveLeatherArmor(player);
+        KitBuilder.giveChainArmor(player);
     }
 
     private static void giveIronArmor(Player p) {

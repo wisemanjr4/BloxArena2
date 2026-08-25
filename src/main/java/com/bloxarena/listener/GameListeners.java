@@ -543,6 +543,17 @@ implements Listener {
                 return;
             }
         }
+        Entity noCombatDamager = e.getDamager();
+        Player noCombatAttacker = null;
+        if (noCombatDamager instanceof Player) {
+            noCombatAttacker = (Player)noCombatDamager;
+        } else if (noCombatDamager instanceof Projectile && ((Projectile)noCombatDamager).getShooter() instanceof Player) {
+            noCombatAttacker = (Player)((Projectile)noCombatDamager).getShooter();
+        }
+        if (noCombatAttacker != null && this.gm.isInFFANoCombatWindow(noCombatAttacker.getUniqueId())) {
+            e.setCancelled(true);
+            return;
+        }
         UUID killerUuid = null;
         if (this.plugin.getGameManager().getPlayerKitType(victim.getUniqueId()) == KitType.MEDIC && (e.getDamager() instanceof Player || e.getDamager() instanceof Arrow) && victim.hasPotionEffect(PotionEffectType.REGENERATION)) {
             victim.removePotionEffect(PotionEffectType.REGENERATION);

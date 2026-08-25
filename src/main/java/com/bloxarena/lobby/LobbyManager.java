@@ -266,22 +266,22 @@ public class LobbyManager {
         this.voteParticipants = new ArrayList<UUID>(participants);
         this.pendingVotes.clear();
         this.voteOptions.clear();
-        GameMode mode0 = GameMode.random(participants.size());
-        GameMode mode1 = GameMode.random(participants.size());
-        GameMode mode2 = GameMode.random(participants.size());
-        MapConfig map0 = this.plugin.getMapManager().selectMap(mode0);
-        MapConfig map1 = this.plugin.getMapManager().selectMap(mode1);
-        MapConfig map2 = this.plugin.getMapManager().selectMap(mode2);
-        if (map0 == null) {
+        Set<String> usedCombos = new LinkedHashSet<String>();
+        for (int attempt = 0; attempt < 30 && this.voteOptions.size() < 3; ++attempt) {
+            GameMode mode = GameMode.random(participants.size());
+            MapConfig map = this.plugin.getMapManager().selectMap(mode);
+            if (map == null) {
+                continue;
+            }
+            String key = map.getId() + "|" + mode.name();
+            if (!usedCombos.add(key)) {
+                continue;
+            }
+            this.voteOptions.add(new Object[]{map, mode});
+        }
+        if (this.voteOptions.isEmpty()) {
             this.broadcastWaiting("\u00a7c\u4f7f\u7528\u53ef\u80fd\u306a\u30de\u30c3\u30d7\u304c\u3042\u308a\u307e\u305b\u3093\u3002config.yml \u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
             return;
-        }
-        this.voteOptions.add(new Object[]{map0, mode0});
-        if (map1 != null) {
-            this.voteOptions.add(new Object[]{map1, mode1});
-        }
-        if (map2 != null) {
-            this.voteOptions.add(new Object[]{map2, mode2});
         }
         for (UUID uid : participants) {
             Player p = Bukkit.getPlayer((UUID)uid);

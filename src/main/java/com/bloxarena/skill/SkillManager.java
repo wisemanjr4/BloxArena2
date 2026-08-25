@@ -479,7 +479,7 @@ public class SkillManager {
             return;
         }
         this.parryActive.add(p.getUniqueId());
-        p.sendActionBar((Component)Component.text((String)"\u00a79\ud83d\udee1 \u30d1\u30ea\u30a3\u53d7\u4ed8\u4e2d\uff011\u79d2"));
+        p.sendActionBar((Component)Component.text((String)"\u00a79\ud83d\udee1 \u30d1\u30ea\u30a3\u53d7\u4ed8\u4e2d\uff012\u79d2"));
         new BukkitRunnable(){
 
             public void run() {
@@ -488,7 +488,7 @@ public class SkillManager {
                     p.sendActionBar((Component)Component.text((String)"\u00a77\u30d1\u30ea\u30a3\u7d42\u4e86"));
                 }
             }
-        }.runTaskLater((Plugin)this.plugin, 20L);
+        }.runTaskLater((Plugin)this.plugin, 40L);
     }
 
     public void tryUniversalGuardBreak(Player attacker, Player victim) {
@@ -1847,7 +1847,7 @@ public class SkillManager {
                         t.getWorld().playSound(t.getLocation(), Sound.ITEM_SHIELD_BREAK, 1.0f, 0.8f);
                         t.sendMessage("\u00a7c\u76fe\u8d8a\u3057\u306b5\u30c0\u30e1\u30fc\u30b8\u8cab\u901a\uff01");
                     } else {
-                        t.damage(10.0, (Entity)p);
+                        t.damage(9.0, (Entity)p);
                     }
                     t.setVelocity(dir.clone().multiply(1.5).setY(0.3));
                     Long cur = this.skillCooldowns.get(p.getUniqueId());
@@ -1857,7 +1857,7 @@ public class SkillManager {
                     return;
                 }
             }
-        }, 3L);
+        }, 5L);
     }
 
     private void jesterSkill(Player p) {
@@ -3595,8 +3595,17 @@ public class SkillManager {
         if (this.isOnCooldown(p.getUniqueId())) {
             return;
         }
-        Player ally = this.getTargetInSight(p, 15);
-        if (ally == null || this.gm.getTeamOf(ally) != this.gm.getTeamOf(p)) {
+        Player ally = null;
+        double best = 225.0;
+        for (Entity e : p.getNearbyEntities(15.0, 15.0, 15.0)) {
+            Player t;
+            if (!(e instanceof Player) || !this.gm.isParticipant(t = (Player)e) || t == p || this.gm.getTeamOf(t) != this.gm.getTeamOf(p)) continue;
+            double d = p.getLocation().distanceSquared(t.getLocation());
+            if (d > 225.0 || d >= best) continue;
+            best = d;
+            ally = t;
+        }
+        if (ally == null) {
             p.sendMessage("\u00a7c\u30dc\u30f3\u30c9\u3067\u304d\u308b\u53cb\u65b9\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\uff08\u534a\u5f8415m\u5185\uff09");
             return;
         }
@@ -3690,7 +3699,7 @@ public class SkillManager {
         w.playSound(p.getLocation(), Sound.BLOCK_GLASS_BREAK, 1.0f, 1.5f);
         w.spawnParticle(Particle.SNOW_SHOVEL, p.getEyeLocation(), 30, 0.2, 0.2, 0.2, 0.2);
         for (Player t : w.getPlayers()) {
-            if (!this.gm.isParticipant(t) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p) || this.gm.isSpectator(t)) {
+            if (t == p || !this.gm.isParticipant(t) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p) || this.gm.isSpectator(t)) {
                 continue;
             }
             Vector toTarget = t.getLocation().toVector().subtract(p.getLocation().toVector());

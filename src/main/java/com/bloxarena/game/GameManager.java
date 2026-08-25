@@ -167,6 +167,7 @@ public class GameManager {
     private final List<UUID> ffaParticipants = new ArrayList<UUID>();
     private final Set<UUID> ffaEliminated = new HashSet<UUID>();
     private final Map<UUID, Integer> ffaKills = new HashMap<UUID, Integer>();
+    private final Map<UUID, Long> ffaNoCombatUntil = new HashMap<UUID, Long>();
     private int ffaTimeLimit = 300;
     private BukkitTask ffaTimerTask = null;
 
@@ -318,6 +319,7 @@ public class GameManager {
                 Player p = Bukkit.getPlayer((UUID)uUID);
                 if (p == null) continue;
                 this.plugin.getSkillManager().refreshBurst(p);
+                this.grantFFASpawnProtection(p);
             }
         } else {
             for (UUID uUID : this.redTeam) {
@@ -770,34 +772,68 @@ public class GameManager {
     }
 
     private Location getRandomSpawnPoint(MapConfig map) {
-        Location max;
-        Location min;
-        Random r = new Random();
-        if (r.nextBoolean() && map.getRedSpawnMin() != null && map.getRedSpawnMax() != null) {
-            min = map.getRedSpawnMin();
-            max = map.getRedSpawnMax();
-        } else if (map.getBlueSpawnMin() != null && map.getBlueSpawnMax() != null) {
-            min = map.getBlueSpawnMin();
-            max = map.getBlueSpawnMax();
-        } else if (map.getRedSpawnMin() != null && map.getRedSpawnMax() != null) {
-            min = map.getRedSpawnMin();
-            max = map.getRedSpawnMax();
-        } else {
-            Location center = map.getCenter();
-            if (center == null) {
-                World world = Bukkit.getWorld((String)map.getWorld());
-                return world != null ? world.getSpawnLocation() : ((World)Bukkit.getWorlds().get(0)).getSpawnLocation();
-            }
-            return center;
-        }
-        World world = min.getWorld();
-        if (world == null && (world = Bukkit.getWorld((String)map.getWorld())) == null) {
+        World world = map.getWorld() != null ? Bukkit.getWorld((String)map.getWorld()) : null;
+        if (world == null) {
             world = (World)Bukkit.getWorlds().get(0);
         }
-        double x = min.getX() + r.nextDouble() * (max.getX() - min.getX());
-        double y = min.getY() + r.nextDouble() * (max.getY() - min.getY());
-        double z = min.getZ() + r.nextDouble() * (max.getZ() - min.getZ());
-        return new Location(world, x, y, z);
+        Location min = map.getOobMin();
+        Location max = map.getOobMax();
+        if (min == null || max == null) {
+            min = map.getRedSpawnMin();
+            max = map.getRedSpawnMax();
+        }
+        if (min == null || max == null) {
+            min = map.getBlueSpawnMin();
+            max = map.getBlueSpawnMax();
+        }
+        if (min == null || max == null) {
+            Location center = map.getCenter();
+            return center != null ? center.clone() : world.getSpawnLocation();
+        }
+        Random r = new Random();
+        int minX = Math.min(min.getBlockX(), max.getBlockX());
+        int maxX = Math.max(min.getBlockX(), max.getBlockX());
+        int minZ = Math.min(min.getBlockZ(), max.getBlockZ());
+        int maxZ = Math.max(min.getBlockZ(), max.getBlockZ());
+        for (int attempt = 0; attempt < 30; ++attempt) {
+            int x = minX + r.nextInt(Math.max(1, maxX - minX + 1));
+            int z = minZ + r.nextInt(Math.max(1, maxZ - minZ + 1));
+            int y = world.getHighestBlockYAt(x, z);
+            Block below = world.getBlockAt(x, y, z);
+            if (below.getType().isAir()) {
+                continue;
+            }
+            Location loc = new Location(world, (double)x + 0.5, (double)(y + 1) + 0.1, (double)z + 0.5);
+            if (loc.getBlock().getType().isSolid() || loc.clone().add(0.0, 1.0, 0.0).getBlock().getType().isSolid()) {
+                continue;
+            }
+            return loc;
+        }
+        return world.getSpawnLocation();
+    }
+
+    public boolean isInFFANoCombatWindow(UUID uid) {
+        Long end = this.ffaNoCombatUntil.get(uid);
+        if (end == null) {
+            return false;
+        }
+        if (System.currentTimeMillis() >= end) {
+            this.ffaNoCombatUntil.remove(uid);
+            return false;
+        }
+        return true;
+    }
+
+    private void grantFFASpawnProtection(Player p) {
+        UUID uid = p.getUniqueId();
+        this.ffaNoCombatUntil.put(uid, System.currentTimeMillis() + 5000L);
+        p.setInvulnerable(true);
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            Player pp = Bukkit.getPlayer(uid);
+            if (pp != null) {
+                pp.setInvulnerable(false);
+            }
+        }, 100L);
     }
 
     public void checkEliminationWin() {
@@ -1263,6 +1299,7 @@ public class GameManager {
         this.ffaParticipants.clear();
         this.ffaEliminated.clear();
         this.ffaKills.clear();
+        this.ffaNoCombatUntil.clear();
         this.ffaTimeLimit = 300;
         if (this.ffaTimerTask != null) {
             this.ffaTimerTask.cancel();
