@@ -183,6 +183,20 @@ public class KitBuilder {
                 list.add(new ItemStack(Material.NETHER_STAR));
                 break;
             }
+            case SUPERIOR_MISTRAL: {
+                ItemStack sms = new ItemStack(Material.DIAMOND_SWORD);
+                sms.addEnchantment(Enchantment.DAMAGE_ALL, 5);
+                sms.addEnchantment(Enchantment.FIRE_ASPECT, 2);
+                list.add(sms);
+                ItemStack sxbow = new ItemStack(Material.CROSSBOW);
+                sxbow.addEnchantment(Enchantment.QUICK_CHARGE, 2);
+                sxbow.addEnchantment(Enchantment.PIERCING, 2);
+                list.add(sxbow);
+                list.add(new ItemStack(Material.ARROW, 32));
+                list.add(new ItemStack(Material.SHIELD));
+                list.add(new ItemStack(Material.NETHER_STAR));
+                break;
+            }
             case RELEASER: {
                 ItemStack rs = new ItemStack(Material.IRON_SWORD);
                 rs.addEnchantment(Enchantment.DAMAGE_ALL, 1);
@@ -455,6 +469,10 @@ public class KitBuilder {
             }
             case MISTRAL: {
                 KitBuilder.giveMistral(player, plugin);
+                break;
+            }
+            case SUPERIOR_MISTRAL: {
+                KitBuilder.giveSuperiorMistral(player, plugin);
                 break;
             }
             case DECOY: {
@@ -974,6 +992,23 @@ public class KitBuilder {
         KitBuilder.giveChainArmor(player);
     }
 
+    private static void giveSuperiorMistral(Player player, BloxArenaPlugin plugin) {
+        ItemStack sword = new ItemStack(Material.DIAMOND_SWORD);
+        sword.addEnchantment(Enchantment.DAMAGE_ALL, 5);
+        sword.addEnchantment(Enchantment.FIRE_ASPECT, 2);
+        player.getInventory().addItem(new ItemStack[]{sword});
+        ItemStack xbow = new ItemStack(Material.CROSSBOW);
+        xbow.addEnchantment(Enchantment.QUICK_CHARGE, 2);
+        xbow.addEnchantment(Enchantment.PIERCING, 2);
+        player.getInventory().addItem(new ItemStack[]{xbow});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.ARROW, 32)});
+        player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.SHIELD)});
+        if (plugin != null) {
+            player.getInventory().addItem(new ItemStack[]{KitBuilder.makeSkillItem(plugin, KitType.SUPERIOR_MISTRAL, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u7a76\u6975\u70c8\u98a8\u7832")});
+        }
+        KitBuilder.giveDiamondArmor(player);
+    }
+
     private static void giveKreutz(Player player, BloxArenaPlugin plugin) {
         player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.STONE_SWORD)});
         if (plugin != null) {
@@ -1106,6 +1141,13 @@ public class KitBuilder {
         p.getInventory().setChestplate(new ItemStack(Material.CHAINMAIL_CHESTPLATE));
         p.getInventory().setLeggings(new ItemStack(Material.CHAINMAIL_LEGGINGS));
         p.getInventory().setBoots(new ItemStack(Material.CHAINMAIL_BOOTS));
+    }
+
+    private static void giveDiamondArmor(Player p) {
+        p.getInventory().setHelmet(new ItemStack(Material.DIAMOND_HELMET));
+        p.getInventory().setChestplate(new ItemStack(Material.DIAMOND_CHESTPLATE));
+        p.getInventory().setLeggings(new ItemStack(Material.DIAMOND_LEGGINGS));
+        p.getInventory().setBoots(new ItemStack(Material.DIAMOND_BOOTS));
     }
 
     private static void giveLeatherArmor(Player p) {
@@ -1431,6 +1473,7 @@ public class KitBuilder {
             case WHIRLWIND -> "\u6c17\u6d41\u7832+\u65cb\u98a8\u5f3e - \u62bc\u51fa\u6c17\u6d41+\u8ffd\u5c3e\u6253\u4e0a\u7403";
             case NILGIRITAR -> "\u76fe\u8cab\u901a - \u30af\u30ed\u30b9\u30dc\u30a6\u547d\u4e2d\u5f8c\u8fd1\u63a5\u3067\u76fe\u8cab\u901a\u30c0\u30e1";
             case MISTRAL -> "\u70c8\u98a8\u7832 - \u72ed\u5c04\u7a0b\u30fb\u8d85\u5f37\u529b\u306a\u62bc\u51fa\u6c17\u6d41 5\u79d2";
+            case SUPERIOR_MISTRAL -> "\u7a76\u6975\u70c8\u98a8\u7832 - 3x3x3\u98a8\u306e\u7a81\u6c17\u5f3e\u5e55 \u5927\u5e45\u62bc\u51fa\u5f0d\u5f01\u3057\u5f31\u4f53\uff0b\u920d\u8db3 5\u79d2";
             case FLASHER -> "\u30d5\u30e9\u30c3\u30b7\u30e5\u30d0\u30f3 - \u7740\u5f3e\u534a\u5f844m\u76f2\u76ee+\u920d\u8db3";
             case MARKSMAN -> "\u30d8\u30f4\u30a3\u30fc\u30dc\u30eb\u30c8 - \u88ab\u5f3e\u8005HP\u4e0a\u9650-10\u6c38\u7d9a";
             case SUNDANCE -> "\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0 - 8\u767a\u9ad8\u901f\u81ea\u52d5\u88c5\u586b 18sCD";
@@ -1466,6 +1509,7 @@ public class KitBuilder {
         return switch (kit) {
             case BLADE, BREAKER, COUNTER, PYRO, BOMBER, COOK, NILGIRITAR, RELEASER, FLASHER, ROCKETER, ALCHEMIST, TRAPPER, GUARDIAN, MEDIC, SWAPPER, STICKER, ANCHOR -> "\u9244\u88c5\u5099";
             case NINJA, LANCER, WHIRLWIND, MISTRAL, SCOUT, ENGINEER, RESTRICTIONER, TRANSPORTER, DECOY, PHANTOM -> "\u9396\u88c5\u5099";
+            case SUPERIOR_MISTRAL -> "\u30c0\u30a4\u30e4\u88c5\u5099\uff0b\u76fe";
             case BERSERKER, SNIPER, JESTER, MARKSMAN, SUNDANCE, KREUTZ, NECRO -> "\u76ae\u88c5\u5099";
             case GRANG -> "\u76ae\u88c5\u5099\uff0b\u76fe";
             case VAMPIRE -> "\u9244\u88c5\u5099(HP\u5909\u52d5)";

@@ -86,6 +86,7 @@ public class KitInfoGUI {
         Inventory inv = Bukkit.createInventory(null, (int)54, (String)LIST_TITLE);
         KitType[] kits = KitType.values();
         for (int i = 0; i < kits.length && i < 45; ++i) {
+            if (kits[i] == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) continue;
             inv.setItem(i, this.makeKitIcon(kits[i]));
         }
         ItemStack bgmBtn = new ItemStack(Material.JUKEBOX);

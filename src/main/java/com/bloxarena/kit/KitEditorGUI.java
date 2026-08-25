@@ -353,6 +353,7 @@ public class KitEditorGUI {
             case HEXER -> Material.ENCHANTING_TABLE;
             case REFLECTOR -> Material.LIGHT_BLUE_STAINED_GLASS;
             case GLACIES -> Material.PACKED_ICE;
+            case SUPERIOR_MISTRAL -> Material.DIAMOND_SWORD;
             default -> throw new IncompatibleClassChangeError();
         };
     }

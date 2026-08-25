@@ -1164,6 +1164,15 @@ public class SkillManager {
             }
         }
         this.activeHexFields.removeIf(f -> System.currentTimeMillis() > f.endTime);
+        for (Player sm : Bukkit.getOnlinePlayers()) {
+            if (!this.gm.isParticipant(sm) || this.gm.isSpectator(sm) || this.gm.getPlayerKitType(sm.getUniqueId()) != KitType.SUPERIOR_MISTRAL) {
+                continue;
+            }
+            if (sm.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null && sm.getHealth() < sm.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue()) {
+                sm.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20, 0, false, true));
+            }
+            sm.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20, 1, false, true));
+        }
         for (HexField field : this.activeHexFields) {
             if (field.center.getWorld() == null) {
                 continue;
@@ -1496,6 +1505,10 @@ public class SkillManager {
             }
             case MISTRAL: {
                 this.mistralSkill(p);
+                break;
+            }
+            case SUPERIOR_MISTRAL: {
+                this.superiorMistralSkill(p);
                 break;
             }
             case FLASHER: {
@@ -2860,6 +2873,63 @@ public class SkillManager {
                     }
                     le.setVelocity(push);
                     le.getWorld().spawnParticle(Particle.SWEEP_ATTACK, le.getLocation().add(0.0, 1.0, 0.0), 1, 0.2, 0.2, 0.2, 0.0);
+                }
+            }
+        }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
+    }
+
+    private void superiorMistralSkill(Player p) {
+        if (this.gm.isFlagCarrier(p.getUniqueId())) {
+            p.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u7a76\u6975\u70c8\u98a8\u7832\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 5000L);
+        final Vector dir = p.getLocation().getDirection().normalize();
+        final Location start = p.getEyeLocation().add(dir.clone().multiply(1.5));
+        final World w = start.getWorld();
+        if (w == null) {
+            return;
+        }
+        p.sendMessage("\u00a76\u00a7l\ud83c\udf2c \u7a76\u6975\u70c8\u98a8\u7832\uff01");
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PHANTOM_SWOOP, 1.0f, 0.5f);
+        new BukkitRunnable(){
+            int ticks = 0;
+            Location cur = start.clone();
+
+            public void run() {
+                if (this.ticks++ > 100) {
+                    this.cancel();
+                    return;
+                }
+                this.cur.add(dir.clone().multiply(0.4));
+                w.spawnParticle(Particle.CLOUD, this.cur, 12, 1.5, 1.5, 1.5, 0.2);
+                w.spawnParticle(Particle.SWEEP_ATTACK, this.cur, 8, 1.5, 1.5, 1.5, 0.1);
+                if (this.ticks % 3 == 0) {
+                    w.playSound(this.cur, Sound.ENTITY_PHANTOM_FLAP, 0.5f, 0.5f);
+                }
+                for (Entity e : w.getNearbyEntities(this.cur, 1.5, 1.5, 1.5)) {
+                    Player tp;
+                    LivingEntity le;
+                    if (e instanceof Projectile) {
+                        Projectile pr = (Projectile)e;
+                        pr.setVelocity(dir.clone().multiply(2.5).add(new Vector(0.0, 0.3, 0.0)));
+                        continue;
+                    }
+                    if (!(e instanceof LivingEntity) || !(le = (LivingEntity)e).isValid() || e instanceof Player && !SkillManager.this.gm.isParticipant(tp = (Player)e)) continue;
+                    Vector push = dir.clone().multiply(1.0).setY(0.35);
+                    if (e instanceof Player && SkillManager.this.gm.isFlagCarrier(((Player)e).getUniqueId())) {
+                        push.setY(0);
+                    }
+                    le.setVelocity(push);
+                    le.getWorld().spawnParticle(Particle.SWEEP_ATTACK, le.getLocation().add(0.0, 1.0, 0.0), 8, 0.5, 0.5, 0.5, 0.1);
+                    if (e instanceof Player) {
+                        Player t = (Player)e;
+                        if (SkillManager.this.gm.getTeamOf(t) != SkillManager.this.gm.getTeamOf(p)) {
+                            t.damage(4.0, (Entity)p);
+                            t.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, false, true));
+                            t.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 40, 0, false, true));
+                        }
+                    }
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 1L);

@@ -153,6 +153,10 @@ public class KitSelectGUI {
         if (kit == null) {
             return;
         }
+        if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
+            p.sendMessage("\u00a7c\u305d\u306e\u30ad\u30c3\u30c8\u306f\u9078\u629e\u3067\u304d\u307e\u305b\u3093\u3002");
+            return;
+        }
         if (this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) {
             p.sendMessage("\u00a7c\u305d\u306e\u30ad\u30c3\u30c8\u306f\u30c1\u30fc\u30e0\u30e1\u30f3\u30d0\u30fc\u304c\u9078\u629e\u6e08\u307f\u3067\u3059\u3002");
             return;
@@ -186,7 +190,9 @@ public class KitSelectGUI {
             p.getInventory().setItem(0, this.navItem("\u00a7e\u00a7l\u25c0 \u524d\u306e\u30da\u30fc\u30b8", "PREV"));
         }
         for (int i = 0; i < 7 && (ki = start + i) < kits.length; ++i) {
-            p.getInventory().setItem(i + 1, this.kitItem(p, kits[ki]));
+            ItemStack kitStack = this.kitItem(p, kits[ki]);
+            if (kitStack == null) continue;
+            p.getInventory().setItem(i + 1, kitStack);
         }
         if (page < maxPage) {
             p.getInventory().setItem(8, this.navItem("\u00a7e\u00a7l\u6b21\u306e\u30da\u30fc\u30b8 \u25b6", "NEXT"));
@@ -262,6 +268,7 @@ public class KitSelectGUI {
             return;
         }
         for (KitType kit : KitType.values()) {
+            if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) continue;
             if (this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) continue;
             this.gm.setPlayerKit(p.getUniqueId(), kit.name());
             this.confirmed.add(p.getUniqueId());
@@ -277,6 +284,9 @@ public class KitSelectGUI {
     }
 
     private ItemStack kitItem(Player p, KitType kit) {
+        if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
+            return null;
+        }
         boolean taken = this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name());
         Material mat = taken ? Material.BARRIER : this.iconMaterial(kit);
         ItemStack item = new ItemStack(mat);
@@ -352,6 +362,7 @@ public class KitSelectGUI {
             case HEXER -> Material.BREWING_STAND;
             case REFLECTOR -> Material.STONE;
             case GLACIES -> Material.PACKED_ICE;
+            case SUPERIOR_MISTRAL -> Material.NETHER_STAR;
             default -> throw new IncompatibleClassChangeError();
         };
     }
