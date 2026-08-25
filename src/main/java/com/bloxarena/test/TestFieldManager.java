@@ -54,6 +54,7 @@ public class TestFieldManager {
     private final Map<UUID, KitType> testKits = new HashMap<UUID, KitType>();
     private final List<Zombie> dummies = new ArrayList<Zombie>();
     private BukkitTask skillUpdateTask = null;
+    private BukkitTask dummyTask = null;
     private Location testSpawn;
     private Location testAreaMin;
     private Location testAreaMax;
@@ -209,6 +210,10 @@ public class TestFieldManager {
     }
 
     private void spawnDummies() {
+        if (this.dummyTask != null) {
+            this.dummyTask.cancel();
+            this.dummyTask = null;
+        }
         this.clearDummies();
         final ArrayList<Location> spawnPoints = new ArrayList<Location>();
         for (int i = 0; i < this.dummyCount; ++i) {
@@ -241,7 +246,7 @@ public class TestFieldManager {
             });
             this.dummies.add(z);
         }
-        new BukkitRunnable(){
+        this.dummyTask = new BukkitRunnable(){
 
             public void run() {
                 if (TestFieldManager.this.testers.isEmpty()) {
@@ -294,6 +299,10 @@ public class TestFieldManager {
     }
 
     private void clearDummies() {
+        if (this.dummyTask != null) {
+            this.dummyTask.cancel();
+            this.dummyTask = null;
+        }
         for (Zombie z : this.dummies) {
             if (!z.isValid()) continue;
             z.remove();
