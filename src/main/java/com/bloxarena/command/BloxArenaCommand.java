@@ -420,7 +420,7 @@ TabCompleter {
                     }
                 }
                 if (bestKit != null) {
-                    sender.sendMessage("\u00a77\u6700\u9ad8\u30de\u30b9\u30bf\u30ea\u30fc: " + sm.getKitMasteryTitle(bestKit, bestLevel));
+                    sender.sendMessage("\u00a77\u6700\u9ad8\u30de\u30b9\u30bf\u30ea\u30fc: " + sm.getMasteryRankLine(bestKit, bestLevel));
                 }
                 sender.sendMessage("\u00a77\u3088\u304f\u4f7f\u3046\u30ad\u30c3\u30c8: " + String.join("  ", parts));
                 break;
@@ -454,7 +454,7 @@ TabCompleter {
                     }
                 }
                 if (bestKit != null) {
-                    sender.sendMessage("\u00a77\u6700\u9ad8\u30ec\u30d9\u30eb\u30ad\u30c3\u30c8: " + sm.getKitMasteryTitle(bestKit, bestLevel));
+                    sender.sendMessage("\u00a77\u6700\u9ad8\u30ec\u30d9\u30eb\u30ad\u30c3\u30c8: " + sm.getMasteryRankLine(bestKit, bestLevel));
                 }
                 List<Map.Entry<String, Integer>> sorted = levels.entrySet().stream().sorted((e1, e2) -> {
                     int c = Integer.compare(e2.getValue(), e1.getValue());
@@ -467,8 +467,41 @@ TabCompleter {
                 int rank = 1;
                 for (Map.Entry<String, Integer> me : sorted) {
                     int count = s.kitCounts.getOrDefault(me.getKey(), 0);
-                    sender.sendMessage("\u00a77#" + rank++ + " " + sm.getKitMasteryTitle(me.getKey(), me.getValue()) + " \u00a77(" + count + "\u56ce)");
+                    sender.sendMessage("\u00a77#" + rank++ + " " + sm.getMasteryRankLine(me.getKey(), me.getValue()) + " \u00a77(" + count + "\u56ce)");
                 }
+                break;
+            }
+            case "title": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    return true;
+                }
+                Player p = (Player)sender;
+                StatsManager sm = this.plugin.getStatsManager();
+                PlayerStats s = sm.getStats(p.getUniqueId());
+                String highest = sm.getHighestMasteryRank(p.getUniqueId());
+                if (highest == null) {
+                    sender.sendMessage("\u00a77\u307e\u3060\u30de\u30b9\u30bf\u30ea\u30fc\u696d\u3092\u53d6\u5f97\u3057\u3066\u3044\u307e\u305b\u3093\u3002");
+                    return true;
+                }
+                Map<String, Integer> levels = sm.getKitMasteryLevels(p.getUniqueId());
+                List<Map.Entry<String, Integer>> sorted = levels.entrySet().stream().sorted((e1, e2) -> {
+                    int c = Integer.compare(e2.getValue(), e1.getValue());
+                    if (c != 0) {
+                        return c;
+                    }
+                    return Integer.compare(s.kitCounts.getOrDefault(e2.getKey(), 0), s.kitCounts.getOrDefault(e1.getKey(), 0));
+                }).limit(3L).collect(Collectors.toList());
+                sender.sendMessage("\u00a76\u00a7l=== \u79f0\u53f7 ===");
+                sender.sendMessage("\u00a77\u6700\u9ad8\u79f0\u53f7: \u00a7e" + highest);
+                sender.sendMessage("\u00a76\u00a7l=== Top 3 \u30de\u30b9\u30bf\u30ea\u30fc\u30ad\u30c3\u30c8 ===");
+                int rank = 1;
+                for (Map.Entry<String, Integer> me : sorted) {
+                    int count = s.kitCounts.getOrDefault(me.getKey(), 0);
+                    sender.sendMessage("\u00a77#" + rank++ + " " + sm.getMasteryRankLine(me.getKey(), me.getValue()) + " \u00a77(" + count + "\u56ce)");
+                }
+                boolean enabled = sm.toggleTitle(p.getUniqueId());
+                sender.sendMessage(enabled ? "\u00a7a\u79f0\u53f7\u8868\u793a: ON" : "\u00a7c\u79f0\u53f7\u8868\u793a: OFF");
                 break;
             }
             case "top": {
@@ -1140,6 +1173,7 @@ TabCompleter {
         s.sendMessage("\u00a7e/ba bot clear \u00a77- BOT\u3092\u3059\u3079\u3066\u524a\u9664");
         s.sendMessage("\u00a7e/ba stats [player] \u00a77- \u7d71\u8a08\u3092\u8868\u793a");
         s.sendMessage("\u00a7e/ba mastery [player] \u00a77- \u30de\u30b9\u30bf\u30ea\u30fc\u6982\u8981\u3092\u8868\u793a");
+        s.sendMessage("\u00a7e/ba title \u00a77- \u79f0\u53f7\u3092\u8868\u793a/\u5207\u308a\u66ff\u3048");
         s.sendMessage("\u00a7e/ba top [kills|wins|kd|damage|kits] \u00a77- \u30e9\u30f3\u30ad\u30f3\u30b0\u8868\u793a");
         s.sendMessage("\u00a7e/ba continuous <on|off> \u00a77- \u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9\u5207\u308a\u66ff\u3048");
         s.sendMessage("\u00a7e/ba setmapname <mapId> <\u540d\u524d> \u00a77- \u30de\u30c3\u30d7\u306e\u8868\u793a\u540d\u3092\u8a2d\u5b9a");
@@ -1157,7 +1191,7 @@ TabCompleter {
 
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("start", "stop", "wand", "setwaitingarea", "setlobby", "addmap", "info", "setspawnzone", "setcenter", "setmaplobby", "setmap", "setmapname", "kitedit", "kits", "bot", "stats", "mastery", "top", "continuous", "setgate", "gatematl", "setoob", "spectate", "reload", "status", "admin", "upgrade", "convert", "test", "debug", "tutorial", "oob", "bgm", "vote", "version");
+            return Arrays.asList("start", "stop", "wand", "setwaitingarea", "setlobby", "addmap", "info", "setspawnzone", "setcenter", "setmaplobby", "setmap", "setmapname", "kitedit", "kits", "bot", "stats", "mastery", "title", "top", "continuous", "setgate", "gatematl", "setoob", "spectate", "reload", "status", "admin", "upgrade", "convert", "test", "debug", "tutorial", "oob", "bgm", "vote", "version");
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase()) {

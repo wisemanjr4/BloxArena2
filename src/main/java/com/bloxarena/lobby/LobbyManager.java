@@ -39,6 +39,8 @@ import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
@@ -49,6 +51,9 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -73,9 +78,11 @@ public class LobbyManager {
     private List<Object[]> voteOptions = new ArrayList<Object[]>();
     private BukkitTask voteTask = null;
     private List<UUID> voteParticipants = new ArrayList<UUID>();
+    private final NamespacedKey VOTE_KEY;
 
     public LobbyManager(BloxArenaPlugin plugin) {
         this.plugin = plugin;
+        this.VOTE_KEY = new NamespacedKey((Plugin)plugin, "vote_choice");
         this.reload();
     }
 
@@ -286,26 +293,32 @@ public class LobbyManager {
         for (UUID uid : participants) {
             Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            p.sendMessage("\u00a76\u00a7l[\u6295\u7968] \u00a77\u30de\u30c3\u30d7/\u30e2\u30fc\u30c9\u3092\u9078\u3093\u3067\u306d\uff01 \u00a78(/ba vote <1|2|3>)");
+            p.sendMessage("\u00a76\u00a7l[\u6295\u7968] \u00a77\u30db\u30c3\u30c8\u30d0\u30fc\u306e\u7f8a\u6bdb\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u6295\u7968\uff01");
             for (int i = 0; i < this.voteOptions.size(); ++i) {
                 Object[] opt = this.voteOptions.get(i);
                 MapConfig mc = (MapConfig)opt[0];
                 GameMode gm = (GameMode)opt[1];
                 p.sendMessage("\u00a7e" + (i + 1) + ". \u00a7f" + mc.getDisplayName() + " \u00a77- " + gm.getDisplayName());
             }
+            this.giveVoteItems(p);
         }
-        this.broadcastWaiting("\u00a7e20\u79d2\u3067\u7d50\u679c\u767a\u8868\uff01 \u00a77\u6295\u7968\u3057\u306a\u3044\u5834\u5408\u306f\u30e9\u30f3\u30c0\u30e0\u306b\u306a\u308a\u307e\u3059\u3002");
+        this.broadcastWaiting("\u00a7e15\u79d2\u3067\u7d50\u679c\u767a\u8868\uff01 \u00a77\u6295\u7968\u3057\u306a\u3044\u5834\u5408\u306f\u30e9\u30f3\u30c0\u30e0\u306b\u306a\u308a\u307e\u3059\u3002");
         this.voteTask = new BukkitRunnable(){
             public void run() {
                 LobbyManager.this.finishVoting();
             }
-        }.runTaskLater((Plugin)this.plugin, 400L);
+        }.runTaskLater((Plugin)this.plugin, 300L);
     }
 
     private void finishVoting() {
         this.voteTask = null;
         if (this.voteParticipants.isEmpty()) {
             return;
+        }
+        for (UUID uid : this.voteParticipants) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            this.clearVoteItems(p);
         }
         int[] counts = new int[this.voteOptions.size()];
         for (Integer choice : this.pendingVotes.values()) {
@@ -327,9 +340,12 @@ public class LobbyManager {
             }
         }
         Object[] chosen;
-        if (best < 0 || bestCount == 0 || tie) {
+        if (bestCount == 0) {
             chosen = this.voteOptions.get(new Random().nextInt(this.voteOptions.size()));
-            this.broadcastWaiting("\u00a7e\u6295\u7968\u4e0d\u8db3\u307e\u305f\u306f\u5f15\u304d\u5206\u3051\u306e\u305f\u3081\u3001\u30e9\u30f3\u30c0\u30e0\u3067\u6c7a\u5b9a\u3057\u307e\u3057\u305f\u3002");
+            this.broadcastWaiting("\u00a7e\u6295\u7968\u306a\u3057\uff08\u7121\u7968\uff09\u306e\u305f\u3081\u3001\u30e9\u30f3\u30c0\u30e0\u3067\u6c7a\u5b9a\u3057\u307e\u3057\u305f\u3002");
+        } else if (best < 0 || tie) {
+            chosen = this.voteOptions.get(new Random().nextInt(this.voteOptions.size()));
+            this.broadcastWaiting("\u00a7e\u5f15\u304d\u5206\u3051\u306e\u305f\u3081\u3001\u30e9\u30f3\u30c0\u30e0\u3067\u6c7a\u5b9a\u3057\u307e\u3057\u305f\u3002");
         } else {
             chosen = this.voteOptions.get(best);
             this.broadcastWaiting("\u00a7a\u6295\u7968\u7d50\u679c: \u9078\u629e\u3055\u308c\u305f\u306e\u306f \u00a7e" + (best + 1) + "\u756a\u76ee \u00a7a\u3067\u3059\uff01");
@@ -352,6 +368,11 @@ public class LobbyManager {
             this.voteTask.cancel();
             this.voteTask = null;
         }
+        for (UUID uid : this.voteParticipants) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            this.clearVoteItems(p);
+        }
         this.pendingVotes.clear();
         this.voteParticipants.clear();
         this.voteOptions.clear();
@@ -370,8 +391,67 @@ public class LobbyManager {
             return false;
         }
         this.pendingVotes.put(p.getUniqueId(), choice);
+        this.clearVoteItems(p);
         p.sendMessage("\u00a7a\u6295\u7968\u3057\u307e\u3057\u305f: \u00a7e" + choice + "\u756a\u76ee");
         return true;
+    }
+
+    private void giveVoteItems(Player p) {
+        int max = Math.min(this.voteOptions.size(), 3);
+        for (int slot = 0; slot < max; ++slot) {
+            Object[] opt = this.voteOptions.get(slot);
+            MapConfig mc = (MapConfig)opt[0];
+            GameMode gm = (GameMode)opt[1];
+            p.getInventory().setItem(slot, this.voteItem(slot + 1, mc.getDisplayName(), gm.getDisplayName()));
+        }
+    }
+
+    private ItemStack voteItem(int choice, String mapName, String modeName) {
+        Material mat;
+        String color;
+        if (choice == 1) {
+            mat = Material.RED_WOOL;
+            color = "\u00a7c";
+        } else if (choice == 2) {
+            mat = Material.BLUE_WOOL;
+            color = "\u00a79";
+        } else {
+            mat = Material.GREEN_WOOL;
+            color = "\u00a7a";
+        }
+        ItemStack item = new ItemStack(mat);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(color + "\u00a7l\u6295\u7968: " + choice + "\u756a\u76ee");
+            meta.setLore(java.util.List.of("\u00a77" + mapName + " \u00a7f- " + modeName, "\u00a78\u30af\u30ea\u30c3\u30af\u3067\u6295\u7968"));
+            meta.getPersistentDataContainer().set(this.VOTE_KEY, PersistentDataType.BYTE, (byte)choice);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    public void clearVoteItems(Player p) {
+        for (int slot = 0; slot < 3; ++slot) {
+            ItemStack it = p.getInventory().getItem(slot);
+            if (it != null && it.hasItemMeta() && it.getItemMeta().getPersistentDataContainer().has(this.VOTE_KEY, PersistentDataType.BYTE)) {
+                p.getInventory().setItem(slot, null);
+            }
+        }
+    }
+
+    public boolean isVoteItem(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return false;
+        }
+        return item.getItemMeta().getPersistentDataContainer().has(this.VOTE_KEY, PersistentDataType.BYTE);
+    }
+
+    public int getVoteChoice(ItemStack item) {
+        if (!this.isVoteItem(item)) {
+            return -1;
+        }
+        Byte val = item.getItemMeta().getPersistentDataContainer().get(this.VOTE_KEY, PersistentDataType.BYTE);
+        return val == null ? -1 : val.intValue();
     }
 
     public Location getLobbyOobMin() {

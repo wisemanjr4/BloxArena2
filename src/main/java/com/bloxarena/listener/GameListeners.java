@@ -96,6 +96,7 @@ import org.bukkit.entity.Allay;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.GlowItemFrame;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.ItemFrame;
@@ -369,6 +370,17 @@ implements Listener {
             e.setCancelled(true);
             return;
         }
+        if (this.gm.getState() == GameState.WAITING && e.getWhoClicked() instanceof Player) {
+            ItemStack clicked = e.getCurrentItem();
+            if (clicked != null && this.lm.isVoteItem(clicked)) {
+                e.setCancelled(true);
+                int choice = this.lm.getVoteChoice(clicked);
+                if (choice > 0) {
+                    this.lm.castVote((Player)e.getWhoClicked(), choice);
+                }
+                return;
+            }
+        }
         String title = e.getView().getTitle();
         if (title.equals("\u00a76\u00a7lKit Editor \u00a77- \u30ad\u30c3\u30c8\u4e00\u89a7") || title.startsWith("\u00a76\u00a7lEdit: \u00a7e")) {
             this.plugin.getKitEditorGUI().handleClick(e);
@@ -380,6 +392,9 @@ implements Listener {
     @EventHandler
     public void onDropItem(PlayerDropItemEvent e) {
         if ((this.gm.getState() == GameState.KIT_SELECT || this.gm.getState() == GameState.IN_GAME) && this.gm.isParticipant(e.getPlayer())) {
+            e.setCancelled(true);
+        }
+        if (this.gm.getState() == GameState.WAITING && this.lm.isVoteItem(e.getItemDrop().getItemStack())) {
             e.setCancelled(true);
         }
     }
@@ -444,6 +459,14 @@ implements Listener {
             this.plugin.getKitInfoGUI().openList(p);
             return;
         }
+        if (this.gm.getState() == GameState.WAITING && this.lm.isVoteItem(p.getInventory().getItemInMainHand())) {
+            e.setCancelled(true);
+            int choice = this.lm.getVoteChoice(p.getInventory().getItemInMainHand());
+            if (choice > 0) {
+                this.lm.castVote(p, choice);
+            }
+            return;
+        }
         if (this.gm.getState() == GameState.KIT_SELECT) {
             if (!this.gm.isParticipant(p)) {
                 return;
@@ -488,6 +511,10 @@ implements Listener {
     public void onDamageByEntity(EntityDamageByEntityEvent e) {
         Player attacker;
         Entity entity;
+        if (e.getDamager() instanceof Firework) {
+            e.setCancelled(true);
+            return;
+        }
         Arrow arrow;
         Entity entity2;
         Player damager;
@@ -699,12 +726,14 @@ implements Listener {
         if (this.gm.getState() == GameState.IN_GAME && this.gm.isParticipant(sender)) {
             String msg = e.getMessage();
             TeamColor team = this.gm.getTeamOf(sender);
+            String titleTag = this.plugin.getStatsManager().isTitleEnabled(sender.getUniqueId()) ? this.plugin.getStatsManager().getTitleTag(sender.getUniqueId()) : null;
+            String nameWithTitle = titleTag != null ? titleTag + " " + sender.getName() : sender.getName();
             if (msg.startsWith(".")) {
                 e.setMessage(msg.substring(1).trim());
-                e.setFormat("\u00a77[\u5168\u4f53] \u00a7f" + sender.getName() + "\u00a77: \u00a7f%2$s");
+                e.setFormat("\u00a77[\u5168\u4f53] \u00a7f" + nameWithTitle + "\u00a77: \u00a7f%2$s");
             } else {
                 String prefix = team != null ? team.getColorCode() + "[" + team.getDisplayName() + "] \u00a7f" : "\u00a77";
-                e.setFormat(prefix + sender.getName() + "\u00a77: \u00a7f%2$s");
+                e.setFormat(prefix + nameWithTitle + "\u00a77: \u00a7f%2$s");
                 e.getRecipients().removeIf(r -> {
                     TeamColor rTeam = this.gm.getTeamOf((Player)r);
                     return rTeam != team && !this.gm.isSpectator((Player)r) && !r.equals((Object)sender);

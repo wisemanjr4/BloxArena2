@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 public class StatsManager {
     private final BloxArenaPlugin plugin;
@@ -33,6 +34,8 @@ public class StatsManager {
     private final Map<UUID, PlayerStats> cache = new HashMap<UUID, PlayerStats>();
     private final Map<UUID, Map<String, Integer>> playerKitUsage = new HashMap<UUID, Map<String, Integer>>();
     private final Set<UUID> debugPlayers = new HashSet<UUID>();
+    private final Set<String> announcedMastery = new HashSet<String>();
+    private final Set<UUID> titleEnabled = new HashSet<UUID>();
     private static final int[] MASTERY_THRESHOLDS = new int[]{1, 5, 15, 30, 50, 75, 100, 150, 200, 300};
 
     public StatsManager(BloxArenaPlugin plugin) {
@@ -132,6 +135,13 @@ public class StatsManager {
         }
         this.get((UUID)uuid).kitCounts.merge(kitName, 1, Integer::sum);
         this.playerKitUsage.computeIfAbsent(uuid, k -> new HashMap<String, Integer>()).merge(kitName, 1, Integer::sum);
+        int level = this.getKitMasteryLevel(uuid, kitName);
+        String announceKey = uuid + ":" + kitName + ":" + level;
+        if (level >= 1 && this.announcedMastery.add(announceKey)) {
+            Player p = Bukkit.getPlayer((UUID)uuid);
+            String playerName = p != null ? p.getName() : this.getName(uuid);
+            Bukkit.broadcastMessage("\u00a76\u00a7l[\u30de\u30b9\u30bf\u30ea\u30fc] \u00a7e" + playerName + " \u00a7f\u304c \u00a7b" + kitName + " \u00a7f\u3092 \u00a7c" + this.getKitMasteryRankName(level) + " \u00a7f\u307e\u3067\u6975\u3081\u307e\u3057\u305f\uff01");
+        }
     }
 
     public PlayerStats getStats(UUID uuid) {
@@ -173,6 +183,78 @@ public class StatsManager {
 
     public String getKitMasteryTitle(String kitName, int level) {
         return this.getKitMasteryColor(level) + kitName + " \u00a77[Lv." + level + "]";
+    }
+
+    public String getKitMasteryRankName(int level) {
+        return switch (level) {
+            case 1 -> "\u898b\u7fd2\u3044";
+            case 2 -> "\u521d\u7d1a\u8005";
+            case 3 -> "\u99c6\u3051\u51fa\u3057";
+            case 4 -> "\u719f\u7df4";
+            case 5 -> "\u7cbe\u92ed";
+            case 6 -> "\u9054\u4eba";
+            case 7 -> "\u540d\u4eba";
+            case 8 -> "\u9054\u4eba";
+            case 9 -> "\u731b\u8005";
+            case 10 -> "\u4f1d\u8aac";
+            default -> "\u65b0\u4eba";
+        };
+    }
+
+    public String getMasteryRankLine(String kitName, int level) {
+        if (level < 1) {
+            return "\u00a7e" + kitName + " \u00a77Lv.0";
+        }
+        return this.getKitMasteryColor(level) + kitName + " \u00a77Lv." + level + " " + this.getKitMasteryColor(level) + this.getKitMasteryRankName(level);
+    }
+
+    public String getHighestMasteryRank(UUID player) {
+        Map<String, Integer> levels = this.getKitMasteryLevels(player);
+        String bestKit = null;
+        int bestLevel = 0;
+        for (Map.Entry<String, Integer> me : levels.entrySet()) {
+            if (me.getValue() > bestLevel) {
+                bestLevel = me.getValue();
+                bestKit = me.getKey();
+            }
+        }
+        if (bestKit == null) {
+            return null;
+        }
+        return bestKit + " " + this.getKitMasteryRankName(bestLevel) + " \u00a77Lv." + bestLevel;
+    }
+
+    public boolean toggleTitle(UUID uuid) {
+        if (this.titleEnabled.contains(uuid)) {
+            this.titleEnabled.remove(uuid);
+            return false;
+        }
+        this.titleEnabled.add(uuid);
+        return true;
+    }
+
+    public boolean isTitleEnabled(UUID uuid) {
+        return this.titleEnabled.contains(uuid);
+    }
+
+    public String getTitleTag(UUID uuid) {
+        String highest = this.getHighestMasteryRank(uuid);
+        if (highest == null) {
+            return null;
+        }
+        Map<String, Integer> levels = this.getKitMasteryLevels(uuid);
+        String bestKit = null;
+        int bestLevel = 0;
+        for (Map.Entry<String, Integer> me : levels.entrySet()) {
+            if (me.getValue() > bestLevel) {
+                bestLevel = me.getValue();
+                bestKit = me.getKey();
+            }
+        }
+        if (bestKit == null) {
+            return null;
+        }
+        return "\u00a7f[\u00a7b" + this.getKitMasteryRankName(bestLevel) + "\u00a7f]";
     }
 
     public String getKitMasteryColor(int level) {

@@ -91,7 +91,14 @@ public class KitSelectGUI {
             for (UUID uid : this.allPlayers) {
                 Player p;
                 if (this.confirmed.contains(uid) || (p = Bukkit.getPlayer((UUID)uid)) == null) continue;
-                p.sendActionBar((Component)Component.text((String)("\u00a7e\u30ad\u30c3\u30c8\u9078\u629e \u6b8b\u308a \u00a7c" + remaining[0] + "\u00a7e \u79d2")));
+                KitType heldKit = this.getHeldKit(p);
+                String title = heldKit != null ? "\u00a7e" + heldKit.getName() : "\u00a7e\u30ad\u30c3\u30c8\u3092\u9078\u629e";
+                p.sendTitle(title, "\u00a7e\u6b8b\u308a \u00a7c" + remaining[0] + "\u00a7e \u79d2", 0, 20, 0);
+                if (heldKit != null) {
+                    p.sendActionBar((Component)Component.text((String)("\u00a77" + heldKit.getDescription() + " \u00a7f" + heldKit.getLore())));
+                } else {
+                    p.sendActionBar((Component)Component.text((String)"\u00a77\u30db\u30c3\u30c8\u30d0\u30fc\u306e\u30ad\u30c3\u30c8\u3092\u6301\u3063\u3066\u78ba\u8a8d"));
+                }
             }
             remaining[0] = remaining[0] - 1;
         }, 0L, 20L);
@@ -296,7 +303,8 @@ public class KitSelectGUI {
         }
         meta.setDisplayName((String)(taken ? "\u00a7c\u00a7m" + kit.getName() + " \u00a7c(\u9078\u629e\u6e08\u307f)" : kit.getDisplayName()));
         int mastery = this.plugin.getStatsManager().getKitMasteryLevel(p.getUniqueId(), kit.name());
-        meta.setLore(Arrays.asList("\u00a77" + kit.getDescription(), "\u00a7f" + kit.getLore(), "\u00a77\u30de\u30b9\u30bf\u30ea\u30fcLv." + mastery, taken ? "\u00a7c\u9078\u629e\u4e0d\u53ef" : "\u00a7a\u25ba \u53f3\u30af\u30ea\u30c3\u30af\u3067\u9078\u629e"));
+        String rankName = this.plugin.getStatsManager().getKitMasteryRankName(mastery);
+        meta.setLore(Arrays.asList("\u00a77" + kit.getDescription(), "\u00a7f" + kit.getLore(), "\u00a77\u30de\u30b9\u30bf\u30ea\u30fcLv." + mastery + " \u00a7e" + rankName, taken ? "\u00a7c\u9078\u629e\u4e0d\u53ef" : "\u00a7a\u25ba \u53f3\u30af\u30ea\u30c3\u30af\u3067\u9078\u629e"));
         if (!taken) {
             meta.getPersistentDataContainer().set(this.KIT_KEY, PersistentDataType.STRING, kit.name());
         }
@@ -381,6 +389,18 @@ public class KitSelectGUI {
             }
             return null;
         }
+    }
+
+    private KitType getHeldKit(Player p) {
+        ItemStack held = p.getInventory().getItemInMainHand();
+        if (held == null || held.getType() == Material.AIR || !held.hasItemMeta()) {
+            return null;
+        }
+        String kitName = held.getItemMeta().getPersistentDataContainer().get(this.KIT_KEY, PersistentDataType.STRING);
+        if (kitName == null) {
+            return null;
+        }
+        return this.findKit(kitName);
     }
 }
 

@@ -3619,7 +3619,7 @@ public class SkillManager {
         this.setCooldown(p.getUniqueId(), 22000L);
         long endTime = System.currentTimeMillis() + 8000L;
         this.activeBonds.put(ally.getUniqueId(), new Bond(p.getUniqueId(), endTime));
-        p.sendMessage("\u00a7f\u00a7l\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9\uff01 \u00a77" + ally.getName() + " \u306e\u53d7\u3051\u305f\u30c0\u30e1\u30fc\u30b8\u306e50%\u3092\u4ee3\u66ff\u306b\u53d7\u3051\u307e\u3059\uff088\u79d2\u9593\uff09");
+        p.sendMessage("\u00a7f\u00a7l\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9\uff01 \u00a77" + ally.getName() + " \u306e\u53d7\u3051\u305f\u30c0\u30e1\u30fc\u30b8\u306e50%\u3092\u80a9\u4ee3\u308f\u308a\u3057\u307e\u3059\uff088\u79d2\u9593\uff09");
         ally.sendMessage("\u00a7f" + p.getName() + " \u304c\u3042\u306a\u305f\u306b\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9\u3092\u7d50\u3093\u3067\u3044\u307e\u3059\uff088\u79d2\u9593\uff09");
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.5f);
     }
