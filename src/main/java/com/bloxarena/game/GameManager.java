@@ -345,17 +345,15 @@ public class GameManager {
                     --GameManager.this.ffaTimeLimit;
                     if (GameManager.this.ffaTimeLimit <= 0) {
                         this.cancel();
-                        UUID topKiller = null;
-                        int topKills = -1;
-                        for (Map.Entry<UUID, Integer> entry : GameManager.this.ffaKills.entrySet()) {
-                            if (entry.getValue() <= topKills) continue;
-                            topKills = entry.getValue();
-                            topKiller = entry.getKey();
-                        }
                         GameManager.this.state = GameState.ENDING;
+                        UUID topKiller = GameManager.this.determineFFAWinner();
                         Player winner = topKiller != null ? Bukkit.getPlayer(topKiller) : null;
                         String winName = winner != null ? winner.getName() : "\u306a\u3057";
-                        Bukkit.broadcastMessage((String)("\u00a7e\u00a7l\u23f1 \u5236\u9650\u6642\u9593\u7d42\u4e86\uff01 \u00a7f" + winName + " \u00a7e\u304c\u6700\u591a\u30ad\u30eb\u3067\u52dd\u5229\uff01"));
+                        if (topKiller != null) {
+                            Bukkit.broadcastMessage((String)("\u00a7e\u00a7l\u23f1 \u5236\u9650\u6642\u9593\u7d42\u4e86\uff01 \u00a7f" + winName + " \u00a7e\u304c\u6700\u591a\u30ad\u30eb\u3067\u52dd\u5229\uff01"));
+                        } else {
+                            Bukkit.broadcastMessage((String)"\u00a7e\u00a7l\u23f1 \u5236\u9650\u6642\u9593\u7d42\u4e86\uff01 \u00a7e\u5f15\u304d\u5206\u3051\uff01");
+                        }
                         GameManager.this.endGame(null, WinCondition.ELIMINATION);
                     }
                 }
@@ -1103,23 +1101,41 @@ public class GameManager {
         }
     }
 
+    private UUID determineFFAWinner() {
+        UUID topKiller = null;
+        int topKills = -1;
+        for (Map.Entry<UUID, Integer> entry : this.ffaKills.entrySet()) {
+            if (entry.getValue() <= topKills) continue;
+            topKills = entry.getValue();
+            topKiller = entry.getKey();
+        }
+        if (topKiller != null && topKills > 0) {
+            boolean tie = false;
+            for (Map.Entry<UUID, Integer> entry : this.ffaKills.entrySet()) {
+                if (entry.getKey().equals(topKiller)) continue;
+                if (entry.getValue() != topKills) continue;
+                tie = true;
+                break;
+            }
+            if (!tie) {
+                return topKiller;
+            }
+        }
+        UUID survivor = null;
+        for (UUID uid : this.ffaParticipants) {
+            if (this.ffaEliminated.contains(uid)) continue;
+            if (survivor != null) {
+                return null;
+            }
+            survivor = uid;
+        }
+        return survivor;
+    }
+
     private void endMatch(TeamColor winner, WinCondition condition) {
         StatsManager sm = this.plugin.getStatsManager();
         if (this.currentGameMode == GameMode.FFA) {
-            UUID winnerUid = null;
-            int topKills = -1;
-            for (Map.Entry<UUID, Integer> entry : this.ffaKills.entrySet()) {
-                if (entry.getValue() <= topKills) continue;
-                topKills = entry.getValue();
-                winnerUid = entry.getKey();
-            }
-            if (winnerUid == null) {
-                for (UUID uid : this.ffaParticipants) {
-                    if (this.ffaEliminated.contains(uid)) continue;
-                    winnerUid = uid;
-                    break;
-                }
-            }
+            UUID winnerUid = this.determineFFAWinner();
             if (winnerUid != null) {
                 sm.addWin(winnerUid);
             }
@@ -1128,8 +1144,8 @@ public class GameManager {
                 sm.addLoss(uid);
             }
             sm.save();
-            this.showMatchReport(null);
-            Effects.playVictoryEffect(null, condition, this.getAllParticipantsAndSpectators(), Collections.emptyList(), Collections.emptyList(), this.currentMap, this.kills, this.deaths, this.plugin);
+            this.showMatchReport(null, winnerUid);
+            Effects.playVictoryEffect(null, condition, this.getAllParticipantsAndSpectators(), Collections.emptyList(), Collections.emptyList(), this.currentMap, this.kills, this.deaths, this.plugin, winnerUid);
             if (this.ffaTimerTask != null) {
                 this.ffaTimerTask.cancel();
                 this.ffaTimerTask = null;
@@ -1147,8 +1163,8 @@ public class GameManager {
                 }
             }
             sm.save();
-            this.showMatchReport(winner);
-            Effects.playVictoryEffect(winner, condition, this.getAllParticipantsAndSpectators(), this.redTeam, this.blueTeam, this.currentMap, this.kills, this.deaths, this.plugin);
+            this.showMatchReport(winner, null);
+            Effects.playVictoryEffect(winner, condition, this.getAllParticipantsAndSpectators(), this.redTeam, this.blueTeam, this.currentMap, this.kills, this.deaths, this.plugin, null);
         }
         if (this.selectedBgm != null) {
             this.selectedBgm.stop();
@@ -1164,10 +1180,16 @@ public class GameManager {
         }.runTaskLater((Plugin)this.plugin, 100L);
     }
 
-    private void showMatchReport(TeamColor winner) {
+    private void showMatchReport(TeamColor winner, UUID ffaWinnerUid) {
         List<UUID> all = this.getAllParticipantsAndSpectators();
         String header = "\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501";
-        String winStr = winner != null ? winner.getColorCode() + winner.getDisplayName() + "\u30c1\u30fc\u30e0\u52dd\u5229\uff01" : "\u5f15\u304d\u5206\u3051";
+        String winStr;
+        if (ffaWinnerUid != null) {
+            String ffaName = Bukkit.getOfflinePlayer((UUID)ffaWinnerUid).getName();
+            winStr = "\u00a7e" + (ffaName != null ? ffaName : "???") + "\u00a7a\u304c\u52dd\u5229\uff01";
+        } else {
+            winStr = winner != null ? winner.getColorCode() + winner.getDisplayName() + "\u30c1\u30fc\u30e0\u52dd\u5229\uff01" : "\u5f15\u304d\u5206\u3051";
+        }
         UUID mvpUid = this.matchStats.getMVP();
         UUID mostDmgUid = this.matchStats.getMostDamage();
         String mvpName = mvpUid != null ? Bukkit.getOfflinePlayer((UUID)mvpUid).getName() : "\u306a\u3057";

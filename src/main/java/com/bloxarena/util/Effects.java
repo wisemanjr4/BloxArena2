@@ -22,6 +22,8 @@ import com.bloxarena.BloxArenaPlugin;
 import com.bloxarena.game.TeamColor;
 import com.bloxarena.game.WinCondition;
 import com.bloxarena.map.MapConfig;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -72,13 +74,31 @@ public class Effects {
         return new Location(min.getWorld(), (min.getX() + max.getX()) / 2.0, (min.getY() + max.getY()) / 2.0, (min.getZ() + max.getZ()) / 2.0);
     }
 
-    public static void playVictoryEffect(final TeamColor winner, WinCondition condition, final List<UUID> allUids, List<UUID> redTeam, List<UUID> blueTeam, MapConfig map, Map<UUID, Integer> kills, Map<UUID, Integer> deaths, BloxArenaPlugin plugin) {
+    public static void playVictoryEffect(final TeamColor winner, WinCondition condition, final List<UUID> allUids, List<UUID> redTeam, List<UUID> blueTeam, MapConfig map, Map<UUID, Integer> kills, Map<UUID, Integer> deaths, BloxArenaPlugin plugin, final UUID ffaWinner) {
         Player p;
         final String conditionStr = condition == WinCondition.ELIMINATION ? "\u6bb2\u6ec5" : "\u30aa\u30d6\u30b8\u30a7\u30af\u30c8";
-        final List<UUID> winTeam = winner == TeamColor.RED ? redTeam : blueTeam;
-        final List<UUID> loseTeam = winner == TeamColor.RED ? blueTeam : redTeam;
-        final Color winColor = winner == TeamColor.RED ? Color.RED : Color.AQUA;
-        final Color winColor2 = winner == TeamColor.RED ? Color.ORANGE : Color.BLUE;
+        final String winnerName = ffaWinner != null ? Bukkit.getOfflinePlayer((UUID)ffaWinner).getName() : null;
+        final List<UUID> winTeam;
+        final List<UUID> loseTeam;
+        final Color winColor;
+        final Color winColor2;
+        if (winner != null) {
+            winTeam = winner == TeamColor.RED ? redTeam : blueTeam;
+            loseTeam = winner == TeamColor.RED ? blueTeam : redTeam;
+            winColor = winner == TeamColor.RED ? Color.RED : Color.AQUA;
+            winColor2 = winner == TeamColor.RED ? Color.ORANGE : Color.BLUE;
+        } else if (ffaWinner != null) {
+            winTeam = Collections.singletonList(ffaWinner);
+            loseTeam = new ArrayList<UUID>(allUids);
+            loseTeam.remove(ffaWinner);
+            winColor = Color.YELLOW;
+            winColor2 = Color.ORANGE;
+        } else {
+            winTeam = Collections.emptyList();
+            loseTeam = new ArrayList<UUID>(allUids);
+            winColor = Color.WHITE;
+            winColor2 = Color.WHITE;
+        }
         final World world = map != null ? Bukkit.getWorld((String)map.getWorld()) : null;
         final Location center = map != null && map.getCenter() != null ? map.getCenter().clone().add(0.0, 5.0, 0.0) : null;
         for (UUID uid : allUids) {
@@ -94,19 +114,21 @@ public class Effects {
                     boolean isWinner;
                     Player p = Bukkit.getPlayer((UUID)uid);
                     if (p == null) continue;
-                    boolean bl = isWinner = winner != null && winTeam.contains(uid);
-                    if (winner == null) {
+                    boolean bl = isWinner = ffaWinner != null ? uid.equals(ffaWinner) : winner != null && winTeam.contains(uid);
+                    if (winner == null && ffaWinner == null) {
                         p.sendTitle("\u00a77\u00a7l\u5f15\u304d\u5206\u3051", "\u00a77\u4e21\u30c1\u30fc\u30e0\u8131\u843d", 5, 60, 15);
                         p.playSound(p.getLocation(), Sound.ENTITY_CREEPER_DEATH, 1.0f, 0.8f);
                         continue;
                     }
                     if (isWinner) {
-                        p.sendTitle(winner.getColorCode() + "\u00a7l\u2605 \u52dd\u5229 \u2605", "\u00a7e" + conditionStr + "\u3067\u52dd\u5229\uff01", 5, 70, 15);
+                        String title = ffaWinner != null ? "\u00a76\u00a7l\u2605 \u52dd\u5229 \u2605" : winner.getColorCode() + "\u00a7l\u2605 \u52dd\u5229 \u2605";
+                        p.sendTitle(title, "\u00a7e" + conditionStr + "\u3067\u52dd\u5229\uff01", 5, 70, 15);
                         p.playSound(p.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.6f, 1.2f);
                         p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
                         continue;
                     }
-                    p.sendTitle("\u00a78\u00a7l\u6557\u5317\u2026", winner.getColorCode() + winner.getDisplayName() + " \u00a78\u30c1\u30fc\u30e0\u306e\u52dd\u5229", 5, 70, 15);
+                    String loseTitle = ffaWinner != null ? "\u00a7e" + (winnerName != null ? winnerName : "???") + " \u00a78\u306e\u52dd\u5229" : winner.getColorCode() + winner.getDisplayName() + " \u00a78\u30c1\u30fc\u30e0\u306e\u52dd\u5229";
+                    p.sendTitle("\u00a78\u00a7l\u6557\u5317\u2026", loseTitle, 5, 70, 15);
                     p.playSound(p.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.4f, 0.7f);
                     p.playSound(p.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1.0f, 0.6f);
                 }
@@ -116,7 +138,7 @@ public class Effects {
                 }
             }
         }.runTaskLater((Plugin)plugin, 20L);
-        if (winner != null && world != null && center != null) {
+        if ((winner != null || ffaWinner != null) && world != null && center != null) {
             final FireworkEffect.Type[] types = new FireworkEffect.Type[]{FireworkEffect.Type.BALL_LARGE, FireworkEffect.Type.STAR, FireworkEffect.Type.BURST, FireworkEffect.Type.BALL};
             final Random rng = new Random();
             new BukkitRunnable(){
@@ -187,8 +209,23 @@ public class Effects {
         StringBuilder result = new StringBuilder();
         String sep = "\u00a78\u00a7m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550";
         result.append(sep).append("\n");
-        result.append((String)(winner != null ? winner.getColorCode() + "\u00a7l\u2605 " + winner.getDisplayName() + " \u30c1\u30fc\u30e0 " + conditionStr + "\u52dd\u5229\uff01 \u2605\n" : "\u00a77\u00a7l\u5f15\u304d\u5206\u3051\n"));
+        if (ffaWinner != null) {
+            result.append("\u00a76\u00a7l\u2605 " + (winnerName != null ? winnerName : "???") + " " + conditionStr + "\u52dd\u5229\uff01 \u2605\n");
+        } else {
+            result.append((String)(winner != null ? winner.getColorCode() + "\u00a7l\u2605 " + winner.getDisplayName() + " \u30c1\u30fc\u30e0 " + conditionStr + "\u52dd\u5229\uff01 \u2605\n" : "\u00a77\u00a7l\u5f15\u304d\u5206\u3051\n"));
+        }
         result.append(sep).append("\n");
+        if (ffaWinner != null) {
+            result.append("\u00a76\u2694 \u6700\u591a\u30ad\u30eb: ");
+            for (UUID uid : allUids) {
+                p = Bukkit.getPlayer((UUID)uid);
+                if (p == null) continue;
+                result.append("\u00a7f").append(p.getName()).append("\u00a77(").append(kills.getOrDefault(uid, 0)).append("K/").append(deaths.getOrDefault(uid, 0)).append("D) ");
+            }
+            result.append("\n").append(sep);
+            Bukkit.broadcastMessage((String)result.toString());
+            return;
+        }
         result.append("\u00a7c\u2764 \u8d64: ");
         for (UUID uid : redTeam) {
             p = Bukkit.getPlayer((UUID)uid);

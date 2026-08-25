@@ -83,6 +83,19 @@ public class ScoreboardManager {
             Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
             Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+            if (gm.getCurrentGameMode() == GameMode.FFA) {
+                Team ffaTeam = board.registerNewTeam("ffa");
+                ffaTeam.setColor(ChatColor.GOLD);
+                ffaTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
+                for (UUID fid : gm.getAllParticipantsFFA()) {
+                    Player fp = Bukkit.getPlayer((UUID)fid);
+                    if (fp == null) continue;
+                    ffaTeam.addEntry(fp.getName());
+                }
+                p.setScoreboard(board);
+                this.playerBoards.put(uid, board);
+                continue;
+            }
             Team redTeam = board.registerNewTeam("blox_red");
             redTeam.setColor(ChatColor.RED);
             redTeam.setPrefix("\u00a7c");
