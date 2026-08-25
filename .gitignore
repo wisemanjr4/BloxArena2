@@ -7,3 +7,6 @@ rewrite_email.sh
 .idea/
 *.iml
 out/
+*.log
+logs/
+
