@@ -1255,6 +1255,13 @@ public class SkillManager {
             this.markedForDeath.clear();
             p.sendMessage("\u00a77\u72d9\u6483\u773c\u304c\u89e3\u9664\u3055\u308c\u307e\u3057\u305f");
         }
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!this.guardBroken.contains(p.getUniqueId())) continue;
+            p.setCooldown(Material.SHIELD, 20);
+            if (p.isBlocking()) {
+                p.setShieldBlockingDelay(20);
+            }
+        }
     }
 
     private void updateKitActionBars() {
