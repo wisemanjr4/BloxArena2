@@ -170,6 +170,8 @@ public class GameManager {
     private final Map<UUID, Long> ffaNoCombatUntil = new HashMap<UUID, Long>();
     private int ffaTimeLimit = 300;
     private BukkitTask ffaTimerTask = null;
+    private final Set<UUID> underdogPlayers = new HashSet<UUID>();
+    private final Map<UUID, Long> underdogCooldown = new HashMap<UUID, Long>();
 
     public int getCtfRedTeamSize() {
         return this.ctfRedTeamSize;
@@ -222,6 +224,8 @@ public class GameManager {
         this.playerKit.clear();
         this.noFallDamage.clear();
         this.deadPlayers.clear();
+        this.underdogPlayers.clear();
+        this.underdogCooldown.clear();
         if (this.currentGameMode == GameMode.FFA) {
             this.ffaParticipants.clear();
             this.ffaParticipants.addAll(participants);
@@ -303,6 +307,7 @@ public class GameManager {
         this.inGameStartTime = System.currentTimeMillis();
         this.ctfRedTeamSize = this.redTeam.size();
         this.ctfBlueTeamSize = this.blueTeam.size();
+        this.applyUnderdogBonus();
         this.plugin.getScoreboardManager().start(this);
         this.gameTickTask = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, this::gameTickUpdate, 0L, 2L);
         if (this.selectedBgm != null) {
@@ -473,6 +478,52 @@ public class GameManager {
                 }
             }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
         }
+    }
+
+    private void applyUnderdogBonus() {
+        this.underdogPlayers.clear();
+        this.underdogCooldown.clear();
+        if (this.currentGameMode == GameMode.FFA) {
+            return;
+        }
+        int red = this.redTeam.size();
+        int blue = this.blueTeam.size();
+        TeamColor disadvantaged = null;
+        if (red >= 2 && blue == 1) {
+            disadvantaged = TeamColor.BLUE;
+        } else if (blue >= 2 && red == 1) {
+            disadvantaged = TeamColor.RED;
+        }
+        if (disadvantaged == null) {
+            return;
+        }
+        List<UUID> team = disadvantaged == TeamColor.RED ? this.redTeam : this.blueTeam;
+        for (UUID uid : team) {
+            this.underdogPlayers.add(uid);
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            p.sendMessage("\u00a7e\u00a7l\u7d66\u4e0e\u30dc\u30fc\u30ca\u30b9\uff01\u00a77\u4eba\u6570\u304c\u4e0d\u5229\u306a\u305f\u3081\u3001\u53d7\u5275\u6642\u306b\u518d\u751fIII\u309210\u79d2\u9593\u7372\u5f97\uff08\u72ec\u81eaCT22\u79d2\uff09");
+        }
+    }
+
+    public boolean isUnderdog(UUID uid) {
+        return this.underdogPlayers.contains(uid);
+    }
+
+    public boolean isUnderdogCooldownReady(UUID uid) {
+        Long end = this.underdogCooldown.get(uid);
+        if (end == null) {
+            return true;
+        }
+        if (System.currentTimeMillis() >= end) {
+            this.underdogCooldown.remove(uid);
+            return true;
+        }
+        return false;
+    }
+
+    public void startUnderdogCooldown(UUID uid) {
+        this.underdogCooldown.put(uid, System.currentTimeMillis() + 22000L);
     }
 
     private void gameTickUpdate() {
@@ -796,16 +847,15 @@ public class GameManager {
         for (int attempt = 0; attempt < 30; ++attempt) {
             int x = minX + r.nextInt(Math.max(1, maxX - minX + 1));
             int z = minZ + r.nextInt(Math.max(1, maxZ - minZ + 1));
-            int y = world.getHighestBlockYAt(x, z);
-            Block below = world.getBlockAt(x, y, z);
-            if (below.getType().isAir()) {
-                continue;
+            for (int y = world.getMaxHeight() - 1; y > world.getMinHeight(); --y) {
+                Block below = world.getBlockAt(x, y, z);
+                Material mat = below.getType();
+                if (mat.isAir() || mat == Material.BARRIER || mat == Material.WATER || mat == Material.LAVA || mat == Material.CACTUS || mat == Material.MAGMA_BLOCK) continue;
+                Block above = world.getBlockAt(x, y + 1, z);
+                Block above2 = world.getBlockAt(x, y + 2, z);
+                if (above.getType().isSolid() || above2.getType().isSolid()) continue;
+                return new Location(world, (double)x + 0.5, (double)(y + 1) + 0.1, (double)z + 0.5);
             }
-            Location loc = new Location(world, (double)x + 0.5, (double)(y + 1) + 0.1, (double)z + 0.5);
-            if (loc.getBlock().getType().isSolid() || loc.clone().add(0.0, 1.0, 0.0).getBlock().getType().isSolid()) {
-                continue;
-            }
-            return loc;
         }
         return world.getSpawnLocation();
     }

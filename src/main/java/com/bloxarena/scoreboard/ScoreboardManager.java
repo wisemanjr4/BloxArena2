@@ -92,6 +92,7 @@ public class ScoreboardManager {
                     if (fp == null) continue;
                     ffaTeam.addEntry(fp.getName());
                 }
+                ffaTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
                 p.setScoreboard(board);
                 this.playerBoards.put(uid, board);
                 continue;
@@ -265,6 +266,18 @@ public class ScoreboardManager {
         Scoreboard board = this.playerBoards.get(p.getUniqueId());
         if (board == null) {
             return;
+        }
+        GameManager gm = this.plugin.getGameManager();
+        if (gm.getCurrentGameMode() == GameMode.FFA) {
+            Team ffaTeam = board.getTeam("ffa");
+            if (ffaTeam != null) {
+                ffaTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
+                for (UUID fid : gm.getAllParticipantsFFA()) {
+                    Player fp = Bukkit.getPlayer((UUID)fid);
+                    if (fp == null) continue;
+                    ffaTeam.addEntry(fp.getName());
+                }
+            }
         }
         if (p.getScoreboard() != board) {
             p.setScoreboard(board);

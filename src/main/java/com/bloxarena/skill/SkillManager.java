@@ -606,7 +606,17 @@ public class SkillManager {
                 Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
                     Player pl = Bukkit.getPlayer((UUID)uid);
                     if (pl != null && pl.isOnline()) {
-                        pl.getWorld().createExplosion(pl.getLocation(), 3.0f, false, false, (Entity)pl);
+                        World w = pl.getWorld();
+                        Location expl = pl.getLocation();
+                        w.playSound(expl, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.6f);
+                        w.spawnParticle(Particle.EXPLOSION_HUGE, expl, 8, 1.5, 1.5, 1.5, 0.1);
+                        for (Entity e : w.getNearbyEntities(expl, 6.5, 6.5, 6.5)) {
+                            Player target;
+                            if (!(e instanceof Player) || !this.gm.isParticipant(target = (Player)e) || this.gm.getTeamOf(target) == this.gm.getTeamOf(pl)) continue;
+                            double dist = expl.distance(target.getLocation());
+                            double dmg = 18.0 * Math.max(0.5, 1.0 - dist / 6.5);
+                            target.damage(dmg, (Entity)pl);
+                        }
                         pl.sendMessage("\u00a77\u00a7l\u6700\u5927\u30c1\u30e3\u30fc\u30b8\u70b8\u88c2\uff01");
                     }
                 }, 10L);
@@ -1103,18 +1113,19 @@ public class SkillManager {
             }
             if (player.isSneaking()) {
                 int ticks = this.sneakChargeTicks.merge(player.getUniqueId(), 1, Integer::sum);
-                if (ticks >= 1 && ticks < 2) {
+                if (ticks >= 3 && ticks < 4) {
                     this.universalCharged.put(player.getUniqueId(), true);
                     player.sendMessage("\u00a7e\u00a7l\u26a1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\u30c1\u30e3\u30fc\u30b8\u5b8c\u4e86\uff01\u6b21\u306e\u653b\u6483\u3067\u76f8\u624b\u306e\u76fe\u3092\u7834\u58ca");
                     player.getWorld().playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.5f, 1.5f);
                     continue;
                 }
-                if (ticks >= 1 || ticks % 5 != 0) continue;
-                player.sendActionBar((Component)Component.text((String)("\u00a7e\u26a1 \u30c1\u30e3\u30fc\u30b8\u4e2d... \u00a77" + (1 - ticks) + "/1\u79d2")));
+                if (ticks < 3) {
+                    player.sendActionBar((Component)Component.text((String)("\u00a7e\u26a1 \u30c1\u30e3\u30fc\u30b8\u4e2d... \u00a77" + (3 - ticks) + "/3\u79d2")));
+                }
                 continue;
             }
             Integer prev = this.sneakChargeTicks.remove(player.getUniqueId());
-            if (prev == null || prev >= 1) continue;
+            if (prev == null || prev >= 3) continue;
             this.universalCharged.remove(player.getUniqueId());
         }
         this.updateKitActionBars();
@@ -2803,7 +2814,7 @@ public class SkillManager {
     }
 
     private void whirlwindGust(Player p) {
-        this.setCooldown(p.getUniqueId(), 10000L);
+        this.setCooldown(p.getUniqueId(), 6000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 60, 1, false, false));
         final Vector dir = p.getLocation().getDirection().normalize();
         final Location start = p.getEyeLocation().add(dir.clone().multiply(2));
@@ -2952,7 +2963,7 @@ public class SkillManager {
             p.sendMessage("\u00a7c\u30b9\u30ad\u30eb\u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u4e2d\uff01 \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
             return;
         }
-        this.setCooldown(p.getUniqueId(), 7000L);
+        this.setCooldown(p.getUniqueId(), 5000L);
         final Snowball ball = (Snowball)p.launchProjectile(Snowball.class);
         ball.setVelocity(p.getLocation().getDirection().normalize().multiply(0.8));
         ball.setCustomName("whirlwindBall");

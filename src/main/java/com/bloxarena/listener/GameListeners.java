@@ -144,6 +144,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.projectiles.ProjectileSource;
 
@@ -648,6 +649,12 @@ implements Listener {
             if (entity3 instanceof Skeleton && (skeleton = (Skeleton)entity3).getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "decoy"), PersistentDataType.BYTE)) {
                 this.plugin.getSkillManager().onDecoyHit((Entity)skeleton, damager2);
             }
+        }
+        if (this.gm.isUnderdog(victim.getUniqueId()) && this.gm.isUnderdogCooldownReady(victim.getUniqueId())) {
+            this.gm.startUnderdogCooldown(victim.getUniqueId());
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 200, 2, false, false));
+            victim.sendMessage("\u00a7e\u00a7l\u7d66\u4e0e\u30dc\u30fc\u30ca\u30b9\uff01\u518d\u751fIII\u304c\u767a\u52d5\uff01");
+            victim.getWorld().spawnParticle(Particle.HEART, victim.getLocation().add(0.0, 1.5, 0.0), 10, 0.3, 0.5, 0.3, 0.0);
         }
         Location loc = victim.getLocation().add(0.0, 1.0, 0.0);
         victim.getWorld().spawnParticle(Particle.CRIT, loc, 8, 0.2, 0.2, 0.2, 0.15);

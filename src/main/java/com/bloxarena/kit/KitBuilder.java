@@ -88,7 +88,7 @@ public class KitBuilder {
             }
             case BERSERKER: {
                 ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
-                axe.addEnchantment(Enchantment.DAMAGE_ALL, 5);
+                axe.addEnchantment(Enchantment.DAMAGE_ALL, 1);
                 list.add(axe);
                 list.add(new ItemStack(Material.NETHER_STAR));
                 break;
@@ -640,7 +640,7 @@ public class KitBuilder {
 
     private static void giveBerserker(Player player, BloxArenaPlugin plugin) {
         ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
-        axe.addEnchantment(Enchantment.DAMAGE_ALL, 5);
+        axe.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         ItemMeta bm = axe.getItemMeta();
         if (bm != null) {
             bm.setLore(List.of("\u00a77\u00a7o\u53f3\u30af\u30ea\u30c3\u30af: \u6012\u6d9b\u7206\u7815 - \u524d\u65b9\u9023\u7d9a\u7206\u767a"));
@@ -1464,50 +1464,50 @@ public class KitBuilder {
 
     private static String getSkillInfo(KitType kit) {
         return switch (kit) {
-            case BLADE -> "\u8987\u65ac - \u5468\u56f2\u6575\u6253\u4e0a\u3052+\u30c0\u30e1+\u5f31\u4f53";
-            case BREAKER -> "\u70c8\u7a81 - \u524d\u65b9\u7a81\u9032+\u63a5\u89e6\u30c0\u30e1+\u5f31\u4f53+\u5439\u98db";
-            case NINJA -> "\u96a0\u5f62 - 8\u79d2\u900f\u660e\u5316+Speed II";
-            case BERSERKER -> "\u6012\u6d9b\u7206\u7815 - \u524d\u65b915m\u9023\u7d9a\u7206\u767a";
-            case SNIPER -> "\u72d9\u6483\u773c - 15\u79d2\u7167\u6e96\u2192\u5373\u6b7b\u30de\u30fc\u30af";
-            case COUNTER -> "\u92fc\u306e\u53cd\u5c04 - \u76fe\u69cb\u3048+\u30b9\u30cb\u30fc\u30af\u3067\u30d1\u30ea\u30a3";
-            case PYRO -> "\u696d\u708e - \u5468\u56f2\u708e\u4e0a \u708e\u4e0a\u4e2d\u306f\u5927\u30c0\u30e1";
-            case LANCER -> "\u523a\u7a81 - 4.5m\u30ea\u30fc\u30c1/7\u30c0\u30e1/\u76fe3\u8cab\u901a 3tick\u9045\u5ef6";
-            case JESTER -> "\u9053\u5316\u306e\u75be\u8d70 - 8\u79d2Speed II";
-            case VAMPIRE -> "\u30d6\u30e9\u30c3\u30c9\u30e2\u30fc\u30c9+\u30c6\u30aa\u30b9\u30d1\u30fc\u30c0 - \u5438\u8840\u5909\u8eab+\u30ec\u30fc\u30b6\u30fc";
-            case BOMBER -> "\u5730\u96f7\u8a2d\u7f6e - \u4e0d\u53ef\u8996\u5730\u96f7 \u4efb\u610f\u8d77\u7206 \u7206\u767a10f";
-            case COOK -> "\u8abf\u7406 - \u98df\u6750\u7372\u5f97+\u8abf\u7406\u3067\u30d0\u30d5/\u6599\u7406\u6295\u64f2\u3067\u30c7\u30d0\u30d5";
-            case SCOUT -> "\u30ea\u30b3\u30f3\u30dc\u30eb\u30c8+\u30d1\u30eb\u30b9\u30dc\u30eb\u30c8 - \u7d22\u6575+\u7bc4\u56f2\u7d99\u7d9a\u30c0\u30e1";
-            case WHIRLWIND -> "\u6c17\u6d41\u7832+\u65cb\u98a8\u5f3e - \u62bc\u51fa\u6c17\u6d41+\u8ffd\u5c3e\u6253\u4e0a\u7403";
-            case NILGIRITAR -> "\u76fe\u8cab\u901a - \u30af\u30ed\u30b9\u30dc\u30a6\u547d\u4e2d\u5f8c\u8fd1\u63a5\u3067\u76fe\u8cab\u901a\u30c0\u30e1";
-            case MISTRAL -> "\u70c8\u98a8\u7832 - \u72ed\u5c04\u7a0b\u30fb\u8d85\u5f37\u529b\u306a\u62bc\u51fa\u6c17\u6d41 5\u79d2";
-            case SUPERIOR_MISTRAL -> "\u7a76\u6975\u70c8\u98a8\u7832 - 3x3x3\u98a8\u306e\u7a81\u98a8\u5f3e\u5e55 \u5927\u5e45\u62bc\u51fa\u3057\u3067\u5f31\u4f53\uff0b\u920d\u8db3 5\u79d2";
-            case FLASHER -> "\u30d5\u30e9\u30c3\u30b7\u30e5\u30d0\u30f3 - \u7740\u5f3e\u534a\u5f844m\u76f2\u76ee+\u920d\u8db3";
-            case MARKSMAN -> "\u30d8\u30f4\u30a3\u30fc\u30dc\u30eb\u30c8 - \u88ab\u5f3e\u8005HP\u4e0a\u9650-10\u6c38\u7d9a";
-            case SUNDANCE -> "\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0 - 8\u767a\u9ad8\u901f\u81ea\u52d5\u88c5\u586b 18sCD";
-            case ROCKETER -> "\u30e1\u30ac\u30ed\u30b1\u30c3\u30c8+\u30de\u30a4\u30af\u30ed - \u5927\u7206\u767a+\u5c0f\u30ed\u30b1\u9023\u5c04";
-            case RELEASER -> "\u30d0\u30fc\u30b9\u30c8\u7279\u5316 - \u8d85\u7206\u767a(1\u56de)+\u5c0f\u7206\u767a(CT\u5236)";
-            case ALCHEMIST -> "\u518d\u8abf\u5408 - \u5168\u30dd\u30fc\u30b7\u30e7\u30f3\u88dc\u5145 10sCD";
-            case ENGINEER -> "\u30ec\u30fc\u30b6\u30fc\u30bf\u30ec\u30c3\u30c8 - 90\u79d2\u81ea\u52d5\u653b\u6483";
-            case TRAPPER -> "\u30c7\u30b9\u30c8\u30e9\u30c3\u30d7 - \u4e0d\u53ef\u8996\u7f60x2 \u7206\u767a+\u76f2\u76ee+\u920d\u8db3+\u5f31\u4f53";
-            case GUARDIAN -> "\u9244\u58c1 - 7\u79d2\u5b8c\u5168\u7121\u6575+\u6e1b\u901f 30sCD";
-            case MEDIC -> "\u30d5\u30a3\u30fc\u30eb\u30c9\u30b1\u30a2 - \u534a\u5f848m\u5473\u65b9HP+5+\u518d\u751fIII";
-            case SUPPORTER -> "\u518d\u8abf\u9054 - \u5168\u30d0\u30d5\u30dd\u30fc\u30b7\u30e7\u30f3\u88dc\u5145 10sCD";
-            case RESTRICTIONER -> "\u30c7\u30c3\u30c9\u30ed\u30c3\u30af - 5m\u5c04\u7a0b \u76f8\u4e92\u62d8\u675f5\u79d2";
-            case TRANSPORTER -> "\u30ef\u30fc\u30d7\u30b2\u30fc\u30c8 - 2\u70b9\u9593\u30dd\u30fc\u30bf\u30eb\u8a2d\u7f6e";
-            case KREUTZ -> "\u9b54\u6cd5\u30ab\u30fc\u30c9 - \u53f3\u30c9\u30ed\u30fc/\u5de6\u8a60\u5531 15\u7a2e";
-            case SWAPPER -> "\u77ac\u9593\u4ea4\u5dee - 10m\u5c04\u7a0b \u76f8\u624b\u3068\u4f4d\u7f6e\u5165\u66ff";
-            case STICKER -> "\u30b0\u30e9\u30c3\u30d7\u30eb - \u7403\u6295\u5c04 \u547d\u4e2d\u3067\u5f15\u5bc4/\u63a5\u8fd1";
-            case DECOY -> "\u30c7\u30b3\u30a4\u5c55\u958b - \u5206\u8eab\u751f\u6210+\u900f\u660e\u53163\u79d2";
-            case PHANTOM -> "\u970a\u4f53\u5316 - 6\u79d2\u900f\u660e+\u7121\u6575 \u88ab\u5f3e\u3067\u89e3\u9664";
-            case ANCHOR -> "\u78c1\u5834\u5c55\u958b - \u534a\u5f845m\u6575\u5927\u5e45\u6e1b\u901f 15\u79d2";
-            case GRANG -> "\u6a5f\u52d5\u7a81\u6483 - \u76fe\u30b7\u30d5\u30c8\u3067\u30c1\u30e3\u30fc\u30b8(\u6700\u592710\u79d2) \u96e2\u3059\u3068\u7a81\u9032";
-            case NECRO -> "\u5c4d\u4f53\u821e\u8e0f - \u30b9\u30b1\u30eb\u30c8\u30f33\u4f53\u53ec\u559a \u53f3\u30af\u30ea\u3067\u79fb\u52d5 \u30b7\u30d5\u30c8\u53f3\u30af\u30ea\u3067\u547c\u623b";
-            case BULWARK -> "\u30a6\u30a9\u30fc\u30eb\u5c55\u958b - \u58c1\u3092\u5c55\u958b\u3057\u5473\u65b9\u3092\u5b88\u308b\u9632\u885b\u30b9\u30ad\u30eb";
-            case TIMEKEEPER -> "\u30ea\u30ef\u30a4\u30f3\u30c9+\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7 - \u6642\u3092\u623b\u3057\u5468\u56f2\u306e\u6642\u9593\u3092\u6b62\u3081\u308b";
-            case AEGIS -> "\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9 - \u5473\u65b9\u3068\u7d46\u3092\u7d50\u3073\u30c0\u30e1\u30fc\u30b8\u3092\u80a9\u4ee3\u308f\u308a";
-            case HEXER -> "\u546a\u7e1b\u9818\u57df - \u9818\u57df\u5185\u306e\u6575\u3092\u62d8\u675f\u3057\u5f31\u4f53\u5316";
-            case REFLECTOR -> "\u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9 - \u653b\u6483\u3092\u53cd\u5c04\u3059\u308b\u30b9\u30bf\u30f3\u30b9";
-            case GLACIES -> "\u30d5\u30ed\u30b9\u30c8\u30b9\u30c8\u30e9\u30a4\u30af - \u6575\u3092\u51cd\u7d50\u3055\u305b\u308b\u6c37\u6483";
+            case BLADE -> "CT10秒 / スニークで発動 周囲3mの敵を打ち上げ3ダメ+弱体化+スロウ+敵スキルCT+5秒";
+            case BREAKER -> "CT10秒 / 前方に突進し接触4ダメ+弱体化";
+            case NINJA -> "CT18秒 / 8秒間透明化+耐性I+SpeedII+エンダーパール1個補充";
+            case BERSERKER -> "CT14秒 / 前方に連続爆発 接触6ダメ+吹き飛ばし";
+            case SNIPER -> "CT7秒 / 地上でしゃがみ照準7秒→マーク マーク中は次の一撃で即死";
+            case COUNTER -> "CT10秒 / 盾構え+スニークでパリィ2秒 成功で相手を弱体化+スロウ";
+            case PYRO -> "CT15秒 / 周囲5m 燃焼中の敵に12ダメ 未燃焼は着火";
+            case LANCER -> "CT2秒 / 前方5m突き刺し 直撃9ダメ/盾越し5ダメ+盾破壊 命中でCT-1秒";
+            case JESTER -> "CT10秒 / 10秒間SpeedII+採掘速度上昇";
+            case VAMPIRE -> "吸血ゲージで変身 / 吸収弾(CT7秒)+破壊光線(ゲージ5)";
+            case BOMBER -> "地雷設置+任意起爆 / 範囲5m最大20ダメ(距離減衰) 起爆CT7秒";
+            case COOK -> "剣右クリックで食材生成 / 料理で自分にバフ 投擲で敵にデバフ";
+            case SCOUT -> "リコン(30秒索敵+範囲ダメ)/パルスボルト(30秒範囲ダメ)";
+            case WHIRLWIND -> "CT6秒 / 気流砲(前方押し出し)+左クリックで旋風弾(追尾打上,CT5秒)";
+            case NILGIRITAR -> "CT15秒 / 周囲6mの敵を感知し風穴マーク マーク中は盾貫通+追加ダメ";
+            case MISTRAL -> "CT15秒 / 前方に烈風砲 敵を大きく吹き飛ばす";
+            case SUPERIOR_MISTRAL -> "CT5秒 / 前方に超強力な風砲 4ダメ+弱体化+スロウ+吹き飛ばし";
+            case FLASHER -> "CT10秒 / 閃光弾を投擲 着弾半径6mで盲目+鈍足+発光";
+            case MARKSMAN -> "CT12秒 / ヘヴィーボルト 命中で敵のHP上限-3(最大-12)";
+            case SUNDANCE -> "CT7秒 / リボルビングクロスボウ5発自動装填";
+            case ROCKETER -> "スニークでメガロケット(大爆発,CT25秒) 通常で誘導ロケット(CT8秒)";
+            case RELEASER -> "バースト特化 / 超解放(1ラウンド1回)+小爆発(CT制)";
+            case ALCHEMIST -> "CT15秒 / 全ポーションを補充";
+            case ENGINEER -> "CT15秒 / レーザータレット設置 90秒間自動攻撃";
+            case TRAPPER -> "CT8秒 / 不可視の罠を設置(最大2個) 発動で爆発+盲目+弱体化";
+            case GUARDIAN -> "CT30秒 / 7秒間完全無敵+鈍足";
+            case MEDIC -> "CT20秒 / 半径10mの味方HP+5+吸収+再生III";
+            case SUPPORTER -> "CT12秒 / 全バフポーションを補充";
+            case RESTRICTIONER -> "CT20秒 / 5m内の敵と中間地点にTP 相互に強力デバフ+行動不能5秒";
+            case TRANSPORTER -> "CT15秒 / 左クリックで入口A 右クリックで出口B 双方向ポータル";
+            case KREUTZ -> "CT2秒 / スニークでカードをドロー 右クリックで詠唱 15種の効果";
+            case SWAPPER -> "CT18秒 / 15m以内の敵と位置を即時交換+弱体化";
+            case STICKER -> "CT12秒 / グラップルを射出 命中で敵を打ち上げ引き寄せ+弱体化";
+            case DECOY -> "CT10秒 / 分身8体を生成し自分は透明化6秒";
+            case PHANTOM -> "CT18秒 / 6秒間透明+無敵+攻撃力上昇";
+            case ANCHOR -> "CT20秒 / 半径8mの磁場を15秒展開 敵を減速+弱体化+継続ダメ";
+            case GRANG -> "盾+スニークでチャージ(最大7秒)→離すと突進 接触7ダメ フルチャージで爆発";
+            case NECRO -> "スケルトン3体を召喚 / 右クリックで移動指示 シフト右クリックで呼び戻し";
+            case BULWARK -> "CT20秒 / 壁を展開して味方を守る シフトで平面展開 再使用で解除";
+            case TIMEKEEPER -> "リワインド(位置+HP復元,CT30秒)/クロックストップ(6mの弾を停止,CT15秒)";
+            case AEGIS -> "CT22秒 / 15m内の味方とボンド 受けたダメの50%を肩代わり";
+            case HEXER -> "CT24秒 / 前方5mに呪縛領域12秒 領域内の敵はスキル/バースト使用不可";
+            case REFLECTOR -> "CT20秒 / 3秒間ミラースタンス 飛翔体を反射";
+            case GLACIES -> "CT14秒 / 前方45°/6mの敵を凍結 3ダメ+スロウ+採掘低下";
             default -> throw new IncompatibleClassChangeError();
         };
     }
