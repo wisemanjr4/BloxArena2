@@ -400,6 +400,9 @@ public class SkillManager {
             if ("TIMEKEEPER".equals(kitName) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.TIMEKEEPER) {
                 this.timekeeperClockStop(p);
             }
+            if ("GLACIES".equals(kitName) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.GLACIES) {
+                this.glaciesColdBall(p);
+            }
         }
         if (meta.getPersistentDataContainer().has(this.KEY_VAMPIRE_SKILL, PersistentDataType.STRING) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.VAMPIRE && p.isSneaking()) {
             this.theosPadaAction(p, false);
@@ -3735,6 +3738,60 @@ public class SkillManager {
             t.getWorld().spawnParticle(Particle.SNOW_SHOVEL, t.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.5, 0.3, 0.1);
         }
         p.sendMessage("\u00a7b\u00a7l\u30d5\u30ed\u30b9\u30c8\u30b9\u30c8\u30e9\u30a4\u30af\uff01");
+    }
+
+    private void glaciesColdBall(Player p) {
+        if (this.isOnCooldown(p.getUniqueId())) {
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 12000L);
+        Location center = p.getLocation().clone().add(0.0, -1.0, 0.0);
+        World w = p.getWorld();
+        w.spawnParticle(Particle.SNOWBALL, center.clone().add(0.0, 1.0, 0.0), 15, 0.3, 0.3, 0.3, 0.1);
+        w.playSound(center, Sound.BLOCK_GLASS_PLACE, 0.8f, 0.5f);
+        p.sendMessage("\u00a7b\u00a7l\u51b7\u6c17\u584a\u8a2d\u7f6e\uff01\u00a77\u305d\u306e\u5834\u6240\u306b\u51b7\u6c17\u304c\u6269\u6563\u3059\u308b");
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            w.spawnParticle(Particle.SNOW_SHOVEL, center.clone().add(0.0, 0.5, 0.0), 40, 0.5, 0.5, 0.5, 0.3);
+            w.playSound(center, Sound.BLOCK_GLASS_BREAK, 1.0f, 1.5f);
+            for (int i = 0; i < 16; ++i) {
+                double angle = Math.toRadians((double)(i * 22));
+                double dx = Math.sin(angle);
+                double dz = Math.cos(angle);
+                this.spawnCrawlCold(center, dx, dz, p, w);
+            }
+        }, 40L);
+    }
+
+    private void spawnCrawlCold(Location center, double dx, double dz, Player p, World w) {
+        new BukkitRunnable() {
+            double dist = 0.0;
+            double range = 6.0;
+            double size = 0.4;
+            @Override public void run() {
+                dist += 0.2;
+                if (dist > range) {
+                    cancel();
+                    return;
+                }
+                Location loc = center.clone().add(dx * dist, 0.0, dz * dist);
+                loc.setY(center.getY());
+                if (!loc.getBlock().getType().isAir()) {
+                    size = 1.2;
+                    this.cancel();
+                    return;
+                }
+                w.spawnParticle(Particle.SNOW_SHOVEL, loc.clone().add(0.0, 0.5, 0.0), 3, (float)size * 0.5f, 0.3, (float)size * 0.5f, 0.02);
+                for (Entity e : w.getNearbyEntities(loc, size, 1.0, size)) {
+                    if (!(e instanceof Player t) || !this.isEnemy(t)) continue;
+                    t.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 1, false, true));
+                    t.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 80, 252, false, true));
+                    t.getWorld().spawnParticle(Particle.SNOW_SHOVEL, t.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
+                }
+            }
+            private boolean isEnemy(Player t) {
+                return t != p && SkillManager.this.gm.isParticipant(t) && SkillManager.this.gm.getTeamOf(t) != SkillManager.this.gm.getTeamOf(p);
+            }
+        }.runTaskTimer((Plugin)this.plugin, 0L, 2L);
     }
 
     private void setCooldown(UUID uid, long millis) {
