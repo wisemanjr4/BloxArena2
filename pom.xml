@@ -6,7 +6,7 @@
 
     <groupId>com.bloxarena</groupId>
     <artifactId>BloxArenaII</artifactId>
-<version>3.4.2</version>
+<version>3.4.3</version>
     <packaging>jar</packaging>
 
     <properties>
