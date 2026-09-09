@@ -331,6 +331,12 @@ public class ScoreboardManager {
         if (team != null) {
             this.score(board, obj, "\u00a77\u30c1\u30fc\u30e0: " + team.getColorCode() + team.getDisplayName(), line--);
         }
+        int ultCharge = this.plugin.getUltimateManager().getCharge(p.getUniqueId());
+        if (ultCharge >= 100) {
+            this.score(board, obj, "\u00a7d\u00a7lULT READY!", line--);
+        } else {
+            this.score(board, obj, "\u00a7dULT \u00a7f[" + ultCharge + "%]", line--);
+        }
         this.score(board, obj, "\u00a7r\u00a7f     ", line--);
     }
 

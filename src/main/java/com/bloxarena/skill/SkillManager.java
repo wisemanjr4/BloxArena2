@@ -366,10 +366,6 @@ public class SkillManager {
             this.useBurst(p);
             return;
         }
-        if (p.isSneaking() && meta.getPersistentDataContainer().has(this.KEY_SKILL, PersistentDataType.STRING)) {
-            this.plugin.getUltimateManager().activateUltimate(p);
-            return;
-        }
         if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.COOK && this.isSword(held)) {
             this.cookGenerateFood(p);
             return;
@@ -408,6 +404,10 @@ public class SkillManager {
             return;
         }
         ItemMeta meta = held.getItemMeta();
+        if (p.isSneaking() && meta.getPersistentDataContainer().has(this.KEY_SKILL, PersistentDataType.STRING) && this.plugin.getUltimateManager().canUltimate(p.getUniqueId())) {
+            this.plugin.getUltimateManager().activateUltimate(p);
+            return;
+        }
         if (meta.getPersistentDataContainer().has(this.KEY_SKILL, PersistentDataType.STRING)) {
             String kitName = (String)meta.getPersistentDataContainer().get(this.KEY_SKILL, PersistentDataType.STRING);
             if ("TRANSPORTER".equals(kitName) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.TRANSPORTER) {
@@ -1004,7 +1004,7 @@ public class SkillManager {
         this.burstUsed.remove(p.getUniqueId());
         this.releaserMegaUsed.remove(p.getUniqueId());
         if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.RELEASER) {
-            p.getInventory().addItem(new ItemStack[]{KitBuilder.makeBurstItem()});
+            p.getInventory().setItem(8, KitBuilder.makeBurstItem());
         }
     }
 
@@ -1460,23 +1460,19 @@ public class SkillManager {
 
     private void sendCTOnly(Player p) {
         float rem;
-        String ult = this.plugin.getUltimateManager().getUltimateBarText(p);
         Long cd = this.skillCooldowns.get(p.getUniqueId());
         if (cd != null && (rem = (float)(cd - System.currentTimeMillis()) / 1000.0f) > 0.0f) {
-            p.sendActionBar((Component)Component.text((String)("\u00a7fCT " + String.format("%.1f", Float.valueOf(rem)) + "s \u00a77| " + ult)));
-        } else {
-            p.sendActionBar((Component)Component.text((String)ult));
+            p.sendActionBar((Component)Component.text((String)("\u00a7fCT " + String.format("%.1f", Float.valueOf(rem)) + "s")));
         }
     }
 
     private Component ctAppend(Player p, Component base) {
         float rem;
-        String ult = this.plugin.getUltimateManager().getUltimateBarText(p);
         Long cd = this.skillCooldowns.get(p.getUniqueId());
         if (cd != null && (rem = (float)(cd - System.currentTimeMillis()) / 1000.0f) > 0.0f) {
-            return ((TextComponent.Builder)((TextComponent.Builder)Component.text().append(base)).append((Component)Component.text((String)(" \u00a77| \u00a7fCT " + String.format("%.1f", Float.valueOf(rem)) + "s \u00a77| " + ult)))).build();
+            return ((TextComponent.Builder)((TextComponent.Builder)Component.text().append(base)).append((Component)Component.text((String)(" \u00a77| \u00a7fCT " + String.format("%.1f", Float.valueOf(rem)) + "s")))).build();
         }
-        return ((TextComponent.Builder)((TextComponent.Builder)Component.text().append(base)).append((Component)Component.text((String)(" \u00a77| " + ult)))).build();
+        return base;
     }
 
     private void useKitSkill(Player p, String kitName) {
