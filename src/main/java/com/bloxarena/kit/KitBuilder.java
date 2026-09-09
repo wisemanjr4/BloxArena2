@@ -35,6 +35,7 @@ import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -588,6 +589,9 @@ public class KitBuilder {
                 break;
             }
         }
+        if (plugin != null && kit == KitType.KREUTZ) {
+            plugin.getSkillManager().resetKreutzMana(player);
+        }
     }
 
     private static void giveBaseItems(Player player, TeamColor team) {
@@ -973,6 +977,9 @@ gsm.setLore(gsl);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
             player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.COOK, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u8abf\u7406"));
+        }
+        if (player.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+            player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(26.0);
         }
         KitBuilder.giveIronArmor(player);
     }

@@ -109,6 +109,7 @@ public class GameManager {
     private final Set<UUID> spectators = new LinkedHashSet<UUID>();
     private final Set<UUID> noFallDamage = new HashSet<UUID>();
     private final Set<UUID> deadPlayers = new HashSet<UUID>();
+    private final Set<UUID> centralZoneMembers = new HashSet<UUID>();
     private MatchStats matchStats = new MatchStats();
     private final Map<UUID, Integer> kills = new HashMap<UUID, Integer>();
     private final Map<UUID, Integer> deaths = new HashMap<UUID, Integer>();
@@ -531,6 +532,58 @@ public class GameManager {
             return;
         }
         this.plugin.getSkillManager().fastUpdate();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!this.isParticipant(p) || this.isSpectator(p)) continue;
+            this.updateCentralZone(p);
+        }
+    }
+
+    public boolean isInCentralZone(Player p) {
+        if (this.state != GameState.IN_GAME || this.currentMap == null || this.currentMap.getCenter() == null) {
+            return false;
+        }
+        GameMode m = this.currentGameMode;
+        if (m != GameMode.BATTLE_ARENA && m != GameMode.TEAM_DEATHMATCH) {
+            return false;
+        }
+        if (!this.isParticipant(p) || this.isSpectator(p)) {
+            return false;
+        }
+        Location c = this.currentMap.getCenter();
+        Location l = p.getLocation();
+        int cx = c.getBlockX();
+        int cy = c.getBlockY();
+        int cz = c.getBlockZ();
+        int px = l.getBlockX();
+        int py = l.getBlockY();
+        int pz = l.getBlockZ();
+        if (px < cx - 2 || px > cx + 2 || pz < cz - 2 || pz > cz + 2) {
+            return false;
+        }
+        return py >= cy && py <= cy + 3;
+    }
+
+    private void updateCentralZone(Player p) {
+        if (this.isInCentralZone(p)) {
+            if (this.centralZoneMembers.add(p.getUniqueId())) {
+                p.sendMessage("\u00a7c\u4e2d\u592e\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u5185\u306f\u30ac\u30fc\u30c9/\u7121\u6575\u4e0d\u53ef");
+            }
+            p.setCooldown(Material.SHIELD, 20);
+            if (p.isBlocking()) {
+                p.setShieldBlockingDelay(20);
+            }
+            if (p.isInvulnerable()) {
+                p.setInvulnerable(false);
+            }
+            PotionEffect dr = p.getPotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
+            if (dr != null && dr.getAmplifier() >= 254) {
+                p.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
+            }
+        } else if (this.centralZoneMembers.remove(p.getUniqueId())) {
+            if (!this.plugin.getSkillManager().isGuardBroken(p.getUniqueId())) {
+                p.setShieldBlockingDelay(4);
+            }
+        }
     }
 
     private void updateDomination(MapConfig map, int targetPoints) {
@@ -902,36 +955,62 @@ public class GameManager {
         Location min = map.getOobMin();
         Location max = map.getOobMax();
         if (min == null || max == null) {
-            min = map.getRedSpawnMin();
-            max = map.getRedSpawnMax();
-        }
-        if (min == null || max == null) {
-            min = map.getBlueSpawnMin();
-            max = map.getBlueSpawnMax();
-        }
-        if (min == null || max == null) {
+            Location fallback = this.randomSpawnZoneLocation(map);
+            if (fallback != null) {
+                return fallback;
+            }
             Location center = map.getCenter();
-            return center != null ? center.clone() : world.getSpawnLocation();
+            return center != null ? center.clone().add(0.0, 1.0, 0.0) : world.getSpawnLocation();
         }
         Random r = new Random();
-        int minX = Math.min(min.getBlockX(), max.getBlockX());
-        int maxX = Math.max(min.getBlockX(), max.getBlockX());
-        int minZ = Math.min(min.getBlockZ(), max.getBlockZ());
-        int maxZ = Math.max(min.getBlockZ(), max.getBlockZ());
-        for (int attempt = 0; attempt < 30; ++attempt) {
+        int minX = Math.min(min.getBlockX(), max.getBlockX()) + 2;
+        int maxX = Math.max(min.getBlockX(), max.getBlockX()) - 2;
+        int minZ = Math.min(min.getBlockZ(), max.getBlockZ()) + 2;
+        int maxZ = Math.max(min.getBlockZ(), max.getBlockZ()) - 2;
+        if (minX > maxX) {
+            minX = maxX = (minX + maxX) / 2;
+        }
+        if (minZ > maxZ) {
+            minZ = maxZ = (minZ + maxZ) / 2;
+        }
+        for (int attempt = 0; attempt < 20; ++attempt) {
             int x = minX + r.nextInt(Math.max(1, maxX - minX + 1));
             int z = minZ + r.nextInt(Math.max(1, maxZ - minZ + 1));
             for (int y = world.getMaxHeight() - 1; y > world.getMinHeight(); --y) {
-                Block below = world.getBlockAt(x, y, z);
-                Material mat = below.getType();
-                if (mat.isAir() || mat == Material.BARRIER || mat == Material.WATER || mat == Material.LAVA || mat == Material.CACTUS || mat == Material.MAGMA_BLOCK) continue;
-                Block above = world.getBlockAt(x, y + 1, z);
-                Block above2 = world.getBlockAt(x, y + 2, z);
-                if (above.getType().isSolid() || above2.getType().isSolid()) continue;
+                Block ground = world.getBlockAt(x, y, z);
+                Material mat = ground.getType();
+                if (mat.isAir()) continue;
+                if (mat == Material.BARRIER) continue;
+                if (!mat.isSolid()) continue;
+                Material aboveMat = world.getBlockAt(x, y + 1, z).getType();
+                Material above2Mat = world.getBlockAt(x, y + 2, z).getType();
+                if (aboveMat.isSolid() || above2Mat.isSolid()) break;
                 return new Location(world, (double)x + 0.5, (double)(y + 1) + 0.1, (double)z + 0.5);
             }
         }
-        return world.getSpawnLocation();
+        Location fallback = this.randomSpawnZoneLocation(map);
+        return fallback != null ? fallback : world.getSpawnLocation();
+    }
+
+    private Location randomSpawnZoneLocation(MapConfig map) {
+        List<Location> options = new ArrayList<Location>();
+        Location redMin = map.getRedSpawnMin();
+        Location redMax = map.getRedSpawnMax();
+        Location blueMin = map.getBlueSpawnMin();
+        Location blueMax = map.getBlueSpawnMax();
+        if (redMin != null && redMax != null) {
+            options.add(new Location(redMin.getWorld(), (redMin.getBlockX() + redMax.getBlockX()) / 2.0 + 0.5, redMax.getBlockY() + 1.1, (redMin.getBlockZ() + redMax.getBlockZ()) / 2.0 + 0.5));
+        }
+        if (blueMin != null && blueMax != null) {
+            options.add(new Location(blueMin.getWorld(), (blueMin.getBlockX() + blueMax.getBlockX()) / 2.0 + 0.5, blueMax.getBlockY() + 1.1, (blueMin.getBlockZ() + blueMax.getBlockZ()) / 2.0 + 0.5));
+        }
+        if (map.getCenter() != null) {
+            options.add(map.getCenter().clone().add(0.0, 1.0, 0.0));
+        }
+        if (options.isEmpty()) {
+            return null;
+        }
+        return options.get(new Random().nextInt(options.size()));
     }
 
     public boolean isInFFANoCombatWindow(UUID uid) {
@@ -1154,6 +1233,7 @@ public class GameManager {
         this.state = GameState.IN_GAME;
         this.noFallDamage.clear();
         this.deadPlayers.clear();
+        this.centralZoneMembers.clear();
         this.matchStats = new MatchStats();
         this.deaths.clear();
         this.roundKills.clear();
@@ -1400,6 +1480,7 @@ public class GameManager {
         this.playerKit.clear();
         this.noFallDamage.clear();
         this.deadPlayers.clear();
+        this.centralZoneMembers.clear();
         this.currentMap = null;
         this.matchStats = new MatchStats();
         this.currentRound = 0;
@@ -1537,13 +1618,12 @@ public class GameManager {
                     for (UUID uid : this.getAllParticipantsAndSpectators()) {
                         Player pp = Bukkit.getPlayer((UUID)uid);
                         if (pp == null) continue;
-                        pp.sendMessage("\u00a76\u00a7l\u2605 " + killer.getName() + " \u00a7r" + streakTitle + " \u00a78(" + rk + " kills)");
                         pp.playSound(pp.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.4f);
                     }
                     this.spawnKillStreakFirework(killer, rk);
                 }
             }
-            if (rk >= 3) {
+            if (rk == 5) {
                 this.announceBigPlay(killer, rk);
             }
         }

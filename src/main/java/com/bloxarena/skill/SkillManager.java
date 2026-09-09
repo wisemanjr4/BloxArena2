@@ -151,6 +151,8 @@ public class SkillManager {
     private final Map<UUID, Integer> sneakChargeTicks = new HashMap<UUID, Integer>();
     private final Map<UUID, Boolean> universalCharged = new HashMap<UUID, Boolean>();
     private final Map<UUID, String> kreutzCard = new HashMap<UUID, String>();
+    private final Map<UUID, Double> kreutzMana = new HashMap<UUID, Double>();
+    private final Map<UUID, Long> kreutzManaPerkCooldown = new HashMap<UUID, Long>();
     private final Set<UUID> piercingRecently = new HashSet<UUID>();
     private final Map<UUID, Integer> marksmanBoltCount = new HashMap<UUID, Integer>();
     private final Map<UUID, Long> grangBurstCooldown = new HashMap<UUID, Long>();
@@ -206,6 +208,9 @@ public class SkillManager {
         this.vampireGauge.clear();
         this.vampireBloodMode.clear();
         this.sundanceRevolver.clear();
+        this.kreutzMana.clear();
+        this.kreutzManaPerkCooldown.clear();
+        this.kreutzCard.clear();
         this.activeTraps.clear();
         this.activeMines.forEach(m -> m.entity.remove());
         this.activeMines.clear();
@@ -334,6 +339,11 @@ public class SkillManager {
         this.phantomEnd.clear();
         this.vampireGauge.clear();
         this.vampireBloodMode.clear();
+        this.kreutzManaPerkCooldown.clear();
+        this.kreutzCard.clear();
+        for (UUID uid : this.kreutzMana.keySet()) {
+            this.kreutzMana.put(uid, 50.0);
+        }
         this.maxHpReduced.clear();
         for (UUID wu : new HashSet<UUID>(this.activeWalls.keySet())) {
             this.removeWall(wu);
@@ -517,13 +527,13 @@ public class SkillManager {
 
     public boolean onSniperHit(Player shooter, Player victim) {
         if (this.sniperUltimate.remove(shooter.getUniqueId()) && this.gm.getPlayerKitType(shooter.getUniqueId()) == KitType.SNIPER) {
-            victim.setHealth(0.0);
+            victim.damage(20.0, (Entity)shooter);
             shooter.getWorld().playSound(shooter.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 2.0f);
             shooter.sendMessage("\u00a7c\u00a7l\u30a2\u30a4\u30fb\u30aa\u30d6\u30fb\u30db\u30eb\u30b9\uff01\u5373\u6b7b\uff01");
             return true;
         }
         if (this.markedForDeath.contains(victim.getUniqueId()) && this.gm.getPlayerKitType(shooter.getUniqueId()) == KitType.SNIPER) {
-            victim.setHealth(0.0);
+            victim.damage(20.0, (Entity)shooter);
             this.markedForDeath.remove(victim.getUniqueId());
             shooter.getWorld().playSound(shooter.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 2.0f);
             return true;
@@ -942,18 +952,6 @@ public class SkillManager {
     }
 
     public void onPhantomDamaged(Player p) {
-        if (!this.phantomEnd.containsKey(p.getUniqueId())) {
-            return;
-        }
-        Long endTime = this.phantomEnd.get(p.getUniqueId());
-        if (endTime != null && System.currentTimeMillis() < endTime) {
-            this.phantomEnd.remove(p.getUniqueId());
-            p.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
-            p.removePotionEffect(PotionEffectType.INVISIBILITY);
-            p.removePotionEffect(PotionEffectType.INCREASE_DAMAGE);
-            this.showArmor(p);
-            p.sendMessage("\u00a7c\u970a\u4f53\u5316\u89e3\u9664\uff01");
-        }
     }
 
     public void checkPortalTeleport(Player p, Location to) {
@@ -1202,6 +1200,10 @@ public class SkillManager {
         for (Player pl : Bukkit.getOnlinePlayers()) {
             if (!this.gm.isParticipant(pl) || this.gm.isSpectator(pl)) continue;
             this.plugin.getUltimateManager().tickCharge(pl);
+        }
+        for (Player pl : Bukkit.getOnlinePlayers()) {
+            if (!this.gm.isParticipant(pl) || this.gm.isSpectator(pl) || this.gm.getPlayerKitType(pl.getUniqueId()) != KitType.KREUTZ) continue;
+            this.addKreutzMana(pl.getUniqueId(), 1.0);
         }
         long now = System.currentTimeMillis();
         new ArrayList<Map.Entry<UUID, Long>>(this.comboLastHit.entrySet()).forEach(e2 -> {
@@ -1478,6 +1480,13 @@ public class SkillManager {
                     boolean inBlood = this.vampireBloodMode.getOrDefault(p.getUniqueId(), false);
                     String bar = this.gaugeBar((int)gauge, 80);
                     p.sendActionBar(this.ctAppend(p, (Component)Component.text((String)((inBlood ? "\u00a74\u00a7l\u2694 \u30d6\u30e9\u30c3\u30c9" : "\u00a77\u30c9\u30ec\u30a4\u30f3") + " S" + stage + " \u00a78[\u00a7a" + bar + "\u00a78] \u00a7f" + String.format("%.0f/80", gauge)))));
+                    break;
+                }
+                case KREUTZ: {
+                    String card = this.kreutzCard.get(p.getUniqueId());
+                    String cardInfo = card != null ? "\u00a75\ud83c\udccf" + card + " \u00a78| " : "";
+                    String manaInfo = "\u00a75\u30de\u30ca \u00a7f[" + String.format("%.0f", this.getKreutzMana(p.getUniqueId())) + "/150]";
+                    p.sendActionBar(this.ctAppend(p, (Component)Component.text((String)(cardInfo + manaInfo))));
                     break;
                 }
                 default: {
@@ -1828,7 +1837,7 @@ public class SkillManager {
     }
 
     private void breakerSkill(final Player p) {
-        this.setCooldown(p.getUniqueId(), 10000L);
+        this.setCooldown(p.getUniqueId(), 8000L);
         Vector dir = p.getLocation().getDirection().normalize().multiply(2.0).setY(0.3);
         p.setVelocity(dir);
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 0.6f);
@@ -2008,7 +2017,12 @@ public class SkillManager {
             if (this.isOnCooldown(p.getUniqueId())) {
                 return;
             }
-            this.setCooldown(p.getUniqueId(), 2000L);
+            if (this.getKreutzMana(p.getUniqueId()) < 5.0) {
+                p.sendMessage("\u00a7c\u30de\u30ca\u304c\u8db3\u308a\u307e\u305b\u3093");
+                return;
+            }
+            this.setCooldown(p.getUniqueId(), 1000L);
+            this.addKreutzMana(p.getUniqueId(), -5.0);
             String card = this.KREUTZ_CARDS[new Random().nextInt(this.KREUTZ_CARDS.length)];
             this.kreutzCard.put(p.getUniqueId(), card);
             p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f\uff01");
@@ -2016,7 +2030,7 @@ public class SkillManager {
         }
         String card = this.kreutzCard.get(p.getUniqueId());
         if (card == null) {
-            p.sendMessage("\u00a7c\u30ab\u30fc\u30c9\u3092\u5f15\u3044\u3066\u3044\u307e\u305b\u3093\uff01\u3057\u3083\u304c\u307f\u53f3\u30af\u30ea\u3067\u30c9\u30ed\u30fc");
+            this.kreutzManaCharge(p);
             return;
         }
         Player target = this.getTargetInSight(p, 20);
@@ -2039,7 +2053,12 @@ public class SkillManager {
             p.sendMessage("\u00a7c\u5bfe\u8c61\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\uff01\u30ab\u30fc\u30c9\u306f\u6d88\u8cbb\u3055\u308c\u307e\u305b\u3093");
             return;
         }
+        if (this.getKreutzMana(p.getUniqueId()) < 30.0) {
+            p.sendMessage("\u00a7c\u30de\u30ca\u304c\u8db3\u308a\u307e\u305b\u3093");
+            return;
+        }
         this.kreutzCard.remove(p.getUniqueId());
+        this.addKreutzMana(p.getUniqueId(), -30.0);
         p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5531\u3048\u305f\uff01");
         switch (card) {
             case "\u30d5\u30a1\u30a4\u30a2\u30dc\u30fc\u30eb": {
@@ -2601,6 +2620,11 @@ public class SkillManager {
         Location mid = p.getLocation().add(target.getLocation()).multiply(0.5);
         p.teleport(mid);
         target.teleport(mid);
+        Vector back = p.getLocation().getDirection().setY(0);
+        if (back.lengthSquared() < 1.0E-4) {
+            back = new Vector(0.0, 0.0, 1.0);
+        }
+        p.setVelocity(back.normalize().multiply(-0.4).setY(0.1));
         for (PotionEffectType et : effs = new PotionEffectType[]{PotionEffectType.SLOW, PotionEffectType.WEAKNESS, PotionEffectType.SLOW_DIGGING, PotionEffectType.BLINDNESS}) {
             p.addPotionEffect(new PotionEffect(et, 100, et == PotionEffectType.SLOW_DIGGING ? 100 : (et == PotionEffectType.BLINDNESS ? 0 : 10), false, false));
             target.addPotionEffect(new PotionEffect(et, 100, et == PotionEffectType.SLOW_DIGGING ? 100 : (et == PotionEffectType.BLINDNESS ? 0 : 10), false, false));
@@ -2609,6 +2633,7 @@ public class SkillManager {
         target.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, -10, false, false));
         this.deadlockedPlayers.add(p.getUniqueId());
         this.deadlockedPlayers.add(target.getUniqueId());
+        p.setHealth(Math.min(p.getHealth() + 4.0, p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()));
         p.sendMessage("\u00a78\u00a7l\u30c7\u30c3\u30c9\u30ed\u30c3\u30af\uff01");
         target.sendMessage("\u00a78\u00a7l\u62d8\u675f\u3055\u308c\u305f\uff01");
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
@@ -2814,19 +2839,23 @@ public class SkillManager {
                 s.setSilent(true);
                 s.setCustomName(p.getName());
                 s.setCustomNameVisible(true);
-                s.getEquipment().setHelmet(decoyArmor[0]);
-                s.getEquipment().setChestplate(decoyArmor[1]);
-                s.getEquipment().setLeggings(decoyArmor[2]);
-                s.getEquipment().setBoots(decoyArmor[3]);
-                s.getEquipment().setHelmetDropChance(0.0f);
-                s.getEquipment().setChestplateDropChance(0.0f);
-                s.getEquipment().setLeggingsDropChance(0.0f);
-                s.getEquipment().setBootsDropChance(0.0f);
-                ItemStack stick = new ItemStack(Material.STICK);
-                stick.addEnchantment(Enchantment.KNOCKBACK, 1);
-                s.getEquipment().setItemInMainHand(stick);
-                s.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 999999, 9, false, false));
+                s.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 500, 0, false, false));
+                s.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 500, 9, false, false));
+                s.setPersistent(true);
             });
+            if (skel.getEquipment() != null) {
+                skel.getEquipment().setHelmet(decoyArmor[0]);
+                skel.getEquipment().setChestplate(decoyArmor[1]);
+                skel.getEquipment().setLeggings(decoyArmor[2]);
+                skel.getEquipment().setBoots(decoyArmor[3]);
+                skel.getEquipment().setHelmetDropChance(0.0f);
+                skel.getEquipment().setChestplateDropChance(0.0f);
+                skel.getEquipment().setLeggingsDropChance(0.0f);
+                skel.getEquipment().setBootsDropChance(0.0f);
+                ItemStack stick = new ItemStack(Material.STICK);
+                stick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
+                skel.getEquipment().setItemInMainHand(stick);
+            }
             skel.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "decoy"), PersistentDataType.BYTE, (byte)1);
             skel.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "decoy_owner"), PersistentDataType.STRING, p.getUniqueId().toString());
             final Skeleton finalSkel = skel;
@@ -2925,9 +2954,9 @@ public class SkillManager {
                     this.cancel();
                     return;
                 }
-                this.cur.add(dir.clone().multiply(0.5));
+                this.cur.add(dir.clone().multiply(0.45));
                 this.cur.getWorld().spawnParticle(Particle.CLOUD, this.cur, 8, 1.5, 1.0, 1.5, 0.02);
-                for (Entity e : this.cur.getWorld().getNearbyEntities(this.cur, 3.0, 3.0, 3.0)) {
+                for (Entity e : this.cur.getWorld().getNearbyEntities(this.cur, 3.45, 3.45, 3.45)) {
                     Player tp;
                     LivingEntity le;
                     Vector push;
@@ -2938,7 +2967,7 @@ public class SkillManager {
                         continue;
                     }
                     if (!(e instanceof LivingEntity) || !(le = (LivingEntity)e).isValid() || e instanceof Player && !SkillManager.this.gm.isParticipant(tp = (Player)e)) continue;
-                    push = dir.clone().multiply(0.2);
+                    push = dir.clone().multiply(0.22);
                     push.setY(Math.min(push.getY(), 0.1));
                     if (this.ticks % 2 != 0) continue;
                     le.setVelocity(push);
@@ -3114,6 +3143,7 @@ public class SkillManager {
         World w = p.getWorld();
         w.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.5f);
         w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 8, 2.0, 2.0, 2.0, 0.0);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 1, false, false));
         for (Entity e : w.getNearbyEntities(loc, 6.0, 3.0, 6.0)) {
             Player t;
             if (!(e instanceof Player) || !this.gm.isParticipant(t = (Player)e) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p)) continue;
@@ -3138,11 +3168,12 @@ public class SkillManager {
         w.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.7f);
         w.spawnParticle(Particle.EXPLOSION_LARGE, loc, 5, 1.5, 1.0, 1.5, 0.05);
         p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, false, true));
-        for (Entity e : w.getNearbyEntities(loc, 6.0, 2.0, 6.0)) {
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 1, false, false));
+        for (Entity e : w.getNearbyEntities(loc, 9.0, 3.0, 9.0)) {
             Player t;
             if (!(e instanceof Player) || !this.gm.isParticipant(t = (Player)e) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p)) continue;
             t.damage(4.0, (Entity)p);
-            t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(1.5).setY(0.4));
+            t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(1.275).setY(0.4));
             t.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 1, false, true));
         }
         p.sendMessage("\u00a7e\u30ea\u30ea\u30fc\u30b9\uff01");
@@ -3392,6 +3423,48 @@ public class SkillManager {
             p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f\uff01");
         }
         p.sendMessage("\u00a75\u00a7l\u30d5\u30eb\u30aa\u30fc\u30c0\u30fc\uff01\u30ab\u30fc\u30c9\u30b9\u30ed\u30c3\u30c8\u30924\u306b\u62e1\u5927\uff01");
+    }
+
+    public void resetKreutzMana(Player p) {
+        this.kreutzMana.put(p.getUniqueId(), 50.0);
+        this.kreutzManaPerkCooldown.remove(p.getUniqueId());
+    }
+
+    public double getKreutzMana(UUID uid) {
+        return this.kreutzMana.getOrDefault(uid, 0.0);
+    }
+
+    public void addKreutzMana(UUID uid, double amount) {
+        this.kreutzMana.put(uid, Math.max(0.0, Math.min(150.0, this.kreutzMana.getOrDefault(uid, 0.0) + amount)));
+    }
+
+    public boolean isKreutzPerkReady(UUID uid) {
+        Long cd = this.kreutzManaPerkCooldown.get(uid);
+        return cd == null || System.currentTimeMillis() >= cd;
+    }
+
+    public void triggerKreutzManaPerk(Player victim) {
+        this.addKreutzMana(victim.getUniqueId(), -20.0);
+        this.kreutzManaPerkCooldown.put(victim.getUniqueId(), System.currentTimeMillis() + 3000L);
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 2, false, true));
+        victim.sendMessage("\u00a75\u00a7l\u2726 \u30de\u30ca\u9632\u58c1\uff01\u00a77\u518d\u751fIII 3\u79d2\u9593");
+        victim.getWorld().playSound(victim.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0f, 1.5f);
+        victim.getWorld().spawnParticle(Particle.PORTAL, victim.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.6, 0.3, 0.1);
+    }
+
+    private void kreutzManaCharge(Player p) {
+        if (this.isOnCooldown(p.getUniqueId())) {
+            Long cd = this.skillCooldowns.get(p.getUniqueId());
+            float remainF = cd != null ? (float)(cd - System.currentTimeMillis()) / 1000.0f : 0.0f;
+            p.sendMessage("\u00a7c\u30de\u30ca\u30c1\u30e3\u30fc\u30b8CT\u4e2d\uff01 \u00a77\u6b8b\u308a\u00a7f" + String.format("%.1f", Float.valueOf(remainF)) + "\u00a77\u79d2");
+            return;
+        }
+        this.setCooldown(p.getUniqueId(), 10000L);
+        this.addKreutzMana(p.getUniqueId(), 60.0);
+        p.sendMessage("\u00a75\u00a7l\u2726 \u30de\u30ca\u30c1\u30e3\u30fc\u30b8\uff01\u00a7f+60 \u00a77(\u00a7f" + String.format("%.0f", this.getKreutzMana(p.getUniqueId())) + "/150\u00a77)");
+        p.getWorld().playSound(p.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1.0f, 0.8f);
+        p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation().add(0.0, 1.0, 0.0), 40, 0.4, 0.9, 0.4, 0.2);
+        p.getWorld().spawnParticle(Particle.SPELL_MOB, p.getLocation().add(0.0, 1.0, 0.0), 25, 0.3, 0.7, 0.3, 0.0);
     }
 
     public void bulwarkUltimate(final Player p) {
@@ -3798,7 +3871,7 @@ public class SkillManager {
                     team2.addEntry(skel.getUniqueId().toString());
                 }
             }
-        }.runTaskTimer((Plugin)this.plugin, 400L, 400L);
+        }.runTaskTimer((Plugin)this.plugin, 800L, 800L);
     }
 
     private void bulwarkSkill(Player p) {
@@ -4049,12 +4122,12 @@ public class SkillManager {
         w.playSound(p.getLocation(), Sound.BLOCK_GLASS_BREAK, 1.0f, 1.5f);
         w.spawnParticle(Particle.SNOW_SHOVEL, p.getEyeLocation(), 30, 0.2, 0.2, 0.2, 0.2);
         for (Player t : w.getPlayers()) {
-            if (t == p || !this.gm.isParticipant(t) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p) || this.gm.isSpectator(t)) {
+            if (t.getUniqueId().equals(p.getUniqueId()) || !this.gm.isParticipant(t) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p) || this.gm.isSpectator(t)) {
                 continue;
             }
             Vector toTarget = t.getLocation().toVector().subtract(p.getLocation().toVector());
             double dist = toTarget.length();
-            if (dist > 6.0) {
+            if (dist > 6.0 || dist < 1.0) {
                 continue;
             }
             Vector norm = toTarget.clone().normalize();
@@ -4074,7 +4147,7 @@ public class SkillManager {
             return;
         }
         this.setCooldown(p.getUniqueId(), 12000L);
-        Location center = p.getLocation().clone().add(0.0, -1.0, 0.0);
+        Location center = p.getLocation().clone();
         World w = p.getWorld();
         w.spawnParticle(Particle.SNOWBALL, center.clone().add(0.0, 1.0, 0.0), 15, 0.3, 0.3, 0.3, 0.1);
         w.playSound(center, Sound.BLOCK_GLASS_PLACE, 0.8f, 0.5f);
@@ -4103,8 +4176,13 @@ public class SkillManager {
                     return;
                 }
                 Location loc = center.clone().add(dx * dist, 0.0, dz * dist);
-                loc.setY(center.getY());
-                if (!loc.getBlock().getType().isAir()) {
+                loc.setY(center.getY() + 0.2);
+                Block b = loc.getBlock();
+                if (!b.getType().isAir()) {
+                    if (dist <= 0.4) {
+                        cancel();
+                        return;
+                    }
                     size = 1.2;
                     this.cancel();
                     return;

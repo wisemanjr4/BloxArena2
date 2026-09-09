@@ -225,7 +225,8 @@ implements Listener {
         double x = loc.getX();
         double y = loc.getY();
         double z = loc.getZ();
-        return x >= Math.min(min.getX(), max.getX()) && x <= Math.max(min.getX(), max.getX()) && y >= Math.min(min.getY(), max.getY()) && y <= Math.max(min.getY(), max.getY()) && z >= Math.min(min.getZ(), max.getZ()) && z <= Math.max(min.getZ(), max.getZ());
+        boolean yOk = y >= Math.min(min.getY(), max.getY()) && y <= Math.max(min.getY(), max.getY()) + 4.0;
+        return x >= Math.min(min.getX(), max.getX()) && x <= Math.max(min.getX(), max.getX()) && yOk && z >= Math.min(min.getZ(), max.getZ()) && z <= Math.max(min.getZ(), max.getZ());
     }
 
     @EventHandler
@@ -710,6 +711,9 @@ implements Listener {
             Entity damageSource = e.getDamager();
             bondOwner.damage(redirected, damageSource);
             bondOwner.getWorld().spawnParticle(Particle.REDSTONE, bondOwner.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.0, new Particle.DustOptions(org.bukkit.Color.RED, 1.0f));
+        }
+        if (this.gm.getPlayerKitType(victim.getUniqueId()) == KitType.KREUTZ && this.plugin.getSkillManager().getKreutzMana(victim.getUniqueId()) >= 75.0 && this.plugin.getSkillManager().isKreutzPerkReady(victim.getUniqueId())) {
+            this.plugin.getSkillManager().triggerKreutzManaPerk(victim);
         }
     }
 

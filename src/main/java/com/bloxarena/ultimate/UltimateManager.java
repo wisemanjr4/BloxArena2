@@ -178,7 +178,7 @@ public class UltimateManager {
         }
         this.charge.put(p.getUniqueId(), 0);
         p.sendMessage("\u00a7d\u00a7l\u2605 ALTMATE \u767a\u52d5\uff01 " + this.ultimateName(kit));
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 0.5f);
+        this.playUltimateIntro(p, kit);
         switch (kit) {
             case BLADE: this.bladeUltimate(p); break;
             case BREAKER: this.breakerUltimate(p); break;
@@ -243,7 +243,9 @@ public class UltimateManager {
                 this.cur.getWorld().spawnParticle(Particle.SWEEP_ATTACK, this.cur, 3, 0.4, 0.2, 0.4, 0.0);
                 for (Entity e : this.cur.getWorld().getNearbyEntities(this.cur, 1.2, 1.5, 1.2)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
-                    ((Player)e).setHealth(0.0);
+                    Player bladeVictim = (Player)e;
+                    bladeVictim.damage(20.0, (Entity)p);
+                    UltimateManager.this.killEffect(bladeVictim);
                     this.cancel();
                     return;
                 }
@@ -275,7 +277,8 @@ public class UltimateManager {
             for (Entity e : check.getWorld().getNearbyEntities(check, 1.0, 2.0, 1.0)) {
                 if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                 Player t = (Player)e;
-                t.setHealth(0.0);
+                t.damage(20.0, (Entity)p);
+                UltimateManager.this.killEffect(t);
                 t.setVelocity(dir.clone().multiply(3.0).setY(0.8));
             }
         }
@@ -293,8 +296,10 @@ public class UltimateManager {
             behind = target.getLocation().clone();
         }
         behind.setY(behind.getY() + 0.2);
+        p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.8, 0.3, 0.1);
         p.teleport(behind);
-        target.setHealth(0.0);
+        target.damage(20.0, (Entity)p);
+        this.killEffect(target);
         p.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.5f);
     }
 
@@ -319,7 +324,9 @@ public class UltimateManager {
                 w.spawnParticle(Particle.FLAME, this.cur, 10, 0.6, 0.6, 0.6, 0.03);
                 for (Entity e : w.getNearbyEntities(this.cur, 3.0, 2.0, 3.0)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
-                    ((Player)e).setHealth(0.0);
+                    Player bersVictim = (Player)e;
+                    bersVictim.damage(20.0, (Entity)p);
+                    UltimateManager.this.killEffect(bersVictim);
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
@@ -329,30 +336,42 @@ public class UltimateManager {
         final Vector dir = p.getLocation().getDirection().normalize();
         final Location start = p.getLocation().clone().add(dir.clone().multiply(2.0));
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1.5f, 0.5f);
+        p.getWorld().spawnParticle(Particle.FLAME, p.getLocation().add(0.0, 1.0, 0.0), 40, 0.5, 1.0, 0.5, 0.1);
+        p.getWorld().spawnParticle(Particle.LAVA, p.getLocation().add(0.0, 1.0, 0.0), 10, 0.5, 0.8, 0.5, 0.0);
         new BukkitRunnable(){
             int t = 0;
             Location cur = start.clone();
             public void run() {
-                if (this.t++ > 40) {
+                if (this.t++ > 60) {
+                    World we = this.cur.getWorld();
+                    we.playSound(this.cur, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.6f);
+                    we.spawnParticle(Particle.EXPLOSION_HUGE, this.cur, 5, 1.0, 1.0, 1.0, 0.1);
+                    we.spawnParticle(Particle.FLAME, this.cur, 60, 2.0, 2.0, 2.0, 0.05);
+                    we.spawnParticle(Particle.LAVA, this.cur, 20, 1.5, 1.5, 1.5, 0.0);
+                    for (Entity e : we.getNearbyEntities(this.cur, 3.0, 3.0, 3.0)) {
+                        if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
+                        ((Player)e).damage(6.0, (Entity)p);
+                    }
                     this.cancel();
                     return;
                 }
-                this.cur.add(dir.clone().multiply(0.4));
+                this.cur.add(dir.clone().multiply(0.6));
                 World w = this.cur.getWorld();
-                for (int dx = -1; dx <= 1; ++dx) {
-                    for (int dy = -1; dy <= 1; ++dy) {
-                        for (int dz = -1; dz <= 1; ++dz) {
+                for (int dx = -2; dx <= 2; ++dx) {
+                    for (int dy = -2; dy <= 2; ++dy) {
+                        for (int dz = -2; dz <= 2; ++dz) {
                             w.spawnParticle(Particle.FLAME, this.cur.clone().add(dx, dy + 0.5, dz), 1, 0.2, 0.2, 0.2, 0.01);
                         }
                     }
                 }
-                for (Entity e : w.getNearbyEntities(this.cur, 2.0, 2.0, 2.0)) {
+                w.spawnParticle(Particle.LAVA, this.cur.clone().add(0.0, 1.0, 0.0), 2, 1.5, 1.5, 1.5, 0.0);
+                for (Entity e : w.getNearbyEntities(this.cur, 2.5, 2.5, 2.5)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player t2 = (Player)e;
                     t2.setFireTicks(80);
                     Bukkit.getScheduler().runTaskLater((Plugin)UltimateManager.this.plugin, () -> {
                         if (t2.isOnline() && t2.getFireTicks() > 0) {
-                            t2.damage(4.0, (Entity)p);
+                            t2.damage(8.0, (Entity)p);
                         }
                     }, 20L);
                 }
@@ -365,6 +384,8 @@ public class UltimateManager {
         ball.setVelocity(p.getLocation().getDirection().normalize().multiply(1.4));
         ball.setCustomName("jesterBind");
         ball.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "jester_bind"), PersistentDataType.BYTE, (byte)1);
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 1.0f, 1.4f);
+        p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation().add(0.0, 1.0, 0.0), 20, 0.4, 0.8, 0.4, 0.1);
         p.sendMessage("\u00a7e\u00a7l\u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af\uff01");
     }
 
@@ -380,7 +401,9 @@ public class UltimateManager {
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
                 World w = loc.getWorld();
                 w.createExplosion(loc, 4.0f, false, false, (Entity)owner);
-                w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 8, 2.0, 2.0, 2.0, 0.1);
+                w.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.5f);
+                w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 12, 2.0, 2.0, 2.0, 0.1);
+                w.spawnParticle(Particle.LAVA, loc, 15, 1.5, 1.5, 1.5, 0.0);
                 for (Entity e : w.getNearbyEntities(loc, 5.0, 3.0, 5.0)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(owner, (Player)e)) continue;
                     ((Player)e).damage(15.0, (Entity)owner);
@@ -416,6 +439,8 @@ public class UltimateManager {
         Location mark = b != null ? b.getLocation().add(0.5, 1.0, 0.5) : p.getLocation().clone();
         this.swapperMark.put(p.getUniqueId(), mark);
         this.skillManager.setSwapperMark(p, mark);
+        mark.getWorld().spawnParticle(Particle.PORTAL, mark, 30, 0.5, 1.0, 0.5, 0.1);
+        p.getWorld().playSound(mark, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.8f);
         p.sendMessage("\u00a75\u00a7l\u30de\u30fc\u30af\u4f4d\u7f6e\u3092\u8a18\u9332\u3057\u307e\u3057\u305f\uff01");
     }
 
@@ -531,6 +556,7 @@ public class UltimateManager {
             World w = target.getWorld();
             w.playSound(target, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.5f);
             w.spawnParticle(Particle.EXPLOSION_HUGE, target, 10, 3.0, 3.0, 3.0, 0.1);
+            w.spawnParticle(Particle.LAVA, target, 20, 2.0, 2.0, 2.0, 0.0);
             for (Entity e : w.getNearbyEntities(target, 6.0, 4.0, 6.0)) {
                 if (!(e instanceof Player) || !UltimateManager.this.isEnemy(owner, (Player)e)) continue;
                 ((Player)e).damage(15.0, (Entity)owner);
@@ -541,6 +567,8 @@ public class UltimateManager {
 
     private void alchemistUltimate(final Player p) {
         p.sendMessage("\u00a7d\u00a7l\u88fd\u85ac\u30d5\u30a3\u30fc\u30d0\u30fc\uff01\u30dd\u30fc\u30b7\u30e7\u30f3\u304c\u6e1b\u308a\u307e\u305b\u3093\uff01");
+        p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 1.0f, 1.0f);
+        p.getWorld().spawnParticle(Particle.SPELL_WITCH, p.getLocation().add(0.0, 1.0, 0.0), 30, 0.4, 0.8, 0.4, 0.05);
         final UUID uid = p.getUniqueId();
         BukkitTask task = new BukkitRunnable(){
             public void run() {
@@ -583,6 +611,8 @@ public class UltimateManager {
             return;
         }
         this.skillManager.setDeadlocked(target, 15000L);
+        target.getWorld().spawnParticle(Particle.CRIT_MAGIC, target.getLocation().add(0.0, 1.0, 0.0), 30, 0.4, 0.8, 0.4, 0.1);
+        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_ANVIL_LAND, 1.0f, 1.5f);
         target.sendMessage("\u00a78\u00a7l\u30de\u30b9\u30ed\u30c3\u30af\uff01");
         p.sendMessage("\u00a78\u00a7l\u30de\u30b9\u30ed\u30c3\u30af\u6210\u529f\uff01");
     }
@@ -595,6 +625,8 @@ public class UltimateManager {
         }
         final Location mark = target.getLocation().clone();
         final Player victim = target;
+        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 0.7f);
+        target.getWorld().spawnParticle(Particle.PORTAL, mark.clone().add(0.0, 1.0, 0.0), 20, 0.4, 0.8, 0.4, 0.05);
         target.sendMessage("\u00a7b\u00a7l\u30ea\u30ef\u30a4\u30f3\u30c9\u30de\u30fc\u30af\uff0110\u79d2\u5f8c\u306b\u623b\u3055\u308c\u307e\u3059\uff01");
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             if (victim.isOnline() && victim.isValid()) {
@@ -614,14 +646,18 @@ public class UltimateManager {
             Vector toT = t.getLocation().toVector().subtract(p.getLocation().toVector()).setY(0).normalize();
             if (facing.dot(toT) < -0.2) continue;
             this.skillManager.setDeadlocked(t, 30000L);
+            t.getWorld().spawnParticle(Particle.SPELL_WITCH, t.getLocation().add(0.0, 1.0, 0.0), 15, 0.3, 0.6, 0.3, 0.05);
             t.sendMessage("\u00a75\u00a7l\u546a\u7e1b\uff01\u30b9\u30ad\u30eb\u4f7f\u7528\u4e0d\u53ef\uff01");
             ++count;
         }
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 1.0f, 0.6f);
         p.sendMessage("\u00a75\u00a7l\u546a\u7e1b\u9818\u57df\uff01" + count + "\u4eba\u306b\u65bd\u3057\u307e\u3057\u305f\uff01");
     }
 
     private void guardianUltimate(Player p) {
         TeamColor team = this.gm.getTeamOf(p);
+        p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.2f);
+        p.getWorld().spawnParticle(Particle.CRIT_MAGIC, p.getLocation().add(0.0, 1.0, 0.0), 20, 1.0, 1.0, 1.0, 0.1);
         for (Entity e : p.getWorld().getNearbyEntities(p.getLocation(), 15.0, 15.0, 15.0)) {
             if (!(e instanceof Player) || (team != null && this.gm.getTeamOf((Player)e) != team)) continue;
             Player ally = (Player)e;
@@ -640,6 +676,8 @@ public class UltimateManager {
 
     private void medicUltimate(final Player p) {
         p.sendMessage("\u00a75\u00a7l\u30ea\u30a2\u30af\u30c6\u30a3\u30d6\u30d2\u30fc\u30eb\uff0130\u79d2\u9593\u5473\u65b9\u306b\u518d\u751f\uff01");
+        p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.6f);
+        p.getWorld().spawnParticle(Particle.HEART, p.getLocation().add(0.0, 1.5, 0.0), 10, 0.4, 0.6, 0.4, 0.0);
         final TeamColor team = this.gm.getTeamOf(p);
         new BukkitRunnable(){
             int t = 0;
@@ -658,6 +696,7 @@ public class UltimateManager {
 
     private void supporterUltimate(Player p) {
         TeamColor team = this.gm.getTeamOf(p);
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
         for (Player ally : Bukkit.getOnlinePlayers()) {
             if (!participant(ally) || (team != null && this.gm.getTeamOf(ally) != team)) continue;
             ally.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 600, 0, false, true));
@@ -665,6 +704,7 @@ public class UltimateManager {
             ally.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 600, 0, false, true));
             ally.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 1, false, true));
             ally.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 600, 1, false, true));
+            ally.getWorld().spawnParticle(Particle.CRIT_MAGIC, ally.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
         }
         p.sendMessage("\u00a7a\u00a7l\u30d5\u30eb\u30a2\u30fc\u30de\u30fc\uff01\u5473\u65b9\u306b\u57fa\u790e\u30d0\u30d5\uff01");
     }
@@ -707,6 +747,7 @@ public class UltimateManager {
         World w = p.getWorld();
         w.createExplosion(loc, 6.0f, false, false, (Entity)p);
         w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 12, 4.0, 3.0, 4.0, 0.1);
+        w.spawnParticle(Particle.LAVA, loc, 20, 3.0, 2.0, 3.0, 0.0);
         w.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.4f);
         for (Entity e : w.getNearbyEntities(loc, 8.0, 4.0, 8.0)) {
             if (!(e instanceof Player) || !isEnemy(p, (Player)e)) continue;
@@ -719,9 +760,11 @@ public class UltimateManager {
 
     private void aegisUltimate(Player p) {
         TeamColor team = this.gm.getTeamOf(p);
+        p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.4f);
         for (Player ally : Bukkit.getOnlinePlayers()) {
             if (!participant(ally) || (team != null && this.gm.getTeamOf(ally) != team)) continue;
             ally.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 600, 0, false, true));
+            ally.getWorld().spawnParticle(Particle.CRIT_MAGIC, ally.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
         }
         p.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 2, false, true));
         p.sendMessage("\u00a7a\u00a7l\u5b8c\u5168\u5e87\u62a0\uff01\u5473\u65b9\u306e\u53d7\u3051\u308b\u30c0\u30e1\u30fc\u30b8\u304c\u534a\u6e1b\uff01");
@@ -753,6 +796,34 @@ public class UltimateManager {
 
     private boolean participant(Player p) {
         return p != null && p.isOnline() && this.gm.isParticipant(p) && !this.gm.isSpectator(p) && this.gm.getState() == GameState.IN_GAME;
+    }
+
+    private void playUltimateIntro(Player p, KitType kit) {
+        Sound sound = Sound.ENTITY_WITHER_SPAWN;
+        float pitch = 0.5f;
+        KitRole role = kit.getRole();
+        if (role == KitRole.DUELIST) {
+            sound = Sound.ENTITY_ENDER_DRAGON_GROWL;
+            pitch = 0.8f;
+        } else if (role == KitRole.INITIATOR) {
+            sound = Sound.ENTITY_RAVAGER_ROAR;
+            pitch = 1.2f;
+        } else if (role == KitRole.SENTINEL) {
+            sound = Sound.BLOCK_BEACON_ACTIVATE;
+            pitch = 0.6f;
+        } else if (role == KitRole.CONTROLLER) {
+            sound = Sound.ENTITY_EVOKER_CAST_SPELL;
+            pitch = 0.6f;
+        }
+        p.getWorld().playSound(p.getLocation(), sound, 1.2f, pitch);
+        p.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, p.getLocation().add(0.0, 1.0, 0.0), 3, 0.5, 0.8, 0.5, 0.05);
+        p.getWorld().spawnParticle(Particle.CRIT_MAGIC, p.getLocation().add(0.0, 1.0, 0.0), 30, 0.6, 1.0, 0.6, 0.1);
+    }
+
+    private void killEffect(Player victim) {
+        victim.getWorld().spawnParticle(Particle.SWEEP_ATTACK, victim.getLocation().add(0.0, 1.0, 0.0), 6, 0.5, 0.6, 0.5, 0.0);
+        victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.6, 0.3, 0.15);
+        victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.7f);
     }
 
     private boolean isEnemy(Player self, Player other) {
