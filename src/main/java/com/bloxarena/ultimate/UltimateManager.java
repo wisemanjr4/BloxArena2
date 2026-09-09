@@ -244,7 +244,7 @@ public class UltimateManager {
                 for (Entity e : this.cur.getWorld().getNearbyEntities(this.cur, 1.2, 1.5, 1.2)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player bladeVictim = (Player)e;
-                    bladeVictim.damage(16.0, (Entity)p);
+                    bladeVictim.damage(26.0, (Entity)p);
         UltimateManager.this.killEffect(bladeVictim);
                     bladeVictim.damage(0.5, (Entity)p);
                     UltimateManager.this.killEffect(bladeVictim);
@@ -279,7 +279,7 @@ public class UltimateManager {
             for (Entity e : check.getWorld().getNearbyEntities(check, 1.0, 2.0, 1.0)) {
                 if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                 Player t = (Player)e;
-                t.damage(16.0, (Entity)p);
+                t.damage(26.0, (Entity)p);
                 UltimateManager.this.killEffect(t);
                 t.setVelocity(dir.clone().multiply(3.0).setY(0.8));
             }
@@ -300,7 +300,7 @@ public class UltimateManager {
         behind.setY(behind.getY() + 0.2);
         p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.8, 0.3, 0.1);
         p.teleport(behind);
-        target.damage(16.0, (Entity)p);
+        target.damage(26.0, (Entity)p);
         this.killEffect(target);
         p.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.5f);
     }
@@ -327,7 +327,7 @@ public class UltimateManager {
                 for (Entity e : w.getNearbyEntities(this.cur, 3.0, 2.0, 3.0)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player bersVictim = (Player)e;
-                    bersVictim.damage(16.0, (Entity)p);
+                    bersVictim.damage(26.0, (Entity)p);
                     UltimateManager.this.killEffect(bersVictim);
                 }
             }

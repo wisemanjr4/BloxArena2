@@ -527,7 +527,7 @@ public class SkillManager {
 
     public boolean onSniperHit(Player shooter, Player victim) {
         if (this.sniperUltimate.remove(shooter.getUniqueId()) && this.gm.getPlayerKitType(shooter.getUniqueId()) == KitType.SNIPER) {
-            victim.damage(16.0, (Entity)shooter);
+            victim.damage(26.0, (Entity)shooter);
             shooter.getWorld().playSound(shooter.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 2.0f);
             shooter.sendMessage("\u00a7c\u00a7l\u30a2\u30a4\u30fb\u30aa\u30d6\u30fb\u30db\u30eb\u30b9\uff01");
             return true;
