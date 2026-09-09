@@ -148,6 +148,7 @@ public class TestFieldManager {
                 }
                 this.plugin.getSkillManager().update();
                 this.plugin.getSkillManager().updateTurrets();
+                this.plugin.getSkillManager().updateKitActionBars();
             }, 0L, 20L);
         }
     }

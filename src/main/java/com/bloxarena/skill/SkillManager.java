@@ -1203,7 +1203,6 @@ public class SkillManager {
             if (!this.gm.isParticipant(pl) || this.gm.isSpectator(pl)) continue;
             this.plugin.getUltimateManager().tickCharge(pl);
         }
-        this.updateKitActionBars();
         long now = System.currentTimeMillis();
         new ArrayList<Map.Entry<UUID, Long>>(this.comboLastHit.entrySet()).forEach(e2 -> {
             if (now - e2.getValue() > 3000L) {
@@ -1350,7 +1349,7 @@ public class SkillManager {
         }
     }
 
-    private void updateKitActionBars() {
+    public void updateKitActionBars() {
         block14: for (Player p : Bukkit.getOnlinePlayers()) {
             KitType kit;
             if (!this.gm.isParticipant(p) || this.gm.isSpectator(p) || (kit = this.gm.getPlayerKitType(p.getUniqueId())) == null) continue;

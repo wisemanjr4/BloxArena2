@@ -1,24 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  org.bukkit.Bukkit
- *  org.bukkit.ChatColor
- *  org.bukkit.GameMode
- *  org.bukkit.entity.Player
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.potion.PotionEffect
- *  org.bukkit.potion.PotionEffectType
- *  org.bukkit.scheduler.BukkitTask
- *  org.bukkit.scoreboard.Criteria
- *  org.bukkit.scoreboard.DisplaySlot
- *  org.bukkit.scoreboard.Objective
- *  org.bukkit.scoreboard.Score
- *  org.bukkit.scoreboard.Scoreboard
- *  org.bukkit.scoreboard.Team
- *  org.bukkit.scoreboard.Team$Option
- *  org.bukkit.scoreboard.Team$OptionStatus
- */
 package com.bloxarena.scoreboard;
 
 import com.bloxarena.BloxArenaPlugin;
@@ -44,13 +23,14 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Criteria;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 public class ScoreboardManager {
+    private static final int LINE_COUNT = 15;
     private final BloxArenaPlugin plugin;
     private BukkitTask task;
+    private BukkitTask logicTask;
     private long startTime;
     private boolean suddenDeathAnnounced = false;
     private final Map<UUID, Scoreboard> playerBoards = new HashMap<UUID, Scoreboard>();
@@ -67,7 +47,11 @@ public class ScoreboardManager {
         this.startTime = System.currentTimeMillis();
         this.suddenDeathAnnounced = false;
         this.setupPlayerBoards(gm);
-        this.task = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, this::update, 0L, 20L);
+        this.logicTask = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, () -> {
+            this.plugin.getSkillManager().update();
+            this.plugin.getSkillManager().updateTurrets();
+        }, 0L, 20L);
+        this.task = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, this::update, 0L, 4L);
     }
 
     private void setupPlayerBoards(GameManager gm) {
@@ -93,36 +77,52 @@ public class ScoreboardManager {
                     ffaTeam.addEntry(fp.getName());
                 }
                 ffaTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
-                p.setScoreboard(board);
-                this.playerBoards.put(uid, board);
-                continue;
+            } else {
+                Team redTeam = board.registerNewTeam("blox_red");
+                redTeam.setColor(ChatColor.RED);
+                redTeam.setPrefix("\u00a7c");
+                redTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
+                redTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+                Team blueTeam = board.registerNewTeam("blox_blue");
+                blueTeam.setColor(ChatColor.AQUA);
+                blueTeam.setPrefix("\u00a7b");
+                blueTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
+                blueTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+                Team necroRed = board.registerNewTeam("necro_red");
+                necroRed.setAllowFriendlyFire(false);
+                Team necroBlue = board.registerNewTeam("necro_blue");
+                necroBlue.setAllowFriendlyFire(false);
+                for (UUID rid : gm.getRedTeam()) {
+                    Player rp = Bukkit.getPlayer((UUID)rid);
+                    if (rp == null) continue;
+                    redTeam.addEntry(rp.getName());
+                }
+                for (UUID bid : gm.getBlueTeam()) {
+                    Player bp = Bukkit.getPlayer((UUID)bid);
+                    if (bp == null) continue;
+                    blueTeam.addEntry(bp.getName());
+                }
             }
-            Team redTeam = board.registerNewTeam("blox_red");
-            redTeam.setColor(ChatColor.RED);
-            redTeam.setPrefix("\u00a7c");
-            redTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
-            redTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-            Team blueTeam = board.registerNewTeam("blox_blue");
-            blueTeam.setColor(ChatColor.AQUA);
-            blueTeam.setPrefix("\u00a7b");
-            blueTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
-            blueTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-            Team necroRed = board.registerNewTeam("necro_red");
-            necroRed.setAllowFriendlyFire(false);
-            Team necroBlue = board.registerNewTeam("necro_blue");
-            necroBlue.setAllowFriendlyFire(false);
-            for (UUID rid : gm.getRedTeam()) {
-                Player rp = Bukkit.getPlayer((UUID)rid);
-                if (rp == null) continue;
-                redTeam.addEntry(rp.getName());
-            }
-            for (UUID bid : gm.getBlueTeam()) {
-                Player bp = Bukkit.getPlayer((UUID)bid);
-                if (bp == null) continue;
-                blueTeam.addEntry(bp.getName());
-            }
+            this.prepareBoard(board);
             p.setScoreboard(board);
             this.playerBoards.put(uid, board);
+        }
+    }
+
+    private void prepareBoard(Scoreboard board) {
+        try {
+            Objective obj = board.registerNewObjective("bloxarena", Criteria.DUMMY, "\u00a76\u00a7lBAII WoNG");
+            obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+            for (int i = 0; i < LINE_COUNT; ++i) {
+                String entry = ChatColor.values()[i].toString() + ChatColor.RESET;
+                Team line = board.registerNewTeam("line" + i);
+                line.addEntry(entry);
+                obj.getScore(entry).setScore(LINE_COUNT - i);
+                line.setPrefix("");
+                line.setSuffix("");
+            }
+        }
+        catch (Exception e) {
         }
     }
 
@@ -131,6 +131,10 @@ public class ScoreboardManager {
             this.task.cancel();
             this.task = null;
         }
+        if (this.logicTask != null) {
+            this.logicTask.cancel();
+            this.logicTask = null;
+        }
         this.playerBoards.clear();
         for (Player p : Bukkit.getOnlinePlayers()) {
             this.clearBoard(p);
@@ -138,8 +142,6 @@ public class ScoreboardManager {
     }
 
     private void update() {
-        boolean isTDM;
-        boolean isCTF;
         GameManager gm = this.plugin.getGameManager();
         if (gm.getState() != GameState.IN_GAME) {
             this.stop();
@@ -148,7 +150,7 @@ public class ScoreboardManager {
         int redAlive = gm.getAliveCount(TeamColor.RED);
         int blueAlive = gm.getAliveCount(TeamColor.BLUE);
         long elapsed = (System.currentTimeMillis() - this.startTime) / 1000L;
-        boolean bl = isCTF = gm.getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG;
+        boolean isCTF = gm.getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG;
         if (isCTF && elapsed >= 600L && !this.suddenDeathAnnounced) {
             int blueCaps;
             this.suddenDeathAnnounced = true;
@@ -177,15 +179,13 @@ public class ScoreboardManager {
                 p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 60, 254, false, false));
             }
         }
-        Object time = String.format("%02d:%02d", elapsed / 60L, elapsed % 60L);
+        String time = String.format("%02d:%02d", elapsed / 60L, elapsed % 60L);
         int round = gm.getCurrentRound();
         int winsRed = gm.getRoundWinsRed();
         int winsBlue = gm.getRoundWinsBlue();
         int winsToWin = gm.getWinsToWin();
         Map<UUID, KitType> kitMap = gm.getPlayerKits();
-        this.plugin.getSkillManager().update();
-        this.plugin.getSkillManager().updateTurrets();
-        boolean bl2 = isTDM = gm.getCurrentGameMode() == GameMode.TEAM_DEATHMATCH;
+        boolean isTDM = gm.getCurrentGameMode() == GameMode.TEAM_DEATHMATCH;
         if (isTDM) {
             redAlive = gm.getTdmKillsRed();
             blueAlive = gm.getTdmKillsBlue();
@@ -215,11 +215,12 @@ public class ScoreboardManager {
                 time = "\u23f1 " + (limit - (int)elapsed) + "/" + limit + "s";
             }
         }
+        this.plugin.getSkillManager().updateKitActionBars();
         this.applyOutnumberedBuff(gm, redAlive, blueAlive);
         for (Player p : Bukkit.getOnlinePlayers()) {
             KitType kit = kitMap.get(p.getUniqueId());
             TeamColor team = gm.getTeam(p.getUniqueId());
-            this.setBoard(p, redAlive, blueAlive, (String)time, kit, team, round, winsRed, winsBlue, winsToWin);
+            this.setBoard(p, redAlive, blueAlive, time, kit, team, round, winsRed, winsBlue, winsToWin);
         }
     }
 
@@ -262,9 +263,12 @@ public class ScoreboardManager {
     }
 
     private void setBoard(Player p, int red, int blue, String time, KitType kit, TeamColor team, int round, int winsRed, int winsBlue, int winsToWin) {
-        Objective obj;
         Scoreboard board = this.playerBoards.get(p.getUniqueId());
         if (board == null) {
+            return;
+        }
+        Objective obj = board.getObjective("bloxarena");
+        if (obj == null) {
             return;
         }
         GameManager gm = this.plugin.getGameManager();
@@ -282,92 +286,97 @@ public class ScoreboardManager {
         if (p.getScoreboard() != board) {
             p.setScoreboard(board);
         }
-        if ((obj = board.getObjective("bloxarena")) == null) {
-            try {
-                obj = board.registerNewObjective("bloxarena", Criteria.DUMMY, "\u00a76\u00a7lBAII WoNG");
-                obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-            }
-            catch (Exception e) {
-                return;
-            }
-        }
-        this.clearLines(board);
-        boolean isTDM = this.plugin.getGameManager().getCurrentGameMode() == GameMode.TEAM_DEATHMATCH;
-        boolean isDom = this.plugin.getGameManager().getCurrentGameMode() == GameMode.DOMINATION;
-        boolean isCTF = this.plugin.getGameManager().getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG;
-        boolean isFFA = this.plugin.getGameManager().getCurrentGameMode() == GameMode.FFA;
-        int line = 16;
-        this.score(board, obj, "\u00a7r\u00a7f ", line--);
-        MapConfig currentMap = this.plugin.getGameManager().getCurrentMap();
+        boolean isTDM = gm.getCurrentGameMode() == GameMode.TEAM_DEATHMATCH;
+        boolean isDom = gm.getCurrentGameMode() == GameMode.DOMINATION;
+        boolean isCTF = gm.getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG;
+        boolean isFFA = gm.getCurrentGameMode() == GameMode.FFA;
+        ArrayList<String> lines = new ArrayList<String>();
+        lines.add("\u00a76\u00a7l\u00a7m\u2501\u2501\u2501\u2501 BAII WoNG \u2501\u2501\u2501\u2501\u00a7r");
+        MapConfig currentMap = gm.getCurrentMap();
         if (currentMap != null) {
             String mapName = currentMap.getDisplayName() != null ? currentMap.getDisplayName() : currentMap.getId();
-            this.score(board, obj, "\u00a7eMAP: \u00a7f" + mapName, line--);
+            lines.add("\u00a7eMAP \u00a77\u00bb \u00a7f" + mapName);
         }
         if (!(isTDM || isCTF || isFFA)) {
-            this.score(board, obj, "\u00a76\u30e9\u30a6\u30f3\u30c9 \u00a7f" + round, line--);
+            lines.add("\u00a76\u30e9\u30a6\u30f3\u30c9 \u00a77\u00bb \u00a7f" + round);
         }
-        this.score(board, obj, "\u00a7d" + this.plugin.getGameManager().getCurrentGameMode().getDisplayName(), line--);
+        lines.add("\u00a7d" + gm.getCurrentGameMode().getDisplayName());
         if (!(isTDM || isCTF || isFFA)) {
-            this.score(board, obj, "\u00a7c\u25cf".repeat(winsRed) + "\u00a77\u25cb".repeat(winsToWin - winsRed) + " \u00a77vs \u00a79" + "\u25cf".repeat(winsBlue) + "\u00a77\u25cb".repeat(winsToWin - winsBlue), line--);
+            lines.add("\u00a7c" + "\u25cf".repeat(winsRed) + "\u00a77" + "\u25cb".repeat(winsToWin - winsRed) + " \u00a77vs \u00a79" + "\u25cf".repeat(winsBlue) + "\u00a77" + "\u25cb".repeat(winsToWin - winsBlue));
         }
-        this.score(board, obj, "\u00a7r\u00a7f  ", line--);
+        lines.add("\u00a7r");
         if (isFFA) {
-            this.score(board, obj, "\u00a7e\u751f\u5b58\u8005: \u00a7f" + red + "\u00a77/\u00a7f" + blue, line--);
-            this.score(board, obj, "\u00a77\u5236\u9650\u6642\u9593: \u00a7f" + time, line--);
+            lines.add("\u00a7e\u751f\u5b58\u8005: \u00a7f" + red + "\u00a77/\u00a7f" + blue);
+            lines.add("\u00a77\u5236\u9650\u6642\u9593: \u00a7f" + time);
         } else {
-            this.score(board, obj, "\u00a7c\u8d64: \u00a7f" + red + (isTDM ? "\u30ad\u30eb" : (isDom ? "pts" : (isCTF ? "\u596a\u53d6" : "\u4eba"))), line--);
-            this.score(board, obj, "\u00a79\u9752: \u00a7f" + blue + (isTDM ? "\u30ad\u30eb" : (isDom ? "pts" : (isCTF ? "\u596a\u53d6" : "\u4eba"))), line--);
-            this.score(board, obj, "\u00a7r\u00a7f   ", line--);
-            this.score(board, obj, "\u00a77\u7d4c\u904e: \u00a7f" + time, line--);
+            String unit = isTDM ? "\u30ad\u30eb" : (isDom ? "pts" : (isCTF ? "\u596a\u53d6" : "\u4eba"));
+            lines.add("\u00a7c\u8d64: \u00a7f" + red + unit);
+            lines.add("\u00a79\u9752: \u00a7f" + blue + unit);
+            lines.add("\u00a7r");
+            lines.add("\u00a77\u7d4c\u904e: \u00a7f" + time);
         }
-        this.score(board, obj, "\u00a7r\u00a7f    ", line--);
+        lines.add("\u00a7r");
         if (kit != null) {
-            this.score(board, obj, "\u00a7e\u30ad\u30c3\u30c8: \u00a7f" + kit.getDisplayName(), line--);
+            lines.add("\u00a7e\u30ad\u30c3\u30c8: \u00a7f" + kit.getDisplayName());
         }
         if (isFFA) {
-            int myKills = this.plugin.getGameManager().getFFAKills(p.getUniqueId());
-            this.score(board, obj, "\u00a76\u30ad\u30eb: \u00a7f" + myKills, line--);
+            lines.add("\u00a76\u30ad\u30eb: \u00a7f" + gm.getFFAKills(p.getUniqueId()));
         }
         if (team != null) {
-            this.score(board, obj, "\u00a77\u30c1\u30fc\u30e0: " + team.getColorCode() + team.getDisplayName(), line--);
+            lines.add("\u00a77\u30c1\u30fc\u30e0: " + team.getColorCode() + team.getDisplayName());
         }
         int ultCharge = this.plugin.getUltimateManager().getCharge(p.getUniqueId());
         if (ultCharge >= 100) {
-            this.score(board, obj, "\u00a7d\u00a7lULT READY!", line--);
+            lines.add("\u00a7d\u00a7l\u26a1 ULT READY!");
         } else {
-            this.score(board, obj, "\u00a7dULT \u00a7f[" + ultCharge + "%]", line--);
+            lines.add("\u00a7dULT \u00a7f[" + ultCharge + "%]");
         }
-        this.score(board, obj, "\u00a7r\u00a7f     ", line--);
+        lines.add("\u00a77\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u00a7r");
+        this.applyLines(board, obj, lines);
     }
 
-    private void score(Scoreboard board, Objective obj, String entry, int value) {
-        try {
-            Score s = obj.getScore(entry);
-            s.setScore(value);
-        }
-        catch (Exception exception) {
-            // empty catch block
+    private void applyLines(Scoreboard board, Objective obj, List<String> lines) {
+        for (int i = 0; i < LINE_COUNT; ++i) {
+            Team line = board.getTeam("line" + i);
+            if (line == null) continue;
+            String entry = ChatColor.values()[i].toString() + ChatColor.RESET;
+            String text = i < lines.size() ? lines.get(i) : "";
+            if (text.isEmpty()) {
+                line.setPrefix("");
+                line.setSuffix("");
+                board.resetScores(entry);
+                continue;
+            }
+            try {
+                obj.getScore(entry).setScore(LINE_COUNT - i);
+            }
+            catch (Exception e) {
+            }
+            this.setLineText(line, text);
         }
     }
 
-    private void clearLines(Scoreboard board) {
-        Objective obj = board.getObjective("bloxarena");
-        if (obj == null) {
+    private void setLineText(Team line, String text) {
+        if (text.length() <= 16) {
+            line.setPrefix(text);
+            line.setSuffix("");
             return;
         }
-        for (String entry : board.getEntries()) {
-            if (board.getEntryTeam(entry) != null) continue;
-            board.resetScores(entry);
+        int cut = 16;
+        if (text.charAt(15) == '\u00a7') {
+            cut = 15;
         }
+        String prefix = text.substring(0, cut);
+        String suffix = ChatColor.getLastColors(prefix) + text.substring(cut);
+        line.setPrefix(prefix);
+        line.setSuffix(suffix);
     }
 
     private void clearBoard(Player p) {
         try {
             p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
         }
-        catch (Exception exception) {
-            // empty catch block
+        catch (Exception e) {
         }
     }
 }
-
