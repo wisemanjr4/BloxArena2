@@ -159,6 +159,8 @@ public class KitInfoGUI {
             List<String> iconLore = new ArrayList<String>();
             iconLore.add("\u00a77\u5f79\u5272: " + kit.getRole().getName());
             iconLore.add("\u00a77" + kit.getDescription());
+            iconLore.add("");
+            iconLore.add("\u00a7d\u00a7l\u2605 ALTMATE\uff1a\u30b9\u30cb\u30fc\u30af+\u30b9\u30ad\u30eb\u661f\u53f3\u30af\u30ea\u3067\u767a\u52d5");
             iconMeta.setLore(iconLore);
             icon.setItemMeta(iconMeta);
         }

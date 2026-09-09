@@ -689,8 +689,21 @@ implements Listener {
                 attacker.sendMessage("\u00a75\u00a7l\u30d4\u30a2\u30c3\u30b7\u30f3\u30b0\uff01\u00a77\u9632\u5177\u8cab\u901a+2\u30c0\u30e1\u30fc\u30b8\uff01");
             }
         }
-        Player bondOwner = this.plugin.getSkillManager().getBondOwner(victim.getUniqueId());
-        if (bondOwner != null && victim != bondOwner) {
+        Entity ultSource = e.getDamager();
+        Player ultAttacker = null;
+        if (ultSource instanceof Player) {
+            ultAttacker = (Player)ultSource;
+        } else if (ultSource instanceof Projectile && ((Projectile)ultSource).getShooter() instanceof Player) {
+            ultAttacker = (Player)((Projectile)ultSource).getShooter();
+        }
+        if (ultAttacker != null && ultAttacker != victim && victimTeam != null && this.gm.getTeamOf(ultAttacker) != victimTeam) {
+            this.plugin.getUltimateManager().onDamageDealt(ultAttacker, e.getFinalDamage());
+            this.plugin.getUltimateManager().onDamageTaken(victim, e.getFinalDamage());
+        }
+        if (ultAttacker != null && this.gm.getPlayerKitType(ultAttacker.getUniqueId()) == KitType.GLACIES) {
+            this.plugin.getSkillManager().tryGlaciesImmobilize(ultAttacker, victim);
+        }
+        Player bondOwner = this.plugin.getSkillManager().getBondOwner(victim.getUniqueId());        if (bondOwner != null && victim != bondOwner) {
             double original = e.getDamage();
             double redirected = original / 2.0;
             e.setDamage(original - redirected);
@@ -805,6 +818,10 @@ implements Listener {
             this.plugin.getSkillManager().marksmanHeavyBoltHit(shooter, victim);
             e.getEntity().remove();
         }
+        if (this.plugin.getSkillManager().consumeMarksmanUltimate(shooter.getUniqueId())) {
+            Location hitLoc = e.getHitEntity() != null ? e.getHitEntity().getLocation() : (e.getHitBlock() != null ? e.getHitBlock().getLocation().add(0.5, 0.5, 0.5) : shooter.getLocation());
+            hitLoc.getWorld().createExplosion(hitLoc, 3.0f, false, false, (Entity)shooter);
+        }
     }
 
     @EventHandler
@@ -852,6 +869,11 @@ implements Listener {
             String matName = (String)ball.getPersistentDataContainer().get(new NamespacedKey((Plugin)this.plugin, "ba_cook"), PersistentDataType.STRING);
             if (matName != null) {
                 this.plugin.getSkillManager().cookHit(e.getEntity().getLocation(), shooter, Material.valueOf((String)matName));
+            }
+            e.getEntity().remove();
+        } else if (ball.getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "jester_bind"), PersistentDataType.BYTE)) {
+            if (e.getHitEntity() instanceof Player) {
+                this.plugin.getSkillManager().onJesterBindHit((Player)e.getHitEntity());
             }
             e.getEntity().remove();
         }

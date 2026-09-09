@@ -27,6 +27,7 @@ import com.bloxarena.song.NbsPlayer;
 import com.bloxarena.stats.StatsManager;
 import com.bloxarena.test.TestFieldManager;
 import com.bloxarena.tutorial.TutorialManager;
+import com.bloxarena.ultimate.UltimateManager;
 import com.bloxarena.util.SelectionTool;
 import java.io.File;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ extends JavaPlugin {
     private BotManager botManager;
     private ScoreboardManager scoreboardManager;
     private SkillManager skillManager;
+    private UltimateManager ultimateManager;
     private TestFieldManager testFieldManager;
     private TutorialManager tutorialManager;
     private final Set<UUID> oobImmunePlayers = new HashSet<UUID>();
@@ -71,6 +73,7 @@ extends JavaPlugin {
         this.scoreboardManager = new ScoreboardManager(this);
         this.gameManager = new GameManager(this);
         this.skillManager = new SkillManager(this);
+        this.ultimateManager = new UltimateManager(this);
         this.testFieldManager = new TestFieldManager(this);
         this.testFieldManager.reload();
         this.tutorialManager = new TutorialManager(this);
@@ -152,6 +155,10 @@ extends JavaPlugin {
 
     public SkillManager getSkillManager() {
         return this.skillManager;
+    }
+
+    public UltimateManager getUltimateManager() {
+        return this.ultimateManager;
     }
 
     public TestFieldManager getTestFieldManager() {
