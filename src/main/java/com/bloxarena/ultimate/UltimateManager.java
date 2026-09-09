@@ -88,9 +88,9 @@ public class UltimateManager {
         }
         int amount = 0;
         if (kit.getRole() == KitRole.DUELIST) {
-            amount = (int)(dmg * 3.0);
+            amount = (int)(dmg * 1.2);
         } else if (kit.getRole() == KitRole.INITIATOR) {
-            amount = (int)(dmg * 1.5);
+            amount = (int)(dmg * 0.6);
         }
         if (amount > 0) {
             this.addCharge(attacker.getUniqueId(), amount);
@@ -107,9 +107,9 @@ public class UltimateManager {
         }
         int amount = 0;
         if (kit.getRole() == KitRole.DUELIST) {
-            amount = (int)(dmg * 2.0);
+            amount = (int)(dmg * 0.8);
         } else if (kit.getRole() == KitRole.SENTINEL) {
-            amount = (int)(dmg * 4.0);
+            amount = (int)(dmg * 1.5);
         }
         if (amount > 0) {
             this.addCharge(victim.getUniqueId(), amount);
@@ -125,9 +125,9 @@ public class UltimateManager {
             return;
         }
         if (kit.getRole() == KitRole.INITIATOR) {
-            this.addCharge(p.getUniqueId(), 25);
+            this.addCharge(p.getUniqueId(), 12);
         } else if (kit.getRole() == KitRole.CONTROLLER) {
-            this.addCharge(p.getUniqueId(), 8);
+            this.addCharge(p.getUniqueId(), 4);
         }
     }
 
@@ -135,7 +135,7 @@ public class UltimateManager {
         if (!participant(killer)) {
             return;
         }
-        this.addCharge(killer.getUniqueId(), 15);
+        this.addCharge(killer.getUniqueId(), 6);
     }
 
     public void tickCharge(Player p) {
