@@ -244,7 +244,9 @@ public class UltimateManager {
                 for (Entity e : this.cur.getWorld().getNearbyEntities(this.cur, 1.2, 1.5, 1.2)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player bladeVictim = (Player)e;
-                    bladeVictim.damage(20.0, (Entity)p);
+                    bladeVictim.damage(16.0, (Entity)p);
+        UltimateManager.this.killEffect(bladeVictim);
+                    bladeVictim.damage(0.5, (Entity)p);
                     UltimateManager.this.killEffect(bladeVictim);
                     this.cancel();
                     return;
@@ -277,7 +279,7 @@ public class UltimateManager {
             for (Entity e : check.getWorld().getNearbyEntities(check, 1.0, 2.0, 1.0)) {
                 if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                 Player t = (Player)e;
-                t.damage(20.0, (Entity)p);
+                t.damage(16.0, (Entity)p);
                 UltimateManager.this.killEffect(t);
                 t.setVelocity(dir.clone().multiply(3.0).setY(0.8));
             }
@@ -298,7 +300,7 @@ public class UltimateManager {
         behind.setY(behind.getY() + 0.2);
         p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.8, 0.3, 0.1);
         p.teleport(behind);
-        target.damage(20.0, (Entity)p);
+        target.damage(16.0, (Entity)p);
         this.killEffect(target);
         p.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.5f);
     }
@@ -325,7 +327,7 @@ public class UltimateManager {
                 for (Entity e : w.getNearbyEntities(this.cur, 3.0, 2.0, 3.0)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player bersVictim = (Player)e;
-                    bersVictim.damage(20.0, (Entity)p);
+                    bersVictim.damage(16.0, (Entity)p);
                     UltimateManager.this.killEffect(bersVictim);
                 }
             }
@@ -406,7 +408,7 @@ public class UltimateManager {
                 w.spawnParticle(Particle.LAVA, loc, 15, 1.5, 1.5, 1.5, 0.0);
                 for (Entity e : w.getNearbyEntities(loc, 5.0, 3.0, 5.0)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(owner, (Player)e)) continue;
-                    ((Player)e).damage(15.0, (Entity)owner);
+                    ((Player)e).damage(12.0, (Entity)owner);
                 }
             }, 200L);
         }
@@ -559,7 +561,7 @@ public class UltimateManager {
             w.spawnParticle(Particle.LAVA, target, 20, 2.0, 2.0, 2.0, 0.0);
             for (Entity e : w.getNearbyEntities(target, 6.0, 4.0, 6.0)) {
                 if (!(e instanceof Player) || !UltimateManager.this.isEnemy(owner, (Player)e)) continue;
-                ((Player)e).damage(15.0, (Entity)owner);
+                ((Player)e).damage(12.0, (Entity)owner);
                 ((Player)e).setVelocity(((Player)e).getLocation().toVector().subtract(target.toVector()).normalize().multiply(2.0).setY(0.5));
             }
         }, 200L);
@@ -752,7 +754,7 @@ public class UltimateManager {
         for (Entity e : w.getNearbyEntities(loc, 8.0, 4.0, 8.0)) {
             if (!(e instanceof Player) || !isEnemy(p, (Player)e)) continue;
             Player t = (Player)e;
-            t.damage(12.0, (Entity)p);
+            t.damage(10.0, (Entity)p);
             t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(2.5).setY(1.0));
         }
         p.sendMessage("\u00a7e\u00a7l\u30ab\u30bf\u30b9\u30c8\u30ed\u30d5\uff01");
