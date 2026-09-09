@@ -45,6 +45,7 @@ public class UltimateManager {
     private final SkillManager skillManager;
     private final Map<UUID, Integer> charge = new HashMap<UUID, Integer>();
     private final Map<UUID, Long> lastTickTime = new HashMap<UUID, Long>();
+    private final Map<UUID, Double> chargeFraction = new HashMap<UUID, Double>();
     private final Map<UUID, Location> swapperMark = new HashMap<UUID, Location>();
     private final Map<UUID, Location> rewindMark = new HashMap<UUID, Location>();
     private final Map<UUID, Long> glaciesHitCooldown = new HashMap<UUID, Long>();
@@ -71,6 +72,7 @@ public class UltimateManager {
     public void resetAll() {
         this.charge.clear();
         this.lastTickTime.clear();
+        this.chargeFraction.clear();
         this.swapperMark.clear();
         this.rewindMark.clear();
         this.glaciesHitCooldown.clear();
@@ -86,9 +88,9 @@ public class UltimateManager {
         }
         int amount = 0;
         if (kit.getRole() == KitRole.DUELIST) {
-            amount = (int)(dmg * 0.8);
+            amount = (int)(dmg * 3.0);
         } else if (kit.getRole() == KitRole.INITIATOR) {
-            amount = (int)(dmg * 0.4);
+            amount = (int)(dmg * 1.5);
         }
         if (amount > 0) {
             this.addCharge(attacker.getUniqueId(), amount);
@@ -105,9 +107,9 @@ public class UltimateManager {
         }
         int amount = 0;
         if (kit.getRole() == KitRole.DUELIST) {
-            amount = (int)(dmg * 0.5);
+            amount = (int)(dmg * 2.0);
         } else if (kit.getRole() == KitRole.SENTINEL) {
-            amount = (int)(dmg * 1.0);
+            amount = (int)(dmg * 4.0);
         }
         if (amount > 0) {
             this.addCharge(victim.getUniqueId(), amount);
@@ -119,10 +121,21 @@ public class UltimateManager {
             return;
         }
         KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
-        if (kit == null || kit.getRole() != KitRole.INITIATOR) {
+        if (kit == null) {
             return;
         }
-        this.addCharge(p.getUniqueId(), 6);
+        if (kit.getRole() == KitRole.INITIATOR) {
+            this.addCharge(p.getUniqueId(), 25);
+        } else if (kit.getRole() == KitRole.CONTROLLER) {
+            this.addCharge(p.getUniqueId(), 8);
+        }
+    }
+
+    public void onKill(Player killer) {
+        if (!participant(killer)) {
+            return;
+        }
+        this.addCharge(killer.getUniqueId(), 15);
     }
 
     public void tickCharge(Player p) {
@@ -130,15 +143,19 @@ public class UltimateManager {
             return;
         }
         KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
-        if (kit == null || kit.getRole() != KitRole.CONTROLLER) {
-            return;
-        }
         long now = System.currentTimeMillis();
         long last = this.lastTickTime.getOrDefault(p.getUniqueId(), now);
         this.lastTickTime.put(p.getUniqueId(), now);
         long elapsed = now - last;
-        if (elapsed >= 1000L) {
-            this.addCharge(p.getUniqueId(), (int)(elapsed / 1000L));
+        if (elapsed <= 0L) {
+            return;
+        }
+        double rate = 2.0;
+        double gained = elapsed / 1000.0 * rate + this.chargeFraction.getOrDefault(p.getUniqueId(), 0.0);
+        int whole = (int)gained;
+        this.chargeFraction.put(p.getUniqueId(), gained - (double)whole);
+        if (whole > 0) {
+            this.addCharge(p.getUniqueId(), whole);
         }
     }
 

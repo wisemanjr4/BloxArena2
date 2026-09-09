@@ -404,7 +404,8 @@ public class SkillManager {
             return;
         }
         ItemMeta meta = held.getItemMeta();
-        if (p.isSneaking() && meta.getPersistentDataContainer().has(this.KEY_SKILL, PersistentDataType.STRING) && this.plugin.getUltimateManager().canUltimate(p.getUniqueId())) {
+        KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
+        if (p.isSneaking() && this.plugin.getUltimateManager().canUltimate(p.getUniqueId()) && this.isUltimateActivatable(kit, held)) {
             this.plugin.getUltimateManager().activateUltimate(p);
             return;
         }
@@ -428,6 +429,40 @@ public class SkillManager {
         }
         if (meta.getPersistentDataContainer().has(this.KEY_VAMPIRE_SKILL, PersistentDataType.STRING) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.VAMPIRE && p.isSneaking()) {
             this.theosPadaAction(p, false);
+        }
+    }
+
+    private boolean isUltimateActivatable(KitType kit, ItemStack held) {
+        if (held == null || held.getItemMeta() == null) {
+            return false;
+        }
+        if (held.getItemMeta().getPersistentDataContainer().has(this.KEY_SKILL, PersistentDataType.STRING)) {
+            return true;
+        }
+        if (kit == null) {
+            return false;
+        }
+        switch (held.getType()) {
+            case WOODEN_SWORD:
+            case STONE_SWORD:
+            case IRON_SWORD:
+            case GOLDEN_SWORD:
+            case DIAMOND_SWORD:
+            case NETHERITE_SWORD:
+            case WOODEN_AXE:
+            case STONE_AXE:
+            case IRON_AXE:
+            case GOLDEN_AXE:
+            case DIAMOND_AXE:
+            case NETHERITE_AXE:
+            case BOW:
+            case CROSSBOW:
+            case SHIELD: {
+                return true;
+            }
+            default: {
+                return false;
+            }
         }
     }
 

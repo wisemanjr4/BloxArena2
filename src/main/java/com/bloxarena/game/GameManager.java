@@ -611,8 +611,6 @@ public class GameManager {
     }
 
     private void startCountdownBeforeBarrierRemoval() {
-        final String mapName = this.currentMap != null ? this.currentMap.getDisplayName() : "???";
-        this.broadcastTitle("\u00a76\u00a7l\u2694 BAII WoNG", "\u00a7e" + mapName + " \u00a77- \u00a7f\u30d0\u30c8\u30eb\u958b\u59cb\u307e\u3067\u5f85\u6a5f\u4e2d\u2026", 10, 60, 10);
         this.broadcastSound(Sound.ENTITY_WITHER_SPAWN, 0.6f, 1.2f);
         this.preBattleBossBar = Bukkit.createBossBar((String)"\u00a7c\u00a7l\u2694 \u30d0\u30c8\u30eb\u6e96\u5099\u4e2d...", (BarColor)BarColor.RED, (BarStyle)BarStyle.SOLID, (BarFlag[])new BarFlag[0]);
         for (UUID uid : this.getAllParticipantsAndSpectators()) {
@@ -620,6 +618,32 @@ public class GameManager {
             if (pl == null) continue;
             this.preBattleBossBar.addPlayer(pl);
         }
+        this.playModeNameSweep();
+    }
+
+    private void playModeNameSweep() {
+        final String mapName = this.currentMap != null ? this.currentMap.getDisplayName() : "???";
+        final String modeName = this.currentGameMode.getDisplayName();
+        final String colored = "\u00a7e\u00a7l\u2694 " + modeName + " \u2694";
+        final int extra = 18;
+        final int steps = 60;
+        new BukkitRunnable(){
+            int t = 0;
+
+            public void run() {
+                if (this.t >= steps) {
+                    this.cancel();
+                    GameManager.this.beginPreBattleCountdown(mapName);
+                    return;
+                }
+                int pad = (int)((steps - this.t) * (double)extra / steps) + 1;
+                GameManager.this.broadcastTitle("\u00a7f" + GameManager.this.repeatSpaces(pad) + colored, "\u00a7e" + modeName + " \u00a77- " + GameManager.this.currentGameMode.getDescription(), 0, 2, 0);
+                ++this.t;
+            }
+        }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
+    }
+
+    private void beginPreBattleCountdown(final String mapName) {
         new BukkitRunnable(){
             int count = 5;
 
@@ -649,22 +673,67 @@ public class GameManager {
                     this.cancel();
                     GameManager.this.removeGates(GameManager.this.currentMap);
                     GameManager.this.grantNoFallDamage();
-                    GameManager.this.broadcastTitle("\u00a7c\u00a7l\u2694  FIGHT!!  \u2694", "\u00a7e" + mapName + " \u00a77| \u00a7f\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u3092\u5236\u5727\u305b\u3088\uff01", 3, 50, 12);
-                    GameManager.this.broadcastSound(Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 1.0f);
-                    GameManager.this.broadcastSound(Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.3f);
-                    GameManager.this.broadcastSound(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                    GameManager.this.broadcastActionBar("\u00a7c\u00a7l\u2694 FIGHT!! \u00a77| \u00a7e2\u5206\u5f8c\u306b\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u304c\u89e3\u653e\u3055\u308c\u308b\uff01");
-                    if (GameManager.this.currentMap != null && GameManager.this.currentMap.getCenter() != null) {
-                        GameManager.this.currentMap.getCenter().getWorld().strikeLightningEffect(GameManager.this.currentMap.getCenter());
-                        Bukkit.getScheduler().runTaskLater((Plugin)GameManager.this.plugin, () -> {
-                            if (GameManager.this.currentMap != null && GameManager.this.currentMap.getCenter() != null) {
-                                GameManager.this.currentMap.getCenter().getWorld().strikeLightningEffect(GameManager.this.currentMap.getCenter());
-                            }
-                        }, 5L);
-                    }
+                    GameManager.this.playFightSlam(mapName);
                 }
             }
-        }.runTaskTimer((Plugin)this.plugin, 40L, 20L);
+        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
+    }
+
+    private void playFightSlam(final String mapName) {
+        final String[] letters = new String[]{"\u00a7c\u00a7lF", "\u00a7c\u00a7lI", "\u00a7c\u00a7lG", "\u00a7c\u00a7lH", "\u00a7c\u00a7lT", "\u00a7c\u00a7l!", "\u00a7c\u00a7l!"};
+        final int maxGap = 6;
+        final int steps = 14;
+        new BukkitRunnable(){
+            int t = 0;
+
+            public void run() {
+                if (this.t > steps) {
+                    this.cancel();
+                    GameManager.this.finishFightStart(mapName);
+                    return;
+                }
+                int gap = maxGap - (int)((double)this.t / steps * maxGap);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < letters.length; ++i) {
+                    if (i > 0) {
+                        sb.append(GameManager.this.repeatSpaces(gap));
+                    }
+                    sb.append(letters[i]);
+                }
+                GameManager.this.broadcastTitle(sb.toString(), "\u00a7e" + mapName, 0, 2, 0);
+                ++this.t;
+            }
+        }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
+    }
+
+    private void finishFightStart(final String mapName) {
+        this.broadcastTitle("\u00a7c\u00a7l\u2694  FIGHT!!  \u2694", "\u00a7e" + mapName + " \u00a77| \u00a7f\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u3092\u5236\u5727\u305b\u3088\uff01", 3, 50, 12);
+        this.broadcastSound(Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 1.0f);
+        this.broadcastSound(Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.3f);
+        this.broadcastSound(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+        this.broadcastActionBar("\u00a7c\u00a7l\u2694 FIGHT!! \u00a77| \u00a7e2\u5206\u5f8c\u306b\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u304c\u89e3\u653e\u3055\u308c\u308b\uff01");
+        for (UUID uid : this.getAllParticipants()) {
+            Player pl = Bukkit.getPlayer((UUID)uid);
+            if (pl == null || !pl.isOnline()) continue;
+            pl.spawnParticle(Particle.VILLAGER_HAPPY, pl.getLocation().add(0.0, 1.2, 0.0), 20, 0.4, 0.5, 0.4, 0.2);
+            pl.spawnParticle(Particle.FIREWORKS_SPARK, pl.getLocation().add(0.0, 2.0, 0.0), 25, 0.5, 0.5, 0.5, 0.1);
+        }
+        if (this.currentMap != null && this.currentMap.getCenter() != null) {
+            this.currentMap.getCenter().getWorld().strikeLightningEffect(this.currentMap.getCenter());
+            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+                if (GameManager.this.currentMap != null && GameManager.this.currentMap.getCenter() != null) {
+                    GameManager.this.currentMap.getCenter().getWorld().strikeLightningEffect(GameManager.this.currentMap.getCenter());
+                }
+            }, 5L);
+        }
+    }
+
+    private String repeatSpaces(int n) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; ++i) {
+            sb.append(' ');
+        }
+        return sb.toString();
     }
 
     private void assignTeams(List<UUID> participants) {
@@ -1417,6 +1486,7 @@ public class GameManager {
         String killerColor = "\u00a7f";
         if (killer != null) {
             this.kills.merge(killer.getUniqueId(), 1, Integer::sum);
+            this.plugin.getUltimateManager().onKill(killer);
             this.matchStats.addKill(killer.getUniqueId());
             this.plugin.getStatsManager().addKill(killer.getUniqueId());
             TeamColor kt = this.getTeamOf(killer);

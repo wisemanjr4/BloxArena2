@@ -611,6 +611,9 @@ public class KitBuilder {
         }
         player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, new ItemStack(Material.SHIELD));
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BLADE, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u8987\u65ac"));
+        }
         KitBuilder.giveIronArmor(player);
     }
 
@@ -624,6 +627,9 @@ public class KitBuilder {
             axe.setItemMeta(am);
         }
         player.getInventory().setItem(0, axe);
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BREAKER, "\u00a7c\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u70c8\u7a81"));
+        }
         KitBuilder.giveIronArmor(player);
     }
 
@@ -648,6 +654,9 @@ public class KitBuilder {
             axe.setItemMeta(bm);
         }
         player.getInventory().setItem(0, axe);
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BERSERKER, "\u00a74\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u6012\u6d9b\u7206\u7815"));
+        }
         KitBuilder.giveLeatherArmor(player);
     }
 
@@ -663,6 +672,9 @@ public class KitBuilder {
         player.getInventory().setItem(0, xbow);
         player.getInventory().setItem(1, new ItemStack(Material.WOODEN_SWORD));
         player.getInventory().setItem(2, new ItemStack(Material.ARROW, 8));
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SNIPER, "\u00a77\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u72d9\u6483\u773c"));
+        }
         KitBuilder.giveLeatherArmor(player);
     }
 
@@ -676,6 +688,9 @@ sm.setLore(sl);
         shield.setItemMeta(sm);
         player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, shield);
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.COUNTER, "\u00a79\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d1\u30ea\u30a3"));
+        }
         KitBuilder.giveIronArmor(player);
     }
 
@@ -711,6 +726,9 @@ sm.setLore(sl);
             sword.setItemMeta(sm);
         }
         player.getInventory().setItem(0, sword);
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.LANCER, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u523a\u7a81"));
+        }
         KitBuilder.giveChainArmor(player);
     }
 
@@ -784,6 +802,9 @@ gsm.setLore(gsl);
         gs.setItemMeta(gsm);
         player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, gs);
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.GRANG, "\u00a77\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30c1\u30e3\u30fc\u30b8\u7a81\u6483"));
+        }
         KitBuilder.giveLeatherArmor(player);
     }
 
@@ -831,6 +852,9 @@ gsm.setLore(gsl);
         player.getInventory().setItem(0, xbow);
         player.getInventory().setItem(1, new ItemStack(Material.WOODEN_SWORD));
         player.getInventory().setItem(2, new ItemStack(Material.ARROW, 16));
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SUNDANCE, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ea\u30dc\u30eb\u30d3\u30f3\u30b0"));
+        }
         KitBuilder.giveLeatherArmor(player);
     }
 
