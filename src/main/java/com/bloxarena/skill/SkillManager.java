@@ -150,7 +150,8 @@ public class SkillManager {
     private final Map<UUID, Long> comboLastHit = new HashMap<UUID, Long>();
     private final Map<UUID, Integer> sneakChargeTicks = new HashMap<UUID, Integer>();
     private final Map<UUID, Boolean> universalCharged = new HashMap<UUID, Boolean>();
-    private final Map<UUID, String> kreutzCard = new HashMap<UUID, String>();
+    private final Map<UUID, List<String>> kreutzHand = new HashMap<UUID, List<String>>();
+    private final Set<UUID> kreutzFullOrder = new HashSet<UUID>();
     private final Map<UUID, Double> kreutzMana = new HashMap<UUID, Double>();
     private final Map<UUID, Long> kreutzManaPerkCooldown = new HashMap<UUID, Long>();
     private final Set<UUID> piercingRecently = new HashSet<UUID>();
@@ -167,15 +168,15 @@ public class SkillManager {
     private final Set<UUID> sniperUltimate = new HashSet<UUID>();
     private final Set<UUID> marksmanUltimate = new HashSet<UUID>();
     private final Set<UUID> trapperUltimate = new HashSet<UUID>();
-    private final Set<UUID> lancerUltimate = new HashSet<UUID>();
+    private final Map<UUID, Long> lancerUltimate = new HashMap<UUID, Long>();
     private final Set<UUID> cookUltimate = new HashSet<UUID>();
     private final Set<UUID> vampireUltimate = new HashSet<UUID>();
-    private final Set<UUID> grangUltimate = new HashSet<UUID>();
-    private final Set<UUID> sundanceUltimate = new HashSet<UUID>();
+    private final Map<UUID, Long> grangUltimate = new HashMap<UUID, Long>();
+    private final Map<UUID, Long> sundanceUltimate = new HashMap<UUID, Long>();
     private final Map<UUID, Location> swapperMark = new HashMap<UUID, Location>();
     private final Set<UUID> transporterUltimate = new HashSet<UUID>();
     private final Set<UUID> bulwarkUltimate = new HashSet<UUID>();
-    private final Set<UUID> glaciesUltimate = new HashSet<UUID>();
+    private final Map<UUID, Long> glaciesUltimate = new HashMap<UUID, Long>();
     private final Set<UUID> superiorMistralUltimate = new HashSet<UUID>();
     private final Map<UUID, Long> glaciesUltimateCooldown = new HashMap<UUID, Long>();
     private final String[] KREUTZ_CARDS = new String[]{"\u30d5\u30a1\u30a4\u30a2\u30dc\u30fc\u30eb", "\u30a2\u30a4\u30b9\u30e9\u30f3\u30b9", "\u30b5\u30f3\u30c0\u30fc", "\u30b7\u30fc\u30eb\u30c9", "\u30d2\u30fc\u30eb", "\u30ab\u30fc\u30b9", "\u30b0\u30e9\u30d3\u30c6\u30a3", "\u30c1\u30a7\u30a4\u30f3", "\u30dd\u30a4\u30ba\u30f3\u30af\u30e9\u30a6\u30c9", "\u30b9\u30d4\u30fc\u30c9\u30d6\u30fc\u30b9\u30c8", "\u30ea\u30fc\u30d7", "\u30a6\u30a3\u30fc\u30af\u30cd\u30b9", "\u30de\u30a4\u30f3\u30c9", "\u30c1\u30a7\u30a4\u30f3\u30e9\u30a4\u30c8\u30cb\u30f3\u30b0", "\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7", "\u30d5\u30a1\u30f3\u30b0", "\u30d4\u30a2\u30c3\u30b7\u30f3\u30b0"};
@@ -210,7 +211,8 @@ public class SkillManager {
         this.sundanceRevolver.clear();
         this.kreutzMana.clear();
         this.kreutzManaPerkCooldown.clear();
-        this.kreutzCard.clear();
+        this.kreutzHand.clear();
+        this.kreutzFullOrder.clear();
         this.activeTraps.clear();
         this.activeMines.forEach(m -> m.entity.remove());
         this.activeMines.clear();
@@ -340,7 +342,8 @@ public class SkillManager {
         this.vampireGauge.clear();
         this.vampireBloodMode.clear();
         this.kreutzManaPerkCooldown.clear();
-        this.kreutzCard.clear();
+        this.kreutzHand.clear();
+        this.kreutzFullOrder.clear();
         for (UUID uid : this.kreutzMana.keySet()) {
             this.kreutzMana.put(uid, 50.0);
         }
@@ -644,7 +647,7 @@ public class SkillManager {
     }
 
     public void onGrangSneak(final Player p, boolean sneaking) {
-        long maxChargeMs = this.grangUltimate.contains(p.getUniqueId()) ? 3500L : 7000L;
+        long maxChargeMs = this.isTimedUltimate(this.grangUltimate, p.getUniqueId()) ? 3500L : 7000L;
         if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.GRANG) {
             return;
         }
@@ -1466,7 +1469,7 @@ public class SkillManager {
                         Long start = this.grangChargeStart.get(p.getUniqueId());
                         if (start == null) continue block14;
                         long elapsed = System.currentTimeMillis() - start;
-                        long gMax = this.grangUltimate.contains(p.getUniqueId()) ? 3500L : 7000L;
+                        long gMax = this.isTimedUltimate(this.grangUltimate, p.getUniqueId()) ? 3500L : 7000L;
                         int pct = (int)Math.min(100L, elapsed * 100L / gMax);
                         p.sendActionBar(this.ctAppend(p, (Component)Component.text((String)("\u00a77\ud83d\udee1 \u30c1\u30e3\u30fc\u30b8 \u00a7e" + pct + "%"))));
                         break;
@@ -1483,10 +1486,10 @@ public class SkillManager {
                     break;
                 }
                 case KREUTZ: {
-                    String card = this.kreutzCard.get(p.getUniqueId());
-                    String cardInfo = card != null ? "\u00a75\ud83c\udccf" + card + " \u00a78| " : "";
+                    List<String> hand = this.kreutzHand.get(p.getUniqueId());
+                    String handInfo = hand != null && !hand.isEmpty() ? "\u00a75\ud83c\udccf" + String.join(",", hand) + " \u00a78| " : "";
                     String manaInfo = "\u00a75\u30de\u30ca \u00a7f[" + String.format("%.0f", this.getKreutzMana(p.getUniqueId())) + "/150]";
-                    p.sendActionBar(this.ctAppend(p, (Component)Component.text((String)(cardInfo + manaInfo))));
+                    p.sendActionBar(this.ctAppend(p, (Component)Component.text((String)(handInfo + manaInfo))));
                     break;
                 }
                 default: {
@@ -1929,8 +1932,8 @@ public class SkillManager {
     }
 
     private void lancerSkill(Player p) {
-        final double reach = this.lancerUltimate.contains(p.getUniqueId()) ? 10.0 : 5.0;
-        this.setCooldown(p.getUniqueId(), this.lancerUltimate.contains(p.getUniqueId()) ? 4000L : 2000L);
+        final double reach = this.isTimedUltimate(this.lancerUltimate, p.getUniqueId()) ? 10.0 : 5.0;
+        this.setCooldown(p.getUniqueId(), this.isTimedUltimate(this.lancerUltimate, p.getUniqueId()) ? 4000L : 2000L);
         Vector dir = p.getLocation().getDirection().normalize();
         Location start = p.getEyeLocation();
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 0.5f);
@@ -2023,12 +2026,21 @@ public class SkillManager {
             }
             this.setCooldown(p.getUniqueId(), 1000L);
             this.addKreutzMana(p.getUniqueId(), -5.0);
+            int cap = this.kreutzFullOrder.contains(p.getUniqueId()) ? 4 : 1;
+            List<String> hand = this.kreutzHand.getOrDefault(p.getUniqueId(), new ArrayList<String>());
+            if (hand.size() >= cap) {
+                p.sendMessage("\u00a7c\u624b\u672d\u304c\u6700\u5927" + cap + "\u679a\u3067\u3059\uff01\u30ab\u30fc\u30c9\u3092\u7a7a\u3051\u3066\u304b\u3089\u5f15\u3044\u3066\u304f\u3060\u3055\u3044");
+                this.addKreutzMana(p.getUniqueId(), 5.0);
+                return;
+            }
             String card = this.KREUTZ_CARDS[new Random().nextInt(this.KREUTZ_CARDS.length)];
-            this.kreutzCard.put(p.getUniqueId(), card);
-            p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f\uff01");
+            hand.add(card);
+            this.kreutzHand.put(p.getUniqueId(), hand);
+            p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f\uff01 \u624b\u672d: " + String.join(", ", hand));
             return;
         }
-        String card = this.kreutzCard.get(p.getUniqueId());
+        List<String> castHand = this.kreutzHand.get(p.getUniqueId());
+        String card = castHand != null && !castHand.isEmpty() ? castHand.get(0) : null;
         if (card == null) {
             this.kreutzManaCharge(p);
             return;
@@ -2057,9 +2069,10 @@ public class SkillManager {
             p.sendMessage("\u00a7c\u30de\u30ca\u304c\u8db3\u308a\u307e\u305b\u3093");
             return;
         }
-        this.kreutzCard.remove(p.getUniqueId());
+        castHand.remove(0);
         this.addKreutzMana(p.getUniqueId(), -30.0);
-        p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5531\u3048\u305f\uff01");
+        int remaining = castHand.size();
+        p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5531\u3048\u305f\uff01" + (remaining > 0 ? " \u624b\u672d: " + String.join(", ", castHand) : " \u624b\u672d\u306f\u7a7a\u306b\u306a\u3063\u305f"));
         switch (card) {
             case "\u30d5\u30a1\u30a4\u30a2\u30dc\u30fc\u30eb": {
                 final Snowball b = (Snowball)p.launchProjectile(Snowball.class);
@@ -3270,7 +3283,7 @@ public class SkillManager {
     }
 
     public void setLancerUltimate(Player p) {
-        this.lancerUltimate.add(p.getUniqueId());
+        this.lancerUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 1200, 0, false, true));
         p.sendMessage("\u00a7b\u00a7l\u30c0\u30a4\u30ca\u30e2\u30e9\u30f3\u30b9\uff011\u5206\u9593\u69cd\u306e\u30ea\u30fc\u30c110m\uff01");
     }
@@ -3285,13 +3298,13 @@ public class SkillManager {
     }
 
     public void setGrangUltimate(Player p) {
-        this.grangUltimate.add(p.getUniqueId());
+        this.grangUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 1200, 1, false, true));
         p.sendMessage("\u00a77\u00a7l\u6a5f\u52d5\u8981\u585e\uff011\u5206\u9593\u30c1\u30e3\u30fc\u30b8\u9ad8\u901f\u30fb\u8010\u6027II\uff01");
     }
 
     public void setSundanceUltimate(Player p) {
-        this.sundanceUltimate.add(p.getUniqueId());
+        this.sundanceUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
         this.sundanceRevolver.put(p.getUniqueId(), 12);
         p.sendMessage("\u00a7b\u00a7l\u30ec\u30f4\u30a9\u30ea\u30e5\u30fc\u30b7\u30e7\u30f3\uff011\u5206\u9593\u88c5\u586b12\u767a\u30fbCT\u77ed\u7e2e\uff01");
     }
@@ -3311,16 +3324,16 @@ public class SkillManager {
     }
 
     public void setGlaciesUltimate(Player p) {
-        this.glaciesUltimate.add(p.getUniqueId());
+        this.glaciesUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
         p.sendMessage("\u00a7b\u00a7l\u30af\u30e9\u30a4\u30aa\u30ad\u30cd\u30b7\u30b9\uff011\u5206\u9593\u30d2\u30c3\u30c8\u3067\u51cd\u7d50\uff01");
     }
 
     public boolean hasGlaciesUltimate(UUID uid) {
-        return this.glaciesUltimate.contains(uid);
+        return this.isTimedUltimate(this.glaciesUltimate, uid);
     }
 
     public void tryGlaciesImmobilize(Player attacker, Player victim) {
-        if (!this.glaciesUltimate.contains(attacker.getUniqueId())) {
+        if (!this.isTimedUltimate(this.glaciesUltimate, attacker.getUniqueId())) {
             return;
         }
         long now = System.currentTimeMillis();
@@ -3417,12 +3430,15 @@ public class SkillManager {
     }
 
     public void kreutzFullOrder(Player p) {
+        List<String> hand = new ArrayList<String>();
         for (int i = 0; i < 4; ++i) {
             String card = this.KREUTZ_CARDS[new Random().nextInt(this.KREUTZ_CARDS.length)];
-            this.kreutzCard.put(p.getUniqueId(), card);
+            hand.add(card);
             p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f\uff01");
         }
-        p.sendMessage("\u00a75\u00a7l\u30d5\u30eb\u30aa\u30fc\u30c0\u30fc\uff01\u30ab\u30fc\u30c9\u30b9\u30ed\u30c3\u30c8\u30924\u306b\u62e1\u5927\uff01");
+        this.kreutzHand.put(p.getUniqueId(), hand);
+        this.kreutzFullOrder.add(p.getUniqueId());
+        p.sendMessage("\u00a75\u00a7l\u30d5\u30eb\u30aa\u30fc\u30c0\u30fc\uff01\u30ab\u30fc\u30c9\u30b9\u30ed\u30c3\u30c8\u30924\u306b\u62e1\u5927\uff01\u624b\u672d: " + String.join(", ", hand));
     }
 
     public void resetKreutzMana(Player p) {
@@ -3481,14 +3497,19 @@ public class SkillManager {
             dir = new Vector(0.0, 0.0, 1.0);
         }
         Vector side = dir.clone().crossProduct(new Vector(0.0, 1.0, 0.0)).normalize();
-        List<Location> placed = new ArrayList<Location>();
+        List<Location> placed = this.activeWalls.getOrDefault(uid, new ArrayList<Location>());
         Location base = p.getLocation().getBlock().getLocation().clone().add(0.5, 0.0, 0.5);
-        for (int s = -1; s <= 1; ++s) {
-            for (int dy = 0; dy <= 2; ++dy) {
-                Location loc = base.clone().add(side.clone().multiply(s * 3.0)).add(dir.clone().multiply(2.0)).add(0.0, (double)dy, 0.0);
-                if (this.canPlaceWall(loc, p)) {
-                    loc.getBlock().setType(mat);
-                    placed.add(loc.clone());
+        Vector[] dirs = new Vector[]{dir, side.clone(), side.clone().multiply(-1.0)};
+        for (Vector wallDir : dirs) {
+            Location wallBase = base.clone().add(wallDir.clone().multiply(2.0));
+            Vector wallSide = wallDir.clone().crossProduct(new Vector(0.0, 1.0, 0.0)).normalize();
+            for (int dx = -2; dx <= 2; ++dx) {
+                for (int dy = 0; dy <= 2; ++dy) {
+                    Location loc = wallBase.clone().add(wallSide.clone().multiply(dx)).add(0.0, (double)dy, 0.0);
+                    if (this.canPlaceWall(loc, p)) {
+                        loc.getBlock().setType(mat);
+                        placed.add(loc.clone());
+                    }
                 }
             }
         }
@@ -3496,7 +3517,12 @@ public class SkillManager {
         this.wallPlacedTime.put(uid, System.currentTimeMillis());
         w.playSound(p.getLocation(), Sound.BLOCK_STONE_PLACE, 1.0f, 0.8f);
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.removeWall(uid), 200L);
-        p.sendMessage("\u00a7f\u00a7l\u8d85\u30fb\u7121\u6575\u8981\u585e\uff01\u5468\u308a\u306b\u58c1\u3092\u5c55\u958b\uff01");
+        p.sendMessage("\u00a7f\u00a7l\u8d85\u30fb\u7121\u6575\u8981\u585e\uff01\u5f8c\u65b9\u3092\u9664\u304f3\u65b9\u5411\u306b\u58c1\u3092\u5c55\u958b\uff01CT\u77ed\u7e2e\uff01");
+    }
+
+    private boolean isTimedUltimate(Map<UUID, Long> map, UUID uid) {
+        Long expiry = map.get(uid);
+        return expiry != null && System.currentTimeMillis() < expiry;
     }
 
     private void clearUltimateFlags() {
@@ -3515,6 +3541,8 @@ public class SkillManager {
         this.glaciesUltimateCooldown.clear();
         this.superiorMistralUltimate.clear();
         this.cookUltimate.clear();
+        this.kreutzHand.clear();
+        this.kreutzFullOrder.clear();
     }
 
     private boolean isSword(ItemStack item) {
