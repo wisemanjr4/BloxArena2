@@ -9,4 +9,5 @@ rewrite_email.sh
 out/
 *.log
 logs/
+.commandcode/
 
