@@ -74,22 +74,22 @@ TabCompleter {
                     return true;
                 }
                 if (this.plugin.getGameManager().getState() != GameState.WAITING) {
-                    sender.sendMessage("\u00a7c\u8a66\u5408\u306f\u3059\u3067\u306b\u9032\u884c\u4e2d\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u8a66\u5408\u9032\u884c\u4e2d\u3067\u3059");
                     return true;
                 }
                 ArrayList<UUID> participants = new ArrayList<UUID>(this.plugin.getLobbyManager().getWaitingPlayers());
                 if (participants.isEmpty()) {
-                    sender.sendMessage("\u00a7c\u5f85\u6a5f\u30a8\u30ea\u30a2\u306b\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u3044\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u5f85\u6a5f\u30a8\u30ea\u30a2\u306b\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u3044\u306a\u3044");
                     return true;
                 }
                 GameMode mode = GameMode.random(participants.size());
                 MapConfig map = this.plugin.getMapManager().selectMap(mode);
                 if (map == null) {
-                    sender.sendMessage("\u00a7c\u4f7f\u7528\u53ef\u80fd\u306a\u30de\u30c3\u30d7\u304c\u3042\u308a\u307e\u305b\u3093\u3002\u00a77(/ba addmap, /ba setspawnzone \u7b49\u3067\u8a2d\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044)");
+                    sender.sendMessage("\u00a7c\u26a0 \u4f7f\u7528\u53ef\u80fd\u306a\u30de\u30c3\u30d7\u304c\u306a\u3044 \u00a78\u00bb \u00a77/ba addmap, /ba setspawnzone \u7b49\u3067\u8a2d\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044");
                     return true;
                 }
                 this.plugin.getGameManager().startGame(map, mode, participants);
-                sender.sendMessage("\u00a7a\u8a66\u5408\u3092\u5f37\u5236\u958b\u59cb\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u8a66\u5408\u3092\u5f37\u5236\u958b\u59cb\u3057\u305f");
                 break;
             }
             case "stop": {
@@ -97,7 +97,7 @@ TabCompleter {
                     return true;
                 }
                 this.plugin.getGameManager().forceStop();
-                sender.sendMessage("\u00a7a\u8a66\u5408\u3092\u5f37\u5236\u7d42\u4e86\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u8a66\u5408\u3092\u5f37\u5236\u7d42\u4e86\u3057\u305f");
                 break;
             }
             case "wand": {
@@ -105,13 +105,13 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 p.getInventory().addItem(new ItemStack[]{this.plugin.getSelectionTool().createWand()});
-                p.sendMessage("\u00a7a\u30ac\u30e9\u30b9\u30d6\u30ed\u30c3\u30af\u306e\u30ef\u30f3\u30c9\u3092\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\u3002");
-                p.sendMessage("\u00a77\u00a7l\u5de6\u30af\u30ea\u30c3\u30af \u00a7r\u00a77= Pos1 (min)  \u00a77\u00a7l\u53f3\u30af\u30ea\u30c3\u30af \u00a7r\u00a77= Pos2 (max)");
+                p.sendMessage("\u00a7a\u2694 \u30ef\u30f3\u30c9\u3092\u53d7\u3051\u53d6\u3063\u305f");
+                p.sendMessage("\u00a77\u00a7l\u5de6\u30af\u30ea\u30c3\u30af \u00a7r\u00a78\u00bb \u00a77Pos1 (min)  \u00a77\u00a7l\u53f3\u30af\u30ea\u30c3\u30af \u00a7r\u00a78\u00bb \u00a77Pos2 (max)");
                 break;
             }
             case "setwaitingarea": {
@@ -119,18 +119,18 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 SelectionTool tool = this.plugin.getSelectionTool();
                 if (!tool.hasSelection(p)) {
-                    sender.sendMessage("\u00a7c\u307e\u305a\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002 (/bloxarena wand)");
+                    sender.sendMessage("\u00a7c\u26a0 \u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u305b\u3088 \u00a78\u00bb \u00a77/bloxarena wand");
                     return true;
                 }
                 this.plugin.getLobbyManager().setWaitingAreaMin(tool.getMin(p));
                 this.plugin.getLobbyManager().setWaitingAreaMax(tool.getMax(p));
-                sender.sendMessage("\u00a7a\u5f85\u6a5f\u30a8\u30ea\u30a2\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u5f85\u6a5f\u30a8\u30ea\u30a2\u3092\u8a2d\u5b9a\u3057\u305f");
                 sender.sendMessage("\u00a77min: " + this.fmt(tool.getMin(p)) + "  max: " + this.fmt(tool.getMax(p)));
                 break;
             }
@@ -139,12 +139,12 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 this.plugin.getLobbyManager().setLobbySpawn(p.getLocation());
-                sender.sendMessage("\u00a7a\u30ed\u30d3\u30fc\u30b9\u30dd\u30fc\u30f3\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u30ed\u30d3\u30fc\u30b9\u30dd\u30fc\u30f3\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\u3057\u305f");
                 break;
             }
             case "addmap": {
@@ -153,7 +153,7 @@ TabCompleter {
                     return true;
                 }
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /bloxarena addmap <mapId> [worldName]");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /bloxarena addmap <mapId> [worldName]");
                     return true;
                 }
                 String mapId = args[1];
@@ -166,10 +166,10 @@ TabCompleter {
                     worldName = "world";
                 }
                 if (!this.plugin.getMapManager().addMap(mapId, worldName)) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + mapId + "' \u306f\u3059\u3067\u306b\u5b58\u5728\u3057\u307e\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30de\u30c3\u30d7 '" + mapId + "' \u306f\u3059\u3067\u306b\u5b58\u5728\u3059\u308b");
                     return true;
                 }
-                sender.sendMessage("\u00a7a\u30de\u30c3\u30d7 \u00a7e" + mapId + " \u00a7a(\u30ef\u30fc\u30eb\u30c9: \u00a7e" + worldName + "\u00a7a) \u3092\u8ffd\u52a0\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u30de\u30c3\u30d7 \u00a7e" + mapId + " \u00a7a(\u30ef\u30fc\u30eb\u30c9: \u00a7e" + worldName + "\u00a7a) \u3092\u8ffd\u52a0\u3057\u305f\u3002");
                 sender.sendMessage("\u00a77\u6b21: /ba setspawnzone red " + mapId + " / /ba setspawnzone blue " + mapId);
                 sender.sendMessage("\u00a77    /ba setcenter " + mapId + " / /ba setmaplobby " + mapId);
                 break;
@@ -179,23 +179,23 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 3) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /bloxarena setspawnzone <red|blue> <mapId>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /bloxarena setspawnzone <red|blue> <mapId>");
                     return true;
                 }
                 String teamStr = args[1].toLowerCase();
                 MapConfig cfg = this.plugin.getMapManager().getById(args[2]);
                 if (cfg == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[2] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[2] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 SelectionTool tool = this.plugin.getSelectionTool();
                 if (!tool.hasSelection(p)) {
-                    sender.sendMessage("\u00a7c\u307e\u305a\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002 (/bloxarena wand)");
+                    sender.sendMessage("\u00a7c\u26a0 \u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u305b\u3088 \u00a78\u00bb \u00a77/bloxarena wand");
                     return true;
                 }
                 if ("red".equals(teamStr)) {
@@ -209,7 +209,7 @@ TabCompleter {
                     return true;
                 }
                 this.plugin.getMapManager().saveMap(cfg);
-                sender.sendMessage("\u00a7a" + teamStr + "\u30b9\u30dd\u30fc\u30f3\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u30fb\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 " + teamStr + " \u30b9\u30dd\u30fc\u30f3\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u30fb\u4fdd\u5b58\u3057\u305f");
                 sender.sendMessage("\u00a77min: " + this.fmt(tool.getMin(p)) + "  max: " + this.fmt(tool.getMax(p)));
                 break;
             }
@@ -218,12 +218,12 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /bloxarena setcenter <mapId>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /bloxarena setcenter <mapId>");
                     return true;
                 }
                 MapConfig cfg = this.plugin.getMapManager().getById(args[1]);
@@ -233,7 +233,7 @@ TabCompleter {
                 }
                 cfg.setCenter(p.getLocation());
                 this.plugin.getMapManager().saveMap(cfg);
-                sender.sendMessage("\u00a7a\u4e2d\u592e\u57fa\u6e96\u70b9\u3092\u8a2d\u5b9a\u30fb\u4fdd\u5b58\u3057\u307e\u3057\u305f: " + this.fmt(p.getLocation()));
+                sender.sendMessage("\u00a7a\u2726 \u4e2d\u592e\u57fa\u6e96\u70b9\u3092\u8a2d\u5b9a\u30fb\u4fdd\u5b58 \u00a78\u00bb \u00a7f" + this.fmt(p.getLocation()));
                 break;
             }
             case "setmaplobby": {
@@ -241,12 +241,12 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /bloxarena setmaplobby <mapId>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /bloxarena setmaplobby <mapId>");
                     return true;
                 }
                 MapConfig cfg = this.plugin.getMapManager().getById(args[1]);
@@ -256,12 +256,12 @@ TabCompleter {
                 }
                 cfg.setLobby(p.getLocation());
                 this.plugin.getMapManager().saveMap(cfg);
-                sender.sendMessage("\u00a7a\u30de\u30c3\u30d7\u30ed\u30d3\u30fc\u5730\u70b9\u3092\u8a2d\u5b9a\u30fb\u4fdd\u5b58\u3057\u307e\u3057\u305f: " + this.fmt(p.getLocation()));
+                sender.sendMessage("\u00a7a\u2726 \u30de\u30c3\u30d7\u30ed\u30d3\u30fc\u3092\u8a2d\u5b9a\u30fb\u4fdd\u5b58 \u00a78\u00bb \u00a7f" + this.fmt(p.getLocation()));
                 break;
             }
             case "info": {
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a76\u00a7l=== \u30de\u30c3\u30d7\u4e00\u89a7 (" + this.plugin.getMapManager().getMaps().size() + ") ===");
+                    sender.sendMessage("\u00a76\u00a7l\u2605 \u30de\u30c3\u30d7\u4e00\u89a7 \u00a78\u00bb \u00a7e" + this.plugin.getMapManager().getMaps().size() + " \u30de\u30c3\u30d7");
                     for (MapConfig mc : this.plugin.getMapManager().getMaps()) {
                         String ready = mc.isReady() ? "\u00a7a\u2714" : "\u00a7c\u2718";
                         String modes = this.modeFlags(mc);
@@ -273,10 +273,10 @@ TabCompleter {
                 }
                 MapConfig mc = this.plugin.getMapManager().getById(args[1]);
                 if (mc == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
-                sender.sendMessage("\u00a76\u00a7l=== \u30de\u30c3\u30d7: " + mc.getId() + " ===");
+                sender.sendMessage("\u00a76\u00a7l\u2605 \u30de\u30c3\u30d7 \u00a78\u00bb \u00a7e" + mc.getId());
                 sender.sendMessage("\u00a77\u30ef\u30fc\u30eb\u30c9: \u00a7f" + mc.getWorldName());
                 sender.sendMessage("\u00a77\u6e96\u5099\u5b8c\u4e86: " + (mc.isReady() ? "\u00a7a\u2714" : "\u00a7c\u2718 (\u672a\u8a2d\u5b9a: \u30b9\u30dd\u30fc\u30f3\u7b49)"));
                 sender.sendMessage("\u00a77RedSpawn: \u00a7f" + this.fmtNull(mc.getRedSpawnMin()) + " ~ " + this.fmtNull(mc.getRedSpawnMax()));
@@ -298,15 +298,15 @@ TabCompleter {
                     return true;
                 }
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /bloxarena setmap <mapId>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /bloxarena setmap <mapId>");
                     return true;
                 }
                 if (this.plugin.getMapManager().getById(args[1]) == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 this.plugin.getMapManager().setNextMap(args[1]);
-                sender.sendMessage("\u00a7a\u6b21\u306e\u8a66\u5408\u30de\u30c3\u30d7\u3092 \u00a7e" + args[1] + " \u00a7a\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\uff081\u8a66\u5408\u9650\u5b9a\uff09\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u6b21\u8a66\u5408\u30de\u30c3\u30d7 \u00a78\u00bb \u00a7e" + args[1] + " \u00a78| \u00a771\u8a66\u5408\u9650\u5b9a");
                 break;
             }
             case "setmapname": {
@@ -314,23 +314,23 @@ TabCompleter {
                     return true;
                 }
                 if (args.length < 3) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba setmapname <mapId> <\u8868\u793a\u540d>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba setmapname <mapId> <\u8868\u793a\u540d>");
                     return true;
                 }
                 MapConfig cfg = this.plugin.getMapManager().getById(args[1]);
                 if (cfg == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 String name = String.join((CharSequence)" ", Arrays.copyOfRange(args, 2, args.length));
                 cfg.setDisplayName(name);
                 this.plugin.getMapManager().saveMap(cfg);
-                sender.sendMessage("\u00a7a\u30de\u30c3\u30d7 \u00a7e" + args[1] + " \u00a7a\u306e\u8868\u793a\u540d\u3092 \u00a7e" + name + " \u00a7a\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u30de\u30c3\u30d7 \u00a7e" + args[1] + " \u00a7a\u306e\u8868\u793a\u540d \u00a78\u00bb \u00a7e" + name);
                 break;
             }
             case "kits": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
@@ -339,16 +339,16 @@ TabCompleter {
             }
             case "spectate": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (this.plugin.getGameManager().getState() != GameState.IN_GAME) {
-                    sender.sendMessage("\u00a7c\u73fe\u5728\u8a66\u5408\u306f\u9032\u884c\u4e2d\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u73fe\u5728\u8a66\u5408\u306f\u9032\u884c\u4e2d\u3067\u306f\u306a\u3044");
                     return true;
                 }
                 this.plugin.getGameManager().addSpectator(p);
-                sender.sendMessage("\u00a7a\u89b3\u6226\u30e2\u30fc\u30c9\u3078\u79fb\u884c\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u89b3\u6226\u30e2\u30fc\u30c9\u306b\u79fb\u884c\u3057\u305f");
                 break;
             }
             case "reload": {
@@ -358,11 +358,11 @@ TabCompleter {
                 this.plugin.reloadConfig();
                 this.plugin.getLobbyManager().reload();
                 this.plugin.getMapManager().reload();
-                sender.sendMessage("\u00a7aconfig.yml \u3092\u30ea\u30ed\u30fc\u30c9\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 config.yml \u3092\u30ea\u30ed\u30fc\u30c9\u3057\u305f");
                 break;
             }
             case "status": {
-                sender.sendMessage("\u00a76\u00a7l=== BAII WoNG Status ===");
+                sender.sendMessage("\u00a76\u00a7l\u2605 BAII WoNG Status");
                 sender.sendMessage("\u00a77\u72b6\u614b: \u00a7f" + String.valueOf((Object)this.plugin.getGameManager().getState()));
                 sender.sendMessage("\u00a77\u5f85\u6a5f\u4eba\u6570: \u00a7f" + this.plugin.getLobbyManager().getWaitingPlayers().size());
                 sender.sendMessage("\u00a77\u30de\u30c3\u30d7\u6570: \u00a7f" + this.plugin.getMapManager().getMaps().size() + " \u00a77(\u6e96\u5099\u5b8c\u4e86: \u00a7a" + this.plugin.getMapManager().getMaps().stream().filter(MapConfig::isReady).count() + "\u00a77)");
@@ -375,7 +375,7 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
@@ -387,7 +387,7 @@ TabCompleter {
                 if (args.length >= 2) {
                     target = Bukkit.getOfflinePlayerIfCached((String)args[1]);
                     if (target == null) {
-                        sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + args[1]);
+                        sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + args[1]);
                         return true;
                     }
                 } else if (sender instanceof Player) {
@@ -399,7 +399,7 @@ TabCompleter {
                 }
                 StatsManager sm = this.plugin.getStatsManager();
                 PlayerStats s = sm.getStats(target.getUniqueId());
-                sender.sendMessage("\u00a76\u00a7l=== " + target.getName() + " \u306e\u7d71\u8a08 ===");
+                sender.sendMessage("\u00a76\u00a7l\u2605 " + target.getName() + " \u306e\u7d71\u8a08");
                 sender.sendMessage("\u00a77Kill: \u00a7f" + s.kills + "  Death: \u00a7f" + s.deaths + "  \u00a77K/D: \u00a7f" + String.format("%.2f", s.getKD()));
                 sender.sendMessage("\u00a77\u52dd\u5229: \u00a7f" + s.wins + "  \u6557\u5317: \u00a7f" + s.losses + "  \u00a77\u52dd\u7387: \u00a7f" + String.format("%.1f", s.getWinRate()) + "%");
                 sender.sendMessage("\u00a77\u7dcf\u30c0\u30e1\u30fc\u30b8: \u00a7f" + String.format("%.1f", s.damage));
@@ -430,7 +430,7 @@ TabCompleter {
                 if (args.length >= 2) {
                     target = Bukkit.getOfflinePlayerIfCached((String)args[1]);
                     if (target == null) {
-                        sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + args[1]);
+                        sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + args[1]);
                         return true;
                     }
                 } else if (sender instanceof Player) {
@@ -443,7 +443,7 @@ TabCompleter {
                 StatsManager sm = this.plugin.getStatsManager();
                 PlayerStats s = sm.getStats(target.getUniqueId());
                 Map<String, Integer> levels = sm.getKitMasteryLevels(target.getUniqueId());
-                sender.sendMessage("\u00a76\u00a7l=== " + target.getName() + " \u306e\u30de\u30b9\u30bf\u30ea\u30fc ===");
+                sender.sendMessage("\u00a76\u00a7l\u2605 " + target.getName() + " \u306e\u30de\u30b9\u30bf\u30ea\u30fc");
                 sender.sendMessage("\u00a77\u7dcf\u30ad\u30c3\u30c8\u4f7f\u7528: \u00a7f" + levels.size() + "\u7a2e\u985e");
                 String bestKit = null;
                 int bestLevel = 0;
@@ -463,7 +463,7 @@ TabCompleter {
                     }
                     return Integer.compare(s.kitCounts.getOrDefault(e2.getKey(), 0), s.kitCounts.getOrDefault(e1.getKey(), 0));
                 }).limit(3L).collect(Collectors.toList());
-                sender.sendMessage("\u00a76\u00a7l=== Top 3 \u30de\u30b9\u30bf\u30ea\u30fc\u30ad\u30c3\u30c8 ===");
+                sender.sendMessage("\u00a76\u00a7l\u2605 Top 3 \u30de\u30b9\u30bf\u30ea\u30fc\u30ad\u30c3\u30c8");
                 int rank = 1;
                 for (Map.Entry<String, Integer> me : sorted) {
                     int count = s.kitCounts.getOrDefault(me.getKey(), 0);
@@ -473,7 +473,7 @@ TabCompleter {
             }
             case "title": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
@@ -492,9 +492,9 @@ TabCompleter {
                     }
                     return Integer.compare(s.kitCounts.getOrDefault(e2.getKey(), 0), s.kitCounts.getOrDefault(e1.getKey(), 0));
                 }).limit(3L).collect(Collectors.toList());
-                sender.sendMessage("\u00a76\u00a7l=== \u79f0\u53f7 ===");
+                sender.sendMessage("\u00a76\u00a7l\u2605 \u79f0\u53f7");
                 sender.sendMessage("\u00a77\u6700\u9ad8\u79f0\u53f7: \u00a7e" + highest);
-                sender.sendMessage("\u00a76\u00a7l=== Top 3 \u30de\u30b9\u30bf\u30ea\u30fc\u30ad\u30c3\u30c8 ===");
+                sender.sendMessage("\u00a76\u00a7l\u2605 Top 3 \u30de\u30b9\u30bf\u30ea\u30fc\u30ad\u30c3\u30c8");
                 int rank = 1;
                 for (Map.Entry<String, Integer> me : sorted) {
                     int count = s.kitCounts.getOrDefault(me.getKey(), 0);
@@ -508,20 +508,20 @@ TabCompleter {
                 String field;
                 String string = field = args.length >= 2 ? args[1].toLowerCase() : "kills";
                 if (!List.of("kills", "wins", "kd", "damage", "kits").contains(field)) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba top [kills|wins|kd|damage|kits]");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba top [kills|wins|kd|damage|kits]");
                     return true;
                 }
                 StatsManager sm = this.plugin.getStatsManager();
                 if ("kits".equals(field)) {
                     List<Map.Entry<String, Integer>> kitTop = sm.getKitTop(15);
-                    sender.sendMessage("\u00a76\u00a7l=== \u30ad\u30c3\u30c8\u4f7f\u7528\u7387 Top 15 ===");
+                    sender.sendMessage("\u00a76\u00a7l\u2605 \u30ad\u30c3\u30c8\u4f7f\u7528\u7387 Top 15");
                     int rank = 1;
                     for (Map.Entry<String, Integer> e2 : kitTop) {
                         sender.sendMessage("\u00a77#" + rank++ + " \u00a7e" + e2.getKey() + " \u00a7f" + String.valueOf(e2.getValue()) + "\u56de");
                     }
                     Map<String, List<Map.Entry<UUID, Integer>>> kitPlayers = sm.getKitUsageWithTopPlayers();
                     if (!kitPlayers.isEmpty()) {
-                        sender.sendMessage("\u00a76\u00a7l=== \u30ad\u30c3\u30c8\u5225 Top 3 \u30d7\u30ec\u30a4\u30e4\u30fc ===");
+                        sender.sendMessage("\u00a76\u00a7l\u2605 \u30ad\u30c3\u30c8\u5225 Top 3 \u30d7\u30ec\u30a4\u30e4\u30fc");
                         int kitIdx = 1;
                         int maxShow = Math.min(10, kitPlayers.size());
                         for (Map.Entry<String, List<Map.Entry<UUID, Integer>>> kitEntry : kitPlayers.entrySet()) {
@@ -541,7 +541,7 @@ TabCompleter {
                     return true;
                 }
                 List<Map.Entry<UUID, PlayerStats>> top = sm.getTop(field, 10);
-                sender.sendMessage("\u00a76\u00a7l=== Top 10: " + field + " ===");
+                sender.sendMessage("\u00a76\u00a7l\u2605 Top 10 \u00a78\u00bb \u00a7e" + field);
                 int rank = 1;
                 for (Map.Entry<UUID, PlayerStats> entry : top) {
                     PlayerStats s = entry.getValue();
@@ -568,7 +568,7 @@ TabCompleter {
                 }
                 boolean enable = "on".equalsIgnoreCase(args[1]);
                 this.plugin.getLobbyManager().setContinuousMode(enable);
-                sender.sendMessage("\u00a7a\u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9\u3092 " + (enable ? "\u00a7aON" : "\u00a7cOFF") + " \u00a7a\u306b\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9 \u00a78\u00bb " + (enable ? "\u00a7aON" : "\u00a7cOFF"));
                 break;
             }
             case "admin": {
@@ -576,12 +576,12 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba admin <imigration|addmap|next|cancel|skip>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba admin <imigration|addmap|next|cancel|skip>");
                     return true;
                 }
                 switch (args[1].toLowerCase()) {
@@ -591,7 +591,7 @@ TabCompleter {
                     }
                     case "addmap": {
                         if (args.length < 3) {
-                            sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba admin addmap <mapId>");
+                            sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba admin addmap <mapId>");
                             break block42;
                         }
                         this.mapWizard.start(p, args[2].toLowerCase());
@@ -622,7 +622,7 @@ TabCompleter {
                         break block42;
                     }
                 }
-                sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba admin <imigration|addmap|next|cancel|skip>");
+                sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba admin <imigration|addmap|next|cancel|skip>");
                 break;
             }
             case "setgate": {
@@ -630,23 +630,23 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 3) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba setgate <red|blue> <mapId>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba setgate <red|blue> <mapId>");
                     return true;
                 }
                 String side = args[1].toLowerCase();
                 MapConfig cfg = this.plugin.getMapManager().getById(args[2]);
                 if (cfg == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[2] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[2] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 SelectionTool tool = this.plugin.getSelectionTool();
                 if (!tool.hasSelection(p)) {
-                    sender.sendMessage("\u00a7c\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u305b\u3088");
                     return true;
                 }
                 if ("red".equals(side)) {
@@ -660,7 +660,7 @@ TabCompleter {
                     return true;
                 }
                 this.plugin.getMapManager().saveMap(cfg);
-                sender.sendMessage("\u00a7a" + side + "\u30c1\u30fc\u30e0\u306e\u30b2\u30fc\u30c8\u9818\u57df\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 " + side + " \u30b2\u30fc\u30c8\u9818\u57df\u3092\u8a2d\u5b9a\u3057\u305f");
                 break;
             }
             case "gatematl": {
@@ -669,12 +669,12 @@ TabCompleter {
                     return true;
                 }
                 if (args.length < 3) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba gatematl <mapId> <\u7d20\u6750\u540d>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba gatematl <mapId> <\u7d20\u6750\u540d>");
                     return true;
                 }
                 MapConfig cfg = this.plugin.getMapManager().getById(args[1]);
                 if (cfg == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 try {
@@ -686,7 +686,7 @@ TabCompleter {
                 }
                 cfg.setGateMaterial(mat);
                 this.plugin.getMapManager().saveMap(cfg);
-                sender.sendMessage("\u00a7a\u30b2\u30fc\u30c8\u30d6\u30ed\u30c3\u30af\u3092 \u00a7e" + mat.name() + " \u00a7a\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u30b2\u30fc\u30c8\u7d20\u6750 \u00a78\u00bb \u00a7e" + mat.name());
                 break;
             }
             case "setoob": {
@@ -694,33 +694,33 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba setoob <mapId|lobby>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba setoob <mapId|lobby>");
                     return true;
                 }
                 SelectionTool tool = this.plugin.getSelectionTool();
                 if (!tool.hasSelection(p)) {
-                    sender.sendMessage("\u00a7c\u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30ef\u30f3\u30c9\u30672\u70b9\u3092\u9078\u629e\u305b\u3088");
                     return true;
                 }
                 if ("lobby".equalsIgnoreCase(args[1])) {
                     this.plugin.getLobbyManager().setLobbyOob(tool.getMin(p), tool.getMax(p));
-                    sender.sendMessage("\u00a7a\u30ed\u30d3\u30fcOOB\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
+                    sender.sendMessage("\u00a7a\u2726 \u30ed\u30d3\u30fcOOB\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u3057\u305f");
                     break;
                 }
                 MapConfig cfg = this.plugin.getMapManager().getById(args[1]);
                 if (cfg == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 cfg.setOobMin(tool.getMin(p));
                 cfg.setOobMax(tool.getMax(p));
                 this.plugin.getMapManager().saveMap(cfg);
-                sender.sendMessage("\u00a7a\u30de\u30c3\u30d7 \u00a7e" + args[1] + " \u00a7a\u306eOOB\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u30de\u30c3\u30d7 \u00a7e" + args[1] + " \u00a7a\u306eOOB\u30be\u30fc\u30f3\u3092\u8a2d\u5b9a\u3057\u305f");
                 break;
             }
             case "setredflag": 
@@ -731,12 +731,12 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba " + sub + " <mapId>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba " + sub + " <mapId>");
                     sender.sendMessage("\u00a77  setredflag    \u2192 \u76f8\u624b\u9663\u5730\u306e\u8d64\u65d7\u521d\u671f\u4f4d\u7f6e\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
                     sender.sendMessage("\u00a77  setblueflag   \u2192 \u76f8\u624b\u9663\u5730\u306e\u9752\u65d7\u521d\u671f\u4f4d\u7f6e\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
                     sender.sendMessage("\u00a77  setredreturn  \u2192 \u8d64\u30c1\u30fc\u30e0\u306e\u65d7\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
@@ -745,7 +745,7 @@ TabCompleter {
                 }
                 MapConfig fc = this.plugin.getMapManager().getById(args[1].toLowerCase());
                 if (fc == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 Location loc = p.getLocation().getBlock().getLocation().add(0.5, 0.0, 0.5);
@@ -779,19 +779,19 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba " + sub + " <mapId>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba " + sub + " <mapId>");
                     sender.sendMessage("\u00a77  setbombplant \u2192 \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
                     sender.sendMessage("\u00a77  setbombdefuse\u2192 \u7206\u5f3e\u89e3\u9664\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
                     return true;
                 }
                 MapConfig mc2 = this.plugin.getMapManager().getById(args[1].toLowerCase());
                 if (mc2 == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 Location bl = p.getLocation().getBlock().getLocation().add(0.5, 0.0, 0.5);
@@ -814,7 +814,7 @@ TabCompleter {
                     return true;
                 }
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba bot <add [n]|clear|list>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba bot <add [n]|clear|list>");
                     return true;
                 }
                 switch (args[1].toLowerCase()) {
@@ -826,16 +826,16 @@ TabCompleter {
                     }
                     case "clear": {
                         this.plugin.getBotManager().clearAll();
-                        sender.sendMessage("\u00a7aBOT\u3092\u3059\u3079\u3066\u524a\u9664\u3057\u307e\u3057\u305f\u3002");
+                        sender.sendMessage("\u00a7a\u2726 BOT\u3092\u5168\u524a\u9664\u3057\u305f");
                         break block42;
                     }
                     case "list": {
                         int cnt = this.plugin.getBotManager().getTotalBotCount();
-                        sender.sendMessage("\u00a77\u73fe\u5728\u306eBOT\u6570: \u00a7f" + cnt + "\u4f53");
+                        sender.sendMessage("\u00a77BOT\u6570 \u00a78\u00bb \u00a7f" + cnt + " \u4f53");
                         break block42;
                     }
                 }
-                sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba bot <add [n]|clear|list>");
+                sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba bot <add [n]|clear|list>");
                 break;
             }
             case "convert": {
@@ -913,27 +913,27 @@ TabCompleter {
                     return true;
                 }
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba upgrade <mapId>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba upgrade <mapId>");
                     return true;
                 }
                 String mapId = args[1];
                 MapConfig mc = this.plugin.getMapManager().getById(mapId);
                 if (mc == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + mapId + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + mapId + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
                     return true;
                 }
                 this.mapWizard.startUpgrade(p, mapId);
-                sender.sendMessage("\u00a7a\u30de\u30c3\u30d7 \u00a7e" + mapId + " \u00a7a\u306e\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9\u30a6\u30a3\u30b6\u30fc\u30c9\u3092\u958b\u59cb\u3057\u307e\u3057\u305f\u3002");
+                sender.sendMessage("\u00a7a\u2726 \u30de\u30c3\u30d7 \u00a7e" + mapId + " \u00a7a\u306e\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9\u30a6\u30a3\u30b6\u30fc\u30c9\u3092\u958b\u59cb");
                 break;
             }
             case "test": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
@@ -953,7 +953,7 @@ TabCompleter {
                     this.plugin.getConfig().set("test_field.spawn.z", (Object)p.getLocation().getZ());
                     this.plugin.saveConfig();
                     this.plugin.getTestFieldManager().reload();
-                    sender.sendMessage("\u00a7a\u30c6\u30b9\u30c8\u5834\u30b9\u30dd\u30fc\u30f3\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\uff01");
+                    sender.sendMessage("\u00a7a\u2726 \u30c6\u30b9\u30c8\u5834\u30b9\u30dd\u30fc\u30f3\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\uff01");
                     sender.sendMessage("\u00a77\u30c0\u30df\u30fc\u6570: \u00a7f" + this.plugin.getConfig().getInt("test_field.dummy_count", 3) + "\u4f53");
                     sender.sendMessage("\u00a77\u00a7f/ba test setarea \u00a77\u3067\u7bc4\u56f2\u8a2d\u5b9a\uff08\u30ef\u30f3\u30c9\u9078\u629e\u5f8c\uff09");
                     sender.sendMessage("\u00a77\u00a7f/ba test \u00a77\u3067\u30c6\u30b9\u30c8\u5834\u306b\u5165\u308c\u307e\u3059");
@@ -965,15 +965,15 @@ TabCompleter {
                     }
                     SelectionTool tool = this.plugin.getSelectionTool();
                     if (!tool.hasSelection(p)) {
-                        sender.sendMessage("\u00a7c\u307e\u305a/ba wand\u30672\u70b9\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                        sender.sendMessage("\u00a7c\u26a0 /ba wand\u30672\u70b9\u3092\u9078\u629e\u305b\u3088");
                         return true;
                     }
                     this.plugin.getTestFieldManager().setArea(tool.getMin(p), tool.getMax(p));
-                    sender.sendMessage("\u00a7a\u30c6\u30b9\u30c8\u5834\u306e\u7bc4\u56f2\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\uff01");
+                    sender.sendMessage("\u00a7a\u2726 \u30c6\u30b9\u30c8\u5834\u306e\u7bc4\u56f2\u3092\u8a2d\u5b9a\uff01");
                     return true;
                 }
                 if (!this.plugin.getTestFieldManager().isActive()) {
-                    sender.sendMessage("\u00a7c\u30c6\u30b9\u30c8\u5834\u304c\u8a2d\u5b9a\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002 \u00a7f/ba test setup [\u30c0\u30df\u30fc\u6570] \u00a7c\u3067\u8a2d\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30c6\u30b9\u30c8\u5834\u672a\u8a2d\u5b9a \u00a78\u00bb \u00a77/ba test setup [\u30c0\u30df\u30fc\u6570] \u3067\u8a2d\u5b9a\u305b\u3088");
                     return true;
                 }
                 if (args.length >= 2 && "leave".equalsIgnoreCase(args[1])) {
@@ -985,7 +985,7 @@ TabCompleter {
             }
             case "debug": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
@@ -995,7 +995,7 @@ TabCompleter {
             }
             case "tutorial": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
@@ -1008,7 +1008,7 @@ TabCompleter {
                     this.plugin.getConfig().set("tutorial.spawn.y", (Object)p.getLocation().getY());
                     this.plugin.getConfig().set("tutorial.spawn.z", (Object)p.getLocation().getZ());
                     this.plugin.saveConfig();
-                    sender.sendMessage("\u00a7a\u30c1\u30e5\u30fc\u30c8\u30ea\u30a2\u30eb\u30b9\u30dd\u30fc\u30f3\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\uff01");
+                    sender.sendMessage("\u00a7a\u2726 \u30c1\u30e5\u30fc\u30c8\u30ea\u30a2\u30eb\u30b9\u30dd\u30fc\u30f3\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\uff01");
                     sender.sendMessage("\u00a77\u00a7f/ba test \u00a77\u3067\u30c6\u30b9\u30c8\u5834\u3078\u3082\u8a2d\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044");
                     break;
                 }
@@ -1057,7 +1057,7 @@ TabCompleter {
                     if (list.isEmpty()) {
                         sender.sendMessage("\u00a77BGM\u304c\u767b\u9332\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002songs\u30d5\u30a9\u30eb\u30c0\u306b.nbs\u30d5\u30a1\u30a4\u30eb\u3092\u914d\u7f6e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
                     } else {
-                        sender.sendMessage("\u00a76\u00a7l=== BGM\u4e00\u89a7 (" + list.size() + "\u66f2) ===");
+                        sender.sendMessage("\u00a76\u00a7l\u2605 BGM\u4e00\u89a7 \u00a78\u00bb \u00a7e" + list.size() + "\u66f2");
                         for (int i = 0; i < list.size(); ++i) {
                             String sel = list.get(i) == this.plugin.getGameManager().getSelectedBgm() ? " \u00a7a\u25c0 \u9078\u629e\u4e2d" : "";
                             sender.sendMessage("\u00a7e  " + (i + 1) + ". \u00a7f" + list.get(i).getName() + sel);
@@ -1072,27 +1072,27 @@ TabCompleter {
                         cur.stop();
                     }
                     this.plugin.getGameManager().setSelectedBgm(null);
-                    sender.sendMessage("\u00a7aBGM\u3092\u7121\u52b9\u306b\u3057\u307e\u3057\u305f\u3002");
+                    sender.sendMessage("\u00a7a\u2726 BGM\u3092\u7121\u52b9\u5316");
                     return true;
                 }
                 String searchName = String.join((CharSequence)" ", Arrays.copyOfRange(args, 1, args.length));
                 for (NbsPlayer song : this.plugin.getSongs()) {
                     if (!song.getName().equalsIgnoreCase(searchName)) continue;
                     this.plugin.getGameManager().setSelectedBgm(song);
-                    sender.sendMessage("\u00a7a\u6b21\u8a66\u5408\u306eBGM: \u00a7e" + song.getName() + " \u00a7a\u3092\u9078\u629e\u3057\u307e\u3057\u305f\u3002");
+                    sender.sendMessage("\u00a7a\u2726 \u6b21\u8a66\u5408\u306eBGM \u00a78\u00bb \u00a7e" + song.getName());
                     return true;
                 }
-                sender.sendMessage("\u00a7c\u66f2\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + searchName + " \u00a77(/ba bgm list \u3067\u4e00\u89a7\u8868\u793a)");
+                sender.sendMessage("\u00a7c\u26a0 \u66f2\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + searchName + " \u00a78\u00bb \u00a77/ba bgm list \u3067\u4e00\u89a7\u8868\u793a");
                 break;
             }
             case "vote": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd\u3067\u3059\u3002");
+                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
                     return true;
                 }
                 Player p = (Player)sender;
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a77\u4f7f\u7528\u6cd5: /ba vote <1|2|3>");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba vote <1|2|3>");
                     return true;
                 }
                 int choice = this.parseInt(args[1], -1);
@@ -1137,7 +1137,7 @@ TabCompleter {
         if (s.hasPermission("bloxarena.admin")) {
             return true;
         }
-        s.sendMessage("\u00a7c\u3053\u306e\u30b3\u30de\u30f3\u30c9\u306b\u306f bloxarena.admin \u6a29\u9650\u304c\u5fc5\u8981\u3067\u3059\u3002");
+        s.sendMessage("\u00a7c\u26a0 bloxarena.admin \u6a29\u9650\u304c\u5fc5\u8981\u3067\u3059");
         return false;
     }
 
@@ -1149,44 +1149,47 @@ TabCompleter {
     }
 
     private void sendHelp(CommandSender s) {
-        s.sendMessage("\u00a76\u00a7l=== BAII WoNG \u30b3\u30de\u30f3\u30c9 ===");
-        s.sendMessage("\u00a7e/ba wand \u00a77- \u30ef\u30f3\u30c9\u3092\u53d7\u3051\u53d6\u308b\uff082\u70b9\u9078\u629e\uff09");
-        s.sendMessage("\u00a7e/ba setwaitingarea \u00a77- \u30ef\u30f3\u30c9\u9078\u629e\u7bc4\u56f2\u3092\u5f85\u6a5f\u30a8\u30ea\u30a2\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba setlobby \u00a77- \u30ed\u30d3\u30fc\u30b9\u30dd\u30fc\u30f3\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba addmap <id> [world] \u00a77- \u65b0\u3057\u3044\u30de\u30c3\u30d7\u3092\u8ffd\u52a0");
-        s.sendMessage("\u00a7e/ba info [mapId] \u00a77- \u30de\u30c3\u30d7\u60c5\u5831\u30fb\u4e00\u89a7\u8868\u793a");
-        s.sendMessage("\u00a7e/ba setspawnzone <red|blue> <mapId> \u00a77- \u30ef\u30f3\u30c9\u9078\u629e\u7bc4\u56f2\u3092\u30b9\u30dd\u30fc\u30f3\u30be\u30fc\u30f3\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba setcenter <mapId> \u00a77- \u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8\u57fa\u6e96\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba setmaplobby <mapId> \u00a77- \u30de\u30c3\u30d7\u306e\u30ed\u30d3\u30fc\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba setmap <mapId> \u00a77- \u6b21\u306e\u8a66\u5408\u30de\u30c3\u30d7\u3092\u6307\u5b9a");
-        s.sendMessage("\u00a7e/ba start \u00a77- \u8a66\u5408\u3092\u5f37\u5236\u958b\u59cb");
-        s.sendMessage("\u00a7e/ba stop \u00a77- \u8a66\u5408\u3092\u5f37\u5236\u7d42\u4e86");
-        s.sendMessage("\u00a7e/ba spectate \u00a77- \u9032\u884c\u4e2d\u8a66\u5408\u3092\u89b3\u6226");
-        s.sendMessage("\u00a7e/ba reload \u00a77- config.yml \u3092\u30ea\u30ed\u30fc\u30c9");
-        s.sendMessage("\u00a7e/ba status \u00a77- \u73fe\u5728\u306e\u72b6\u614b\u3092\u8868\u793a");
-        s.sendMessage("\u00a7e/ba admin imigration \u00a77- \u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u30a6\u30a3\u30b6\u30fc\u30c9\u8d77\u52d5\uff08\u30ed\u30d3\u30fc+\u30de\u30c3\u30d71\u500b\u3092\u5bfe\u8a71\u8a2d\u5b9a\uff09");
-        s.sendMessage("\u00a7e/ba kitedit \u00a77- \u30ad\u30c3\u30c8\u30a8\u30c7\u30a3\u30bf\u3092\u958b\u304f\uff08\u904b\u55b6\u9650\u5b9aGUI\uff09");
-        s.sendMessage("\u00a7e/ba setgate <red|blue> <mapId> \u00a77- \u30b2\u30fc\u30c8\u9818\u57df\u3092\u30ef\u30f3\u30c9\u3067\u8a2d\u5b9a\uff08\u7e26\u6a2a\u5bfe\u5fdc\uff09");
-        s.sendMessage("\u00a7e/ba gatematl <mapId> <\u7d20\u6750> \u00a77- \u30b2\u30fc\u30c8\u30d6\u30ed\u30c3\u30af\u7d20\u6750\u3092\u6307\u5b9a\uff08\u4f8b: BARRIER\uff09");
-        s.sendMessage("\u00a7e/ba setoob <mapId|lobby> \u00a77- \u30a8\u30ea\u30a2\u5916\u5224\u5b9a\u30be\u30fc\u30f3\u3092\u30ef\u30f3\u30c9\u3067\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba bot add [n] \u00a77- \u30c6\u30b9\u30c8\u7528BOT\u3092\u8ffd\u52a0\uff08\u8a66\u5408\u958b\u59cb\u524d\uff09");
-        s.sendMessage("\u00a7e/ba bot clear \u00a77- BOT\u3092\u3059\u3079\u3066\u524a\u9664");
-        s.sendMessage("\u00a7e/ba stats [player] \u00a77- \u7d71\u8a08\u3092\u8868\u793a");
-        s.sendMessage("\u00a7e/ba mastery [player] \u00a77- \u30de\u30b9\u30bf\u30ea\u30fc\u6982\u8981\u3092\u8868\u793a");
-        s.sendMessage("\u00a7e/ba title \u00a77- \u79f0\u53f7\u3092\u8868\u793a/\u5207\u308a\u66ff\u3048");
-        s.sendMessage("\u00a7e/ba top [kills|wins|kd|damage|kits] \u00a77- \u30e9\u30f3\u30ad\u30f3\u30b0\u8868\u793a");
-        s.sendMessage("\u00a7e/ba continuous <on|off> \u00a77- \u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9\u5207\u308a\u66ff\u3048");
-        s.sendMessage("\u00a7e/ba setmapname <mapId> <\u540d\u524d> \u00a77- \u30de\u30c3\u30d7\u306e\u8868\u793a\u540d\u3092\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba upgrade <mapId> \u00a77- \u65e2\u5b58\u30de\u30c3\u30d7\u3092\u65b0\u30e2\u30fc\u30c9\u5bfe\u5fdc\u306b\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9");
-        s.sendMessage("\u00a7e/ba convert \u00a77- \u65e7config\u3092\u65b0\u5f62\u5f0f\u306b\u81ea\u52d5\u5909\u63db");
-        s.sendMessage("\u00a7e/ba setredflag <mapId> \u00a77- CTF\u8d64\u65d7\u521d\u671f\u4f4d\u7f6e\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\uff08\u81ea\u9663\u5074\uff09");
-        s.sendMessage("\u00a7e/ba setblueflag <mapId> \u00a77- CTF\u9752\u65d7\u521d\u671f\u4f4d\u7f6e\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\uff08\u81ea\u9663\u5074\uff09");
-        s.sendMessage("\u00a7e/ba setredreturn <mapId> \u00a77- CTF\u8d64\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba setbluereturn <mapId> \u00a77- CTF\u9752\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba setbombplant <mapId> \u00a77- \u7206\u7834\u8a2d\u7f6e\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba setbombdefuse <mapId> \u00a77- \u7206\u7834\u89e3\u9664\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a7e/ba test [leave] \u00a77- \u30c6\u30b9\u30c8\u5834\u306b\u5165\u308b/\u9000\u51fa");
-        s.sendMessage("\u00a7e/ba kits \u00a77- \u30ad\u30c3\u30c8\u4e00\u89a7\u3092\u8868\u793a\uff08\u8ab0\u3067\u3082\u4f7f\u7528\u53ef\u80fd\uff09");
+        s.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+        s.sendMessage("\u00a76\u00a7l\u2605 BAII WoNG \u30b3\u30de\u30f3\u30c9\u30ac\u30a4\u30c9");
+        s.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba wand \u00a77- \u30ef\u30f3\u30c9\u3092\u53d7\u3051\u53d6\u308b\uff082\u70b9\u9078\u629e\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setwaitingarea \u00a77- \u30ef\u30f3\u30c9\u9078\u629e\u7bc4\u56f2\u3092\u5f85\u6a5f\u30a8\u30ea\u30a2\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setlobby \u00a77- \u30ed\u30d3\u30fc\u30b9\u30dd\u30fc\u30f3\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba addmap <id> [world] \u00a77- \u65b0\u3057\u3044\u30de\u30c3\u30d7\u3092\u8ffd\u52a0");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba info [mapId] \u00a77- \u30de\u30c3\u30d7\u60c5\u5831\u30fb\u4e00\u89a7\u8868\u793a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setspawnzone <red|blue> <mapId> \u00a77- \u30ef\u30f3\u30c9\u9078\u629e\u7bc4\u56f2\u3092\u30b9\u30dd\u30fc\u30f3\u30be\u30fc\u30f3\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setcenter <mapId> \u00a77- \u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8\u57fa\u6e96\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setmaplobby <mapId> \u00a77- \u30de\u30c3\u30d7\u306e\u30ed\u30d3\u30fc\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setmap <mapId> \u00a77- \u6b21\u306e\u8a66\u5408\u30de\u30c3\u30d7\u3092\u6307\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba start \u00a77- \u8a66\u5408\u3092\u5f37\u5236\u958b\u59cb");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba stop \u00a77- \u8a66\u5408\u3092\u5f37\u5236\u7d42\u4e86");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba spectate \u00a77- \u9032\u884c\u4e2d\u8a66\u5408\u3092\u89b3\u6226");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba reload \u00a77- config.yml \u3092\u30ea\u30ed\u30fc\u30c9");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba status \u00a77- \u73fe\u5728\u306e\u72b6\u614b\u3092\u8868\u793a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba admin imigration \u00a77- \u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u30a6\u30a3\u30b6\u30fc\u30c9\u8d77\u52d5\uff08\u30ed\u30d3\u30fc+\u30de\u30c3\u30d71\u500b\u3092\u5bfe\u8a71\u8a2d\u5b9a\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba kitedit \u00a77- \u30ad\u30c3\u30c8\u30a8\u30c7\u30a3\u30bf\u3092\u958b\u304f\uff08\u904b\u55b6\u9650\u5b9aGUI\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setgate <red|blue> <mapId> \u00a77- \u30b2\u30fc\u30c8\u9818\u57df\u3092\u30ef\u30f3\u30c9\u3067\u8a2d\u5b9a\uff08\u7e26\u6a2a\u5bfe\u5fdc\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba gatematl <mapId> <\u7d20\u6750> \u00a77- \u30b2\u30fc\u30c8\u30d6\u30ed\u30c3\u30af\u7d20\u6750\u3092\u6307\u5b9a\uff08\u4f8b: BARRIER\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setoob <mapId|lobby> \u00a77- \u30a8\u30ea\u30a2\u5916\u5224\u5b9a\u30be\u30fc\u30f3\u3092\u30ef\u30f3\u30c9\u3067\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba bot add [n] \u00a77- \u30c6\u30b9\u30c8\u7528BOT\u3092\u8ffd\u52a0\uff08\u8a66\u5408\u958b\u59cb\u524d\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba bot clear \u00a77- BOT\u3092\u3059\u3079\u3066\u524a\u9664");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba stats [player] \u00a77- \u7d71\u8a08\u3092\u8868\u793a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba mastery [player] \u00a77- \u30de\u30b9\u30bf\u30ea\u30fc\u6982\u8981\u3092\u8868\u793a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba title \u00a77- \u79f0\u53f7\u3092\u8868\u793a/\u5207\u308a\u66ff\u3048");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba top [kills|wins|kd|damage|kits] \u00a77- \u30e9\u30f3\u30ad\u30f3\u30b0\u8868\u793a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba continuous <on|off> \u00a77- \u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9\u5207\u308a\u66ff\u3048");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setmapname <mapId> <\u540d\u524d> \u00a77- \u30de\u30c3\u30d7\u306e\u8868\u793a\u540d\u3092\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba upgrade <mapId> \u00a77- \u65e2\u5b58\u30de\u30c3\u30d7\u3092\u65b0\u30e2\u30fc\u30c9\u5bfe\u5fdc\u306b\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba convert \u00a77- \u65e7config\u3092\u65b0\u5f62\u5f0f\u306b\u81ea\u52d5\u5909\u63db");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setredflag <mapId> \u00a77- CTF\u8d64\u65d7\u521d\u671f\u4f4d\u7f6e\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\uff08\u81ea\u9663\u5074\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setblueflag <mapId> \u00a77- CTF\u9752\u65d7\u521d\u671f\u4f4d\u7f6e\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\uff08\u81ea\u9663\u5074\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setredreturn <mapId> \u00a77- CTF\u8d64\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setbluereturn <mapId> \u00a77- CTF\u9752\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setbombplant <mapId> \u00a77- \u7206\u7834\u8a2d\u7f6e\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba setbombdefuse <mapId> \u00a77- \u7206\u7834\u89e3\u9664\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba test [leave] \u00a77- \u30c6\u30b9\u30c8\u5834\u306b\u5165\u308b/\u9000\u51fa");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba kits \u00a77- \u30ad\u30c3\u30c8\u4e00\u89a7\u3092\u8868\u793a\uff08\u8ab0\u3067\u3082\u4f7f\u7528\u53ef\u80fd\uff09");
+        s.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
     }
 
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {

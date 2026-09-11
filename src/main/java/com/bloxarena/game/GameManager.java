@@ -192,23 +192,23 @@ public class GameManager {
         if (this.currentGameMode == GameMode.BOMB_MISSION) {
             this.bombRoundAttackerRed = true;
         }
-        Bukkit.broadcastMessage((String)("\u00a7d\u00a7l[\u30b2\u30fc\u30e0\u30e2\u30fc\u30c9] \u00a7f" + this.currentGameMode.getDisplayName() + " \u00a77| " + this.currentGameMode.getDescription()));
+        Bukkit.broadcastMessage((String)("\u00a78\u00bb \u00a7d\u26a1 " + this.currentGameMode.getDisplayName() + " \u00a78\u00bb \u00a77" + this.currentGameMode.getDescription()));
         for (Player pl2 : Bukkit.getOnlinePlayers()) {
             pl2.playSound(pl2.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.8f, 2.0f);
         }
         for (UUID uid : participants) {
             Player pl = Bukkit.getPlayer((UUID)uid);
             if (pl == null) continue;
-            pl.sendTitle("\u00a7d\u00a7l\u26a1 \u30b2\u30fc\u30e0\u30e2\u30fc\u30c9 \u26a1", "\u00a7f" + this.currentGameMode.getDisplayName() + " \u00a77| " + this.currentGameMode.getDescription(), 5, 50, 15);
+            pl.sendTitle("\u00a7d\u26a1 " + this.currentGameMode.getDisplayName() + " \u26a1", "\u00a77" + this.currentGameMode.getDescription(), 5, 50, 15);
         }
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             String rules = switch (this.currentGameMode) {
-                case BATTLE_ARENA -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u6575\u3092\u6bb2\u6ec5\u3059\u308b\u304b\u3001\u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8(25\u679a)\u3092\u81ea\u8272\u3067\u57cb\u3081\u306615\u79d2\u30db\u30fc\u30eb\u30c9\u305b\u3088\uff01BO3\u5148\u53d6\u5236\u3002";
-                case TEAM_DEATHMATCH -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u5236\u9650\u6642\u9593\u5185\u306b\u3088\u308a\u591a\u304f\u306e\u6575\u3092\u5012\u305b\uff01\u6b7b\u4ea1\u3057\u3066\u30823\u79d2\u3067\u30ea\u30b9\u30dd\u30fc\u30f3\u3002\u76ee\u6a1930\u30ad\u30eb\u5148\u53d6\u3067\u3082\u52dd\u5229\u3002";
-                case BOMB_MISSION -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u653b\u6483\u5074\u306f\u7206\u5f3e\u3092\u8a2d\u7f6e(5\u79d2)\u2192\u7206\u767a45\u79d2\u3002\u5b88\u5099\u5074\u306f\u89e3\u9664(7\u79d2)\u305b\u3088\uff01\u30e9\u30a6\u30f3\u30c9\u6bce\u306b\u653b\u5b88\u4ea4\u4ee3\u3002";
-                case DOMINATION -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u62e0\u70b9\u306b\u7acb\u3061\u7d9a\u3051\u3066\u5360\u9818\u305b\u3088\uff01\u5360\u9818\u62e0\u70b9\u304b\u3089\u6bce\u79d2\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3002\u5148\u306b\u76ee\u6a19\u30dd\u30a4\u30f3\u30c8\u5230\u9054\u3067\u52dd\u5229\u3002";
-                case CAPTURE_THE_FLAG -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u6575\u9663\u306e\u65d7\u3092\u596a\u3044\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01\u5148\u306b3\u56de\u596a\u53d6\u3067\u52dd\u5229\u3002\u6b7b\u4ea1\u6642\u306f\u65d7\u3092\u843d\u3068\u3059\u3002";
-                case FFA -> "\u00a76\u00a7l\u30eb\u30fc\u30eb\u00a7f: \u5168\u54e1\u304c\u6575\uff01\u6700\u5f8c\u306e1\u4eba\u306b\u306a\u308b\u307e\u3067\u6226\u3048\uff01\u30ea\u30b9\u30dd\u30fc\u30f3\u306a\u3057\u3002";
+                case BATTLE_ARENA -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u6575\u3092\u6bb2\u6ec5\u3059\u308b\u304b\u3001\u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8(25\u679a)\u3092\u81ea\u8272\u3067\u57cb\u3081\u306615\u79d2\u30db\u30fc\u30eb\u30c9\u305b\u3088\uff01BO3\u5148\u53d6\u5236\u3002";
+                case TEAM_DEATHMATCH -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u5236\u9650\u6642\u9593\u5185\u306b\u3088\u308a\u591a\u304f\u306e\u6575\u3092\u5012\u305b\uff01\u6b7b\u4ea1\u3057\u3066\u30823\u79d2\u3067\u30ea\u30b9\u30dd\u30fc\u30f3\u3002\u76ee\u6a1930\u30ad\u30eb\u5148\u53d6\u3067\u3082\u52dd\u5229\u3002";
+                case BOMB_MISSION -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u653b\u6483\u5074\u306f\u7206\u5f3e\u3092\u8a2d\u7f6e(5\u79d2)\u2192\u7206\u767a45\u79d2\u3002\u5b88\u5099\u5074\u306f\u89e3\u9664(7\u79d2)\u305b\u3088\uff01\u30e9\u30a6\u30f3\u30c9\u6bce\u306b\u653b\u5b88\u4ea4\u4ee3\u3002";
+                case DOMINATION -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u62e0\u70b9\u306b\u7acb\u3061\u7d9a\u3051\u3066\u5360\u9818\u305b\u3088\uff01\u5360\u9818\u62e0\u70b9\u304b\u3089\u6bce\u79d2\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3002\u5148\u306b\u76ee\u6a19\u30dd\u30a4\u30f3\u30c8\u5230\u9054\u3067\u52dd\u5229\u3002";
+                case CAPTURE_THE_FLAG -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u6575\u9663\u306e\u65d7\u3092\u596a\u3044\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01\u5148\u306b3\u56de\u596a\u53d6\u3067\u52dd\u5229\u3002\u6b7b\u4ea1\u6642\u306f\u65d7\u3092\u843d\u3068\u3059\u3002";
+                case FFA -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u5168\u54e1\u304c\u6575\uff01\u6700\u5f8c\u306e1\u4eba\u306b\u306a\u308b\u307e\u3067\u6226\u3048\uff01\u30ea\u30b9\u30dd\u30fc\u30f3\u306a\u3057\u3002";
                 default -> throw new IncompatibleClassChangeError();
             };
             Bukkit.broadcastMessage((String)rules);
@@ -238,14 +238,14 @@ public class GameManager {
             if (pp == null) continue;
             this.plugin.getSkillManager().restoreMaxHp(pp);
         }
-        Bukkit.broadcastMessage((String)("\u00a76\u00a7l[BAII WoNG] \u00a7eMAP: \u00a7f" + map.getDisplayName()));
+        Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2605 MAP \u00a78\u00bb \u00a7e" + map.getDisplayName()));
         if (this.currentGameMode != GameMode.FFA) {
             this.broadcastTeamAnnouncement();
         } else {
             for (UUID uid : participants) {
                 Player pl = Bukkit.getPlayer((UUID)uid);
                 if (pl == null) continue;
-                pl.sendTitle("\u00a7e\u00a7lFFA", "\u00a7f\u5168\u54e1\u304c\u6575\uff01\u6700\u5f8c\u307e\u3067\u751f\u304d\u6b8b\u308c", 5, 60, 10);
+                pl.sendTitle("\u00a7e\u00a7l\u2726 FFA \u2726", "\u00a77\u5168\u54e1\u304c\u6575 \u2014 \u6700\u5f8c\u306e1\u4eba\u306b\u306a\u308b\u307e\u3067\u751f\u304d\u6b8b\u308c", 5, 60, 10);
                 pl.playSound(pl.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
             }
         }
@@ -255,7 +255,7 @@ public class GameManager {
                 if (pl == null || !pl.isOnline()) continue;
                 TeamColor t = this.getTeamOf(pl);
                 if (t != null) {
-                    pl.sendTitle(t.getColorCode() + "\u00a7l\u3042\u306a\u305f\u306f " + t.getDisplayName() + " \u30c1\u30fc\u30e0", "\u00a77\u30ad\u30c3\u30c8\u9078\u629e\u753b\u9762\u3067\u6e96\u5099\u3057\u3066\u304f\u3060\u3055\u3044", 5, 40, 10);
+                    pl.sendTitle(t.getColorCode() + "\u00a7l\u2605 \u3042\u306a\u305f\u306f " + t.getDisplayName() + " \u30c1\u30fc\u30e0", "\u00a77\u30ad\u30c3\u30c8\u9078\u629e\u753b\u9762\u3067\u6e96\u5099\u305b\u3088", 5, 40, 10);
                     continue;
                 }
                 if (this.currentGameMode != GameMode.FFA) continue;
@@ -356,9 +356,9 @@ public class GameManager {
                         Player winner = topKiller != null ? Bukkit.getPlayer(topKiller) : null;
                         String winName = winner != null ? winner.getName() : "\u306a\u3057";
                         if (topKiller != null) {
-                            Bukkit.broadcastMessage((String)("\u00a7e\u00a7l\u23f1 \u5236\u9650\u6642\u9593\u7d42\u4e86\uff01 \u00a7f" + winName + " \u00a7e\u304c\u6700\u591a\u30ad\u30eb\u3067\u52dd\u5229\uff01"));
+                            Bukkit.broadcastMessage((String)("\u00a7e\u23f0 \u5236\u9650\u6642\u9593\u7d42\u4e86 \u00a78\u00bb \u00a7f" + winName + " \u00a7e\u304c\u6700\u591a\u30ad\u30eb\u3067\u52dd\u5229\uff01"));
                         } else {
-                            Bukkit.broadcastMessage((String)"\u00a7e\u00a7l\u23f1 \u5236\u9650\u6642\u9593\u7d42\u4e86\uff01 \u00a7e\u5f15\u304d\u5206\u3051\uff01");
+                            Bukkit.broadcastMessage((String)"\u00a7e\u23f0 \u5236\u9650\u6642\u9593\u7d42\u4e86 \u00a78\u00bb \u00a77\u5f15\u304d\u5206\u3051\uff01");
                         }
                         GameManager.this.endGame(null, WinCondition.ELIMINATION);
                     }
@@ -426,7 +426,7 @@ public class GameManager {
                 ItemStack bomb = new ItemStack(Material.TNT);
                 ItemMeta m = bomb.getItemMeta();
                 if (m != null) {
-                    m.setDisplayName("\u00a7c\u00a7l\ud83d\udca3 \u7206\u5f3e \u00a77(\u8a2d\u7f6e\u5730\u70b9\u3067\u53f3\u30af\u30ea\u30c3\u30af)");
+                    m.setDisplayName("\u00a7c\u00a7l\ud83d\udca3 \u7206\u5f3e \u00a78\u00bb \u00a77\u8a2d\u7f6e\u5730\u70b9\u3067\u53f3\u30af\u30ea\u30c3\u30af");
                     bomb.setItemMeta(m);
                 }
                 pl.getInventory().addItem(new ItemStack[]{bomb});
@@ -438,7 +438,7 @@ public class GameManager {
                 }
                 if (!this.bombPlanted) {
                     TeamColor defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-                    Bukkit.broadcastMessage((String)("\u00a7e\u00a7l\u23f1 \u5236\u9650\u6642\u9593\u5207\u308c\uff01 \u00a77| " + defender.getColorCode() + "\u00a7l" + defender.getDisplayName() + " \u30c1\u30fc\u30e0\u306e\u52dd\u5229\uff01"));
+                    Bukkit.broadcastMessage((String)("\u00a7e\u23f0 \u6642\u9593\u5207\u308c \u00a78\u00bb " + defender.getColorCode() + "\u00a7l" + defender.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01"));
                     this.endGame(defender, WinCondition.OBJECTIVE);
                 }
             }, (long)this.plugin.getConfig().getInt("bomb_mission.time_limit_seconds", 180) * 20L);
@@ -503,7 +503,7 @@ public class GameManager {
             this.underdogPlayers.add(uid);
             Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            p.sendMessage("\u00a7e\u00a7l\u7d66\u4e0e\u30dc\u30fc\u30ca\u30b9\uff01\u00a77\u4eba\u6570\u304c\u4e0d\u5229\u306a\u305f\u3081\u3001\u53d7\u5275\u6642\u306b\u518d\u751fIII\u309210\u79d2\u9593\u7372\u5f97\uff08\u72ec\u81eaCT22\u79d2\uff09");
+            p.sendMessage("\u00a7e\u00a7l\u2605 \u7d66\u4e0e\u30dc\u30fc\u30ca\u30b9 \u00a78\u00bb \u00a77\u4eba\u6570\u4e0d\u5229\u306e\u305f\u3081\u3001\u53d7\u5275\u6642\u306b\u518d\u751fIII\u309210\u79d2\u9593\u7372\u5f97\uff08\u72ec\u81eaCT22\u79d2\uff09");
         }
     }
 
@@ -566,7 +566,7 @@ public class GameManager {
     private void updateCentralZone(Player p) {
         if (this.isInCentralZone(p)) {
             if (this.centralZoneMembers.add(p.getUniqueId())) {
-                p.sendMessage("\u00a7c\u4e2d\u592e\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u5185\u306f\u30ac\u30fc\u30c9/\u7121\u6575\u4e0d\u53ef");
+                p.sendMessage("\u00a7c\u2694 \u4e2d\u592e\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u5185 \u00a78\u00bb \u00a77\u30ac\u30fc\u30c9/\u7121\u6575\u4e0d\u53ef");
             }
             p.setCooldown(Material.SHIELD, 20);
             if (p.isBlocking()) {
@@ -639,7 +639,7 @@ public class GameManager {
             now = progress >= 0.8f ? TeamColor.RED : (progress <= -0.8f ? TeamColor.BLUE : null);
             if (now != prev) {                this.domCapOwner.put(idx, now);
                 if (now != null) {
-                    Bukkit.broadcastMessage((String)(now.getColorCode() + "\u62e0\u70b9" + (idx + 1) + "\u3092\u5360\u9818\uff01"));
+                    Bukkit.broadcastMessage((String)(now.getColorCode() + "\u2605 \u62e0\u70b9" + (idx + 1) + " \u00a78\u00bb \u00a77\u5360\u9818\uff01"));
                 }
             }
             if (center.getBlock().getType() == Material.BEACON) {
@@ -665,7 +665,7 @@ public class GameManager {
 
     private void startCountdownBeforeBarrierRemoval() {
         this.broadcastSound(Sound.ENTITY_WITHER_SPAWN, 0.6f, 1.2f);
-        this.preBattleBossBar = Bukkit.createBossBar((String)"\u00a7c\u00a7l\u2694 \u30d0\u30c8\u30eb\u6e96\u5099\u4e2d...", (BarColor)BarColor.RED, (BarStyle)BarStyle.SOLID, (BarFlag[])new BarFlag[0]);
+        this.preBattleBossBar = Bukkit.createBossBar((String)"\u00a7c\u00a7l\u2694 \u6226\u95d8\u6e96\u5099\u4e2d...", (BarColor)BarColor.RED, (BarStyle)BarStyle.SOLID, (BarFlag[])new BarFlag[0]);
         for (UUID uid : this.getAllParticipantsAndSpectators()) {
             Player pl = Bukkit.getPlayer((UUID)uid);
             if (pl == null) continue;
@@ -677,7 +677,7 @@ public class GameManager {
     private void playModeNameSweep() {
         final String mapName = this.currentMap != null ? this.currentMap.getDisplayName() : "???";
         final String modeName = this.currentGameMode.getDisplayName();
-        final String colored = "\u00a7e\u00a7l\u2694 " + modeName + " \u2694";
+        final String colored = "\u00a76\u00a7l\u2694 " + modeName + " \u2694";
         final int extra = 18;
         final int steps = 60;
         new BukkitRunnable(){
@@ -690,7 +690,7 @@ public class GameManager {
                     return;
                 }
                 int pad = (int)((steps - this.t) * (double)extra / steps) + 1;
-                GameManager.this.broadcastTitle("\u00a7f" + GameManager.this.repeatSpaces(pad) + colored, "\u00a7e" + modeName + " \u00a77- " + GameManager.this.currentGameMode.getDescription(), 0, 2, 0);
+                GameManager.this.broadcastTitle("\u00a7f" + GameManager.this.repeatSpaces(pad) + colored, "\u00a7e" + modeName + " \u00a78\u00bb \u00a77" + GameManager.this.currentGameMode.getDescription(), 0, 2, 0);
                 ++this.t;
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
@@ -712,10 +712,10 @@ public class GameManager {
                     float pitch = 0.6f + (float)(5 - this.count) * 0.15f;
                     GameManager.this.broadcastTitle(color + this.count, "\u00a77" + mapName, 0, 22, 3);
                     GameManager.this.broadcastSound(Sound.BLOCK_NOTE_BLOCK_PLING, 1.2f, pitch);
-                    GameManager.this.broadcastActionBar("\u00a7f\u6e96\u5099\u3057\u308d\uff01\u00a7e" + this.count + "\u00a7f\u79d2\u5f8c\u306b\u30b2\u30fc\u30c8\u304c\u958b\u304f\uff01");
+                    GameManager.this.broadcastActionBar("\u00a7f\u6e96\u5099\u4e07\u7aef \u00a78\u00bb \u00a7e" + this.count + " \u00a7f\u79d2\u5f8c\u306b\u30b2\u30fc\u30c8\u958b\u653e\uff01");
                     if (GameManager.this.preBattleBossBar != null) {
                         GameManager.this.preBattleBossBar.setProgress((double)this.count / 5.0);
-                        GameManager.this.preBattleBossBar.setTitle("\u00a7c\u00a7l\u2694 \u30b2\u30fc\u30c8\u958b\u653e\u307e\u3067 \u00a7e" + this.count + "\u00a7c \u79d2");
+                        GameManager.this.preBattleBossBar.setTitle("\u00a7c\u00a7l\u2694 \u30b2\u30fc\u30c8\u958b\u653e \u00a78\u00bb \u00a7e" + this.count + "\u00a7c \u79d2");
                     }
                     --this.count;
                 } else {
@@ -760,11 +760,11 @@ public class GameManager {
     }
 
     private void finishFightStart(final String mapName) {
-        this.broadcastTitle("\u00a7c\u00a7l\u2694  FIGHT!!  \u2694", "\u00a7e" + mapName + " \u00a77| \u00a7f\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u3092\u5236\u5727\u305b\u3088\uff01", 3, 50, 12);
+        this.broadcastTitle("\u00a7c\u00a7l\u2694  FIGHT!!  \u2694", "\u00a7e" + mapName + " \u00a78\u00bb \u00a7f\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u3092\u5236\u5727\u305b\u3088\uff01", 3, 50, 12);
         this.broadcastSound(Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 1.0f);
         this.broadcastSound(Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.3f);
         this.broadcastSound(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-        this.broadcastActionBar("\u00a7c\u00a7l\u2694 FIGHT!! \u00a77| \u00a7e2\u5206\u5f8c\u306b\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u304c\u89e3\u653e\u3055\u308c\u308b\uff01");
+        this.broadcastActionBar("\u00a7c\u00a7l\u2694 FIGHT!! \u00a78\u00bb \u00a7e2\u5206\u5f8c\u306b\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u89e3\u653e\uff01");
         for (UUID uid : this.getAllParticipants()) {
             Player pl = Bukkit.getPlayer((UUID)uid);
             if (pl == null || !pl.isOnline()) continue;
@@ -814,7 +814,7 @@ public class GameManager {
             if (p == null) continue;
             log.append(p.getName()).append(" ");
         }
-        log.append("\u00a7b\u9752=");
+        log.append("\u00a79\u9752=");
         for (UUID uid : this.blueTeam) {
             p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
@@ -843,17 +843,17 @@ public class GameManager {
             }
             blueNames.append("\u00a7f").append(p.getName());
         }
-        Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u3010\u30c1\u30fc\u30e0\u632f\u308a\u5206\u3051\u3011 \u00a7c[RED] \u00a7f" + redNames + " \u00a77vs \u00a79[BLUE] \u00a7f" + blueNames));
+        Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2605 \u30c1\u30fc\u30e0\u632f\u308a\u5206\u3051 \u00a78\u00bb \u00a7c[RED] \u00a7f" + redNames + " \u00a77vs \u00a79[BLUE] \u00a7f" + blueNames));
         for (UUID uid : this.redTeam) {
             p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            p.sendTitle("\u00a7c\u8d64\u30c1\u30fc\u30e0", "\u00a7f\u3042\u306a\u305f\u306f\u8d64\u30c1\u30fc\u30e0\u3067\u3059", 5, 60, 10);
+            p.sendTitle("\u00a7c\u00a7l\u2605 \u8d64\u30c1\u30fc\u30e0", "\u00a77\u547d\u3092\u6253\u3063\u3066\u6226\u3048\uff01", 5, 60, 10);
             p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         }
         for (UUID uid : this.blueTeam) {
             p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            p.sendTitle("\u00a7b\u9752\u30c1\u30fc\u30e0", "\u00a7f\u3042\u306a\u305f\u306f\u9752\u30c1\u30fc\u30e0\u3067\u3059", 5, 60, 10);
+            p.sendTitle("\u00a79\u00a7l\u2605 \u9752\u30c1\u30fc\u30e0", "\u00a77\u547d\u3092\u6253\u3063\u3066\u6226\u3048\uff01", 5, 60, 10);
             p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         }
     }
@@ -1085,7 +1085,7 @@ public class GameManager {
                 ++cyanCount;
             }
         }
-        Bukkit.broadcastMessage((String)("\u00a76[BA] \u00a7e\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u304c\u596a\u53d6\u3055\u308c\u3066\u3044\u307e\u3059\uff01 \u00a7c\u8d64:" + redCount + "/25 \u00a7b\u9752:" + cyanCount + "/25"));
+        Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2694 \u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u4e89\u593a\u4e2d \u00a78\u00bb \u00a7c\u8d64 " + redCount + "/25 \u00a78| \u00a79\u9752 " + cyanCount + "/25"));
         Material first = null;
         boolean allSame = true;
         block2: for (int dx = -2; dx <= 2; ++dx) {
@@ -1120,8 +1120,8 @@ public class GameManager {
         this.cancelHoldTimer();
         this.holdingTeam = winner;
         final TeamColor fw = winner;
-        this.broadcastTitle(winner.getColorCode() + "\u00a7l25\u679a\u5236\u5727\uff01", "\u00a7e15\u79d2\u30db\u30fc\u30eb\u30c9\u3067\u52dd\u5229", 5, 30, 5);
-        Bukkit.broadcastMessage((String)(winner.getColorCode() + "\u00a7l[BA] " + winner.getDisplayName() + " \u30c1\u30fc\u30e0\u304c25\u679a\u5236\u5727\uff0115\u79d2\u30db\u30fc\u30eb\u30c9\u3067\u52dd\u5229\uff01"));
+        this.broadcastTitle(winner.getColorCode() + "\u00a7l25\u679a\u5236\u5727\uff01", "\u00a7e15\u79d2\u30db\u30fc\u30eb\u30c9\u3067\u52dd\u5229\u305b\u3088\uff01", 5, 30, 5);
+        Bukkit.broadcastMessage((String)(winner.getColorCode() + "\u00a7l\u2605 " + winner.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u304c25\u679a\u5236\u5727\uff01 \u00a7715\u79d2\u30db\u30fc\u30eb\u30c9\u3067\u52dd\u5229\uff01"));
         this.holdTask = new BukkitRunnable(){
             int rem = 15;
 
@@ -1135,7 +1135,7 @@ public class GameManager {
                     GameManager.this.endGame(fw, WinCondition.OBJECTIVE);
                     return;
                 }
-                GameManager.this.broadcastActionBar(fw.getColorCode() + "\u00a7l" + fw.getDisplayName() + " \u00a7e\u30db\u30fc\u30eb\u30c9 \u00a7f" + this.rem + "\u00a7e\u79d2");
+                GameManager.this.broadcastActionBar(fw.getColorCode() + "\u00a7l" + fw.getDisplayName() + " \u00a7e\u30db\u30fc\u30eb\u30c9\u4e2d \u00a78\u00bb \u00a7f" + this.rem + "\u00a7e\u79d2");
                 --this.rem;
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
@@ -1144,7 +1144,7 @@ public class GameManager {
     public void onObjectiveBlockBroken() {
         if (this.holdTask != null) {
             this.cancelHoldTimer();
-            Bukkit.broadcastMessage((String)"\u00a76[BA] \u00a7c\u30db\u30fc\u30eb\u30c9\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f\uff01");
+            Bukkit.broadcastMessage((String)"\u00a7c\u2694 \u30db\u30fc\u30eb\u30c9\u4e2d\u65ad \u00a78\u00bb \u00a77\u57fa\u76e4\u304c\u58ca\u3055\u308c\u305f\uff01");
         }
     }
 
@@ -1188,17 +1188,17 @@ public class GameManager {
         } else if (winner == TeamColor.BLUE) {
             ++this.roundWinsBlue;
         }
-        String roundResult = winner != null ? winner.getColorCode() + winner.getDisplayName() + " \u00a7a\u304c\u30e9\u30a6\u30f3\u30c9\u3092\u5236\u3057\u307e\u3057\u305f\uff01" : "\u00a77\u5f15\u304d\u5206\u3051";
+        String roundResult = winner != null ? winner.getColorCode() + "\u00a7l" + winner.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u304c\u30e9\u30a6\u30f3\u30c9\u3092\u5236\u3057\u305f\uff01" : "\u00a77\u5f15\u304d\u5206\u3051";
         String scoreStr = "\u00a7c\u8d64 " + this.roundWinsRed + " \u00a77- \u00a79" + this.roundWinsBlue + " \u00a77\u9752";
         for (UUID uid : this.getAllParticipantsAndSpectators()) {
             Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            p.sendTitle(roundResult, scoreStr, 5, 50, 10);
-            p.sendMessage("\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
-            p.sendMessage("\u00a76\u00a7l  \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u7d42\u4e86");
-            p.sendMessage("\u00a77\u7d50\u679c: " + roundResult);
-            p.sendMessage("\u00a77\u30b9\u30b3\u30a2: " + scoreStr);
-            p.sendMessage("\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+            p.sendTitle(winner != null ? "\u00a7e\u00a7l\u2726 ROUND WIN \u2726" : "\u00a77\u00a7l\u2726 DRAW \u2726", roundResult + " \u00a78\u00bb " + scoreStr, 5, 50, 10);
+            p.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+            p.sendMessage("\u00a76\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u7d42\u4e86");
+            p.sendMessage("\u00a77\u7d50\u679c \u00a78\u00bb " + roundResult);
+            p.sendMessage("\u00a77\u30b9\u30b3\u30a2 \u00a78\u00bb " + scoreStr);
+            p.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
         }
         this.endingTask = this.roundWinsRed >= 3 || this.roundWinsBlue >= 3 ? new BukkitRunnable(){
 
@@ -1221,14 +1221,14 @@ public class GameManager {
             this.bombCleanup();
         }
         String scoreStr = "\u00a7c\u8d64 " + this.roundWinsRed + " \u00a77- \u00a79" + this.roundWinsBlue + " \u00a77\u9752";
-        this.broadcastTitle("\u00a76\u00a7l\u2694 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u2694", scoreStr, 10, 60, 10);
+        this.broadcastTitle("\u00a76\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u2605", scoreStr, 10, 60, 10);
         for (UUID uid : this.getAllParticipantsAndSpectators()) {
             Player pl = Bukkit.getPlayer((UUID)uid);
             if (pl == null) continue;
-            pl.sendMessage("\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+            pl.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
             pl.sendMessage("\u00a76\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u958b\u59cb\uff01");
-            pl.sendMessage("\u00a77\u30b9\u30b3\u30a2: " + scoreStr);
-            pl.sendMessage("\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
+            pl.sendMessage("\u00a77\u30b9\u30b3\u30a2 \u00a78\u00bb " + scoreStr);
+            pl.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
         }
         this.state = GameState.IN_GAME;
         this.noFallDamage.clear();
@@ -1261,7 +1261,7 @@ public class GameManager {
         KitSelectGUI gui = new KitSelectGUI(this.plugin, this);
         this.plugin.getGameListeners().setActiveGUI(gui);
         gui.openForAll(this.redTeam, this.blueTeam, timeoutSeconds);
-        this.broadcastTitle("\u00a76\u00a7l\u30e9\u30a6\u30f3\u30c9 " + this.currentRound, scoreStr, 5, 40, 10);
+        this.broadcastTitle("\u00a76\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound, scoreStr, 5, 40, 10);
     }
 
     private void roundRestorePlayer(Player p) {
@@ -1380,13 +1380,13 @@ public class GameManager {
 
     private void showMatchReport(TeamColor winner, UUID ffaWinnerUid) {
         List<UUID> all = this.getAllParticipantsAndSpectators();
-        String header = "\u00a78\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501";
+        String header = "\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501";
         String winStr;
         if (ffaWinnerUid != null) {
             String ffaName = Bukkit.getOfflinePlayer((UUID)ffaWinnerUid).getName();
-            winStr = "\u00a7e" + (ffaName != null ? ffaName : "???") + "\u00a7a\u304c\u52dd\u5229\uff01";
+            winStr = "\u00a7e\u2605 " + (ffaName != null ? ffaName : "???") + " \u00a7a\u304c\u52dd\u5229\uff01";
         } else {
-            winStr = winner != null ? winner.getColorCode() + winner.getDisplayName() + "\u30c1\u30fc\u30e0\u52dd\u5229\uff01" : "\u5f15\u304d\u5206\u3051";
+            winStr = winner != null ? winner.getColorCode() + "\u00a7l" + winner.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01" : "\u00a77\u5f15\u304d\u5206\u3051";
         }
         UUID mvpUid = this.matchStats.getMVP();
         UUID mostDmgUid = this.matchStats.getMostDamage();
@@ -1398,14 +1398,14 @@ public class GameManager {
             Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
             p.sendMessage(header);
-            p.sendMessage("\u00a76\u00a7l        \u8a66\u5408\u7d50\u679c\u30ec\u30dd\u30fc\u30c8");
-            p.sendMessage("\u00a77\u7d50\u679c: " + winStr);
-            p.sendMessage("\u00a77MVP: \u00a7e" + mvpName + " \u00a77(" + mvpKills + " kill)");
-            p.sendMessage("\u00a77\u6700\u591a\u30c0\u30e1\u30fc\u30b8: \u00a7e" + dmgName + String.format(" \u00a77(%.1f dmg)", maxDmg));
+            p.sendMessage("\u00a76\u00a7l\u2605 \u8a66\u5408\u7d50\u679c\u30ec\u30dd\u30fc\u30c8");
+            p.sendMessage("\u00a77\u7d50\u679c \u00a78\u00bb " + winStr);
+            p.sendMessage("\u00a77MVP \u00a78\u00bb \u00a7e" + mvpName + " \u00a77(" + mvpKills + " kill)");
+            p.sendMessage("\u00a77\u6700\u591a\u30c0\u30e1\u30fc\u30b8 \u00a78\u00bb \u00a7e" + dmgName + String.format(" \u00a77(%.1f dmg)", maxDmg));
             p.sendMessage(header);
             int myKills = this.matchStats.getKills(uid);
             double myDmg = this.matchStats.getDamage(uid);
-            p.sendMessage(String.format("\u00a77\u3042\u306a\u305f\u306e\u6210\u7e3e: \u00a7fKill \u00a7e%d \u00a7f/ DMG \u00a7e%.1f", myKills, myDmg));
+            p.sendMessage(String.format("\u00a77\u3042\u306a\u305f\u306e\u6210\u7e3e \u00a78\u00bb \u00a7fKill \u00a7e%d \u00a78| \u00a7fDMG \u00a7e%.1f", myKills, myDmg));
             p.sendMessage(header);
         }
     }
@@ -1572,15 +1572,15 @@ public class GameManager {
             TeamColor kt = this.getTeamOf(killer);
             killerColor = kt != null ? ((TeamColor)((Object)kt)).getColorCode() : "\u00a7f";
             killerDisplay = killer.getName();
-            deathMsg = "\u00a78\u2620 " + killerColor + killer.getName() + " \u00a77\u00bb " + victimColor + victim.getName();
+            deathMsg = "\u00a7c\u2694 " + killerColor + killer.getName() + " \u00a77\u304c " + victimColor + victim.getName() + " \u00a77\u3092\u6483\u7834";
         } else if (killerUuid != null && this.plugin.getBotManager().getBotTeam(killerUuid) != null) {
             this.matchStats.addKill(killerUuid);
             TeamColor kt = this.plugin.getBotManager().getBotTeam(killerUuid);
             killerColor = kt != null ? ((TeamColor)((Object)kt)).getColorCode() : "\u00a7f";
             killerDisplay = "[BOT]";
-            deathMsg = "\u00a78\u2620 " + killerColor + "[BOT] \u00a77\u00bb " + victimColor + victim.getName();
+            deathMsg = "\u00a7c\u2694 " + killerColor + "[BOT] \u00a77\u304c " + victimColor + victim.getName() + " \u00a77\u3092\u6483\u7834";
         } else {
-            deathMsg = "\u00a78\u2620 " + victimColor + victim.getName() + " \u00a77\u304c\u8131\u843d";
+            deathMsg = "\u00a78\u2620 " + victimColor + victim.getName() + " \u00a77\u306f\u6230\u529b\u55aa\u5931";
         }
         for (UUID uid : this.getAllParticipantsAndSpectators()) {
             Player pp = Bukkit.getPlayer((UUID)uid);
@@ -1596,16 +1596,16 @@ public class GameManager {
         victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.2f, 0.8f);
         victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.4f);
         if (killerDisplay != null) {
-            victim.sendTitle("\u00a7c\u00a7l\u2620  YOU DIED", killerColor + "\u00a7l" + killerDisplay + " \u00a77\u306b\u3084\u3089\u308c\u305f", 3, 50, 10);
+            victim.sendTitle("\u00a7c\u00a7l\u2620  YOU DIED", killerColor + "\u00a7l" + killerDisplay + " \u00a77\u306e\u653b\u6483\u306b\u3088\u308a\u6483\u7834", 3, 50, 10);
         } else {
-            victim.sendTitle("\u00a7c\u00a7l\u2620  YOU DIED", "\u00a77\u8131\u843d", 3, 50, 10);
+            victim.sendTitle("\u00a7c\u00a7l\u2620  YOU DIED", "\u00a77\u6230\u529b\u55aa\u5931", 3, 50, 10);
         }
         victim.playSound(victim.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1.0f, 0.5f);
         if (killer != null) {
             int rk = this.roundKills.merge(killer.getUniqueId(), 1, Integer::sum);
             String streakTitle = this.getStreakTitle(rk);
             if (rk == 1) {
-                killer.sendTitle("\u00a76\u00a7l\u2694 KILL!", "\u00a77" + victimColor + victim.getName() + " \u00a77\u3092\u5012\u3057\u305f", 3, 30, 6);
+                killer.sendTitle("\u00a7c\u00a7l\u2694 KILL!", victimColor + victim.getName() + " \u00a77\u3092\u6483\u7834", 3, 30, 6);
                 killer.playSound(killer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.6f);
                 killer.spawnParticle(Particle.VILLAGER_HAPPY, killer.getLocation().add(0.0, 2.0, 0.0), 15, 0.4, 0.4, 0.4, 0.1);
             } else {
@@ -1651,7 +1651,7 @@ public class GameManager {
                 }
                 Player winner = winnerUid != null ? Bukkit.getPlayer(winnerUid) : null;
                 String winName = winner != null ? winner.getName() : "\u306a\u3057";
-                Bukkit.broadcastMessage((String)("\u00a76\u00a7l\ud83c\udfc6 FFA \u7d42\u4e86\uff01 \u00a7e" + winName + " \u00a7f\u304c\u6700\u5f8c\u306e\u751f\u5b58\u8005\u3067\u3059\uff01"));
+                Bukkit.broadcastMessage((String)("\u00a76\u00a7l\ud83c\udfc6 FFA \u7d42\u4e86 \u00a78\u00bb \u00a7e" + winName + " \u00a7f\u304c\u6700\u5f8c\u306e\u751f\u5b58\u8005\uff01"));
                 if (this.ffaTimerTask != null) {
                     this.ffaTimerTask.cancel();
                     this.ffaTimerTask = null;
@@ -1710,7 +1710,7 @@ public class GameManager {
                     respawnDelay = 40L;
                 }
             }
-            finalV.sendMessage("\u00a77\u30ea\u30b9\u30dd\u30fc\u30f3\u307e\u3067 \u00a7e" + respawnDelay / 20L + "\u00a77\u79d2...");
+            finalV.sendMessage("\u00a77\u30ea\u30b9\u30dd\u30fc\u30f3 \u00a78\u00bb \u00a7e" + respawnDelay / 20L + " \u00a7f\u79d2");
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
                 if (finalV.isOnline() && this.state == GameState.IN_GAME) {
                     this.roundRestorePlayer(finalV);
@@ -1729,7 +1729,7 @@ public class GameManager {
                         this.teleportToSpawnZonePublic(finalV, this.currentMap, vTeam);
                     }
                     this.plugin.getSkillManager().refreshBurst(finalV);
-                    finalV.sendMessage("\u00a7a\u30ea\u30b9\u30dd\u30fc\u30f3\uff01");
+                    finalV.sendMessage("\u00a7a\u26a1 \u30ea\u30b9\u30dd\u30fc\u30f3\uff01");
                 }
             }, respawnDelay);
         } else {
@@ -1750,7 +1750,7 @@ public class GameManager {
         if (this.currentGameMode == GameMode.BOMB_MISSION && this.bombDefusing && victim.equals((Object)this.bombDefuser)) {
             this.bombDefusing = false;
             this.bombDefuser = null;
-            Bukkit.broadcastMessage((String)"\u00a7c\u89e3\u9664\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f\uff01\uff08\u89e3\u9664\u8005\u304c\u6b7b\u4ea1\uff09");
+            Bukkit.broadcastMessage((String)"\u00a7c\u26a0 \u89e3\u9664\u4f5c\u696d\u4e2d\u65ad \u00a78\u00bb \u00a77\u89e3\u9664\u8005\u304c\u6b7b\u4ea1");
         }
         if (!(this.currentGameMode == GameMode.BOMB_MISSION && this.bombPlanted || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG)) {
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, this::checkEliminationWin, 1L);
@@ -1759,9 +1759,9 @@ public class GameManager {
 
     private String getStreakTitle(int kills) {
         return switch (kills) {
-            case 2 -> "\u00a7e\u00a7lDOUBLE KILL!!";
-            case 3 -> "\u00a76\u00a7l\ud83d\udd25 TRIPLE KILL!";
-            case 4 -> "\u00a7c\u00a7l\u26a1 QUADRA KILL!";
+            case 2 -> "\u00a7e\u00a7l\u2726 DOUBLE KILL";
+            case 3 -> "\u00a76\u00a7l\u2726 TRIPLE KILL \u2726";
+            case 4 -> "\u00a7c\u00a7l\u26a1 QUADRA KILL";
             case 5 -> "\u00a74\u00a7l\u2605 PENTA KILL \u2605";
             default -> "\u00a74\u00a7l\ud83d\udc80 RAMPAGE \ud83d\udc80";
         };
@@ -1805,7 +1805,7 @@ public class GameManager {
             TeamColor kt = this.getTeamOf(killer);
             String botColor = bt != null ? bt.getColorCode() : "\u00a7f";
             String killerColor = kt != null ? kt.getColorCode() : "\u00a7f";
-            String msg = botColor + "[BOT] \u00a77\u304c " + killerColor + killer.getName() + " \u00a77\u306b\u3084\u3089\u308c\u305f\uff01";
+            String msg = "\u00a7c\u2694 " + botColor + "[BOT] \u00a77\u304c " + killerColor + killer.getName() + " \u00a77\u306b\u6483\u7834\u3055\u308c\u305f\uff01";
             for (UUID uid : this.getAllParticipantsAndSpectators()) {
                 Player p = Bukkit.getPlayer((UUID)uid);
                 if (p == null) continue;
@@ -1837,8 +1837,8 @@ public class GameManager {
         for (UUID uid : this.getAllParticipantsAndSpectators()) {
             Player pl = Bukkit.getPlayer((UUID)uid);
             if (pl == null) continue;
-            String role = this.getTeamOf(pl) == attacker ? "\u00a7c\u653b\u6483\u5074: \u7206\u5f3e\u3092\u8a2d\u7f6e\u305b\u3088\uff01" : "\u00a79\u5b88\u5099\u5074: \u8a2d\u7f6e\u3092\u963b\u6b62\u305b\u3088\uff01";
-            pl.sendTitle(attacker.getColorCode() + "\u30e9\u30a6\u30f3\u30c9 " + this.currentRound, role, 5, 50, 10);
+            String role = this.getTeamOf(pl) == attacker ? "\u00a7c\u2694 \u653b\u6483\u5074 \u00a78\u00bb \u00a7f\u7206\u5f3e\u3092\u8a2d\u7f6e\u305b\u3088\uff01" : "\u00a79\u2694 \u5b88\u5099\u5074 \u00a78\u00bb \u00a7f\u8a2d\u7f6e\u3092\u963b\u6b62\u305b\u3088\uff01";
+            pl.sendTitle(attacker.getColorCode() + "\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound, role, 5, 50, 10);
         }
     }
 
@@ -1858,12 +1858,12 @@ public class GameManager {
         }
         TeamColor teamColor = attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
         if (this.getTeamOf(p) != attacker) {
-            p.sendMessage("\u00a7c\u3042\u306a\u305f\u306f\u653b\u6483\u5074\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002");
+            p.sendMessage("\u00a7c\u2694 \u3042\u306a\u305f\u306f\u653b\u6483\u5074\u3067\u306f\u306a\u3044");
             return;
         }
         if (p.getLocation().distance(this.currentMap.getBombSite()) > 3.0) {
             if (p.getLocation().distance(this.currentMap.getBombSite()) < 10.0) {
-                p.sendMessage("\u00a7c\u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u306b\u8fd1\u3065\u3044\u3066\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a7c\ud83d\udca3 \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u306b\u8fd1\u3065\u3044\u3066\u304f\u3060\u3055\u3044");
             }
             return;
         }
@@ -1879,7 +1879,7 @@ public class GameManager {
 
             public void run() {
                 if (!p.isOnline() || GameManager.this.state != GameState.IN_GAME || p.getLocation().distance(GameManager.this.bombLoc) > 3.0) {
-                    p.sendMessage("\u00a7c\u8a2d\u7f6e\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f\uff01");
+                    p.sendMessage("\u00a7c\u26a0 \u7206\u5f3e\u8a2d\u7f6e\u304c\u4e2d\u65ad\u3055\u308c\u305f\uff01");
                     GameManager.this.bombPlanted = false;
                     GameManager.this.bombLoc = null;
                     this.cancel();
@@ -1899,7 +1899,7 @@ public class GameManager {
     private void bombArmed(Player planter) {
         int fuse;
         this.bombSecondsRemaining = fuse = this.plugin.getConfig().getInt("bomb_mission.bomb_fuse_seconds", 45);
-        Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca3 \u7206\u5f3e\u304c\u8a2d\u7f6e\u3055\u308c\u307e\u3057\u305f\uff01 \u00a7e" + fuse + "\u79d2\u3067\u7206\u767a\uff01"));
+        Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca3 \u7206\u5f3e\u8a2d\u7f6e\u5b8c\u4e86 \u00a78\u00bb \u00a7e" + fuse + " \u79d2\u5f8c\u7206\u767a\uff01"));
         for (Player pl : Bukkit.getOnlinePlayers()) {
             pl.playSound(pl.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.5f, 0.6f);
         }
@@ -1919,7 +1919,7 @@ public class GameManager {
                 if (GameManager.this.getAliveCount(defender) == 0) {
                     this.cancel();
                     GameManager.this.bombCleanup();
-                    Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca5 \u9632\u885b\u5074\u5168\u6ec5\uff01 " + attacker.getDisplayName() + "\u30c1\u30fc\u30e0\u306e\u52dd\u5229\uff01"));
+                    Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\u2694 \u9632\u885b\u5074\u5168\u6ec5 \u00a78\u00bb " + attacker.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01"));
                     GameManager.this.endGame(attacker, WinCondition.OBJECTIVE);
                     return;
                 }
@@ -1939,7 +1939,7 @@ public class GameManager {
         }
         this.bombCleanup();
         TeamColor attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-        Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca5 \u7206\u5f3e\u304c\u7206\u767a\uff01 " + attacker.getDisplayName() + "\u30c1\u30fc\u30e0\u306e\u52dd\u5229\uff01"));
+        Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca5 \u7206\u767a \u00a78\u00bb " + attacker.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01"));
         this.endGame(attacker, WinCondition.OBJECTIVE);
     }
 
@@ -1956,17 +1956,17 @@ public class GameManager {
         }
         TeamColor teamColor = defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
         if (this.getTeamOf(p) != defender) {
-            p.sendMessage("\u00a7c\u3042\u306a\u305f\u306f\u5b88\u5099\u5074\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002");
+            p.sendMessage("\u00a7c\u2694 \u3042\u306a\u305f\u306f\u5b88\u5099\u5074\u3067\u306f\u306a\u3044");
             return;
         }
         if (p.getLocation().distance(this.bombLoc) > 3.0) {
             if (p.getLocation().distance(this.bombLoc) < 10.0) {
-                p.sendMessage("\u00a7c\u7206\u5f3e\u306b\u8fd1\u3065\u3044\u3066\u304f\u3060\u3055\u3044\u3002");
+                p.sendMessage("\u00a7c\ud83d\udca3 \u7206\u5f3e\u306b\u8fd1\u3065\u3044\u3066\u304f\u3060\u3055\u3044");
             }
             return;
         }
         if (p.getInventory().getItemInOffHand().getType() == Material.SHIELD) {
-            p.sendMessage("\u00a7c\u76fe\u3092\u5916\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u89e3\u9664\u4e2d\u306f\u76fe\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\u3002");
+            p.sendMessage("\u00a7c\ud83d\udee1 \u76fe\u6301\u3061\u4e0d\u53ef \u00a78\u00bb \u00a77\u76fe\u3092\u5916\u3057\u3066\u89e3\u9664\u305b\u3088");
             return;
         }
         final int defuseTime = this.plugin.getConfig().getInt("bomb_mission.defuse_time_seconds", 7);
@@ -1981,7 +1981,7 @@ public class GameManager {
 
             public void run() {
                 if (!p.isOnline() || GameManager.this.state != GameState.IN_GAME || p.getLocation().distance(GameManager.this.bombLoc) > 3.0 || p.getInventory().getItemInOffHand().getType() == Material.SHIELD) {
-                    p.sendMessage("\u00a7c\u89e3\u9664\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f\uff01");
+                    p.sendMessage("\u00a7c\u26a0 \u89e3\u9664\u4f5c\u696d\u304c\u4e2d\u65ad\u3055\u308c\u305f\uff01");
                     GameManager.this.bombDefusing = false;
                     GameManager.this.bombDefuser = null;
                     this.cancel();
@@ -1999,7 +1999,7 @@ public class GameManager {
 
     private void bombDefused(Player defuser) {
         TeamColor defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-        Bukkit.broadcastMessage((String)("\u00a7a\u00a7l\ud83d\udee1 \u7206\u5f3e\u304c\u89e3\u9664\u3055\u308c\u307e\u3057\u305f\uff01 " + defender.getDisplayName() + "\u30c1\u30fc\u30e0\u306e\u52dd\u5229\uff01"));
+        Bukkit.broadcastMessage((String)("\u00a7a\u00a7l\ud83d\udee1 \u89e3\u9664\u6210\u529f \u00a78\u00bb " + defender.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01"));
         if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
             this.bombLoc.getBlock().setType(Material.AIR);
         }
@@ -2200,16 +2200,16 @@ public class GameManager {
         Player carrier;
         if (!this.redFlagTaken && this.redFlagDropTime > 0L && System.currentTimeMillis() - this.redFlagDropTime > 30000L) {
             this.resetRedFlag();
-            Bukkit.broadcastMessage((String)"\u00a7c\u8d64\u306e\u65d7\u304c\u81ea\u52d5\u56de\u53ce\u3055\u308c\u307e\u3057\u305f\u3002");
+            Bukkit.broadcastMessage((String)"\u00a7c\ud83c\udff4 \u8d64\u306e\u65d7 \u00a78\u00bb \u00a77\u81ea\u52d5\u56de\u53ce\u3055\u308c\u305f");
         }
         if (!this.blueFlagTaken && this.blueFlagDropTime > 0L && System.currentTimeMillis() - this.blueFlagDropTime > 30000L) {
             this.resetBlueFlag();
-            Bukkit.broadcastMessage((String)"\u00a79\u9752\u306e\u65d7\u304c\u81ea\u52d5\u56de\u53ce\u3055\u308c\u307e\u3057\u305f\u3002");
+            Bukkit.broadcastMessage((String)"\u00a79\ud83c\udff4 \u9752\u306e\u65d7 \u00a78\u00bb \u00a77\u81ea\u52d5\u56de\u53ce\u3055\u308c\u305f");
         }
         this.ctfCarrierOnGround.keySet().removeIf(uuid -> !uuid.equals(this.redFlagCarrier) && !uuid.equals(this.blueFlagCarrier));
         if (this.redFlagCarrier != null && (carrier = Bukkit.getPlayer((UUID)this.redFlagCarrier)) != null && carrier.isOnline()) {
             carrier.getWorld().spawnParticle(Particle.REDSTONE, carrier.getLocation().add(0.0, 2.5, 0.0), 5, 0.3, 0.5, 0.3, (Object)new Particle.DustOptions(Color.BLUE, 1.5f));
-            carrier.sendActionBar((Component)Component.text((String)"\u00a79\ud83c\udff4 \u9752\u306e\u65d7\u3092\u6301\u3063\u3066\u3044\u307e\u3059\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
+            carrier.sendActionBar((Component)Component.text((String)"\u00a79\ud83c\udff4 \u9752\u65d7\u6240\u6301 \u00a78\u00bb \u00a7f\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
             prevOnGround = this.ctfCarrierOnGround.get(this.redFlagCarrier);
             if (prevOnGround != null && prevOnGround.booleanValue() && !carrier.isOnGround()) {
                 v = carrier.getVelocity();
@@ -2225,7 +2225,7 @@ public class GameManager {
         }
         if (this.blueFlagCarrier != null && (carrier = Bukkit.getPlayer((UUID)this.blueFlagCarrier)) != null && carrier.isOnline()) {
             carrier.getWorld().spawnParticle(Particle.REDSTONE, carrier.getLocation().add(0.0, 2.5, 0.0), 5, 0.3, 0.5, 0.3, (Object)new Particle.DustOptions(Color.RED, 1.5f));
-            carrier.sendActionBar((Component)Component.text((String)"\u00a7c\ud83c\udff4 \u8d64\u306e\u65d7\u3092\u6301\u3063\u3066\u3044\u307e\u3059\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
+            carrier.sendActionBar((Component)Component.text((String)"\u00a7c\ud83c\udff4 \u8d64\u65d7\u6240\u6301 \u00a78\u00bb \u00a7f\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
             prevOnGround = this.ctfCarrierOnGround.get(this.blueFlagCarrier);
             if (prevOnGround != null && prevOnGround.booleanValue() && !carrier.isOnGround()) {
                 v = carrier.getVelocity();
@@ -2269,7 +2269,7 @@ public class GameManager {
             if (this.currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
                 this.currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
             }
-            p.sendMessage("\u00a7c\ud83c\udff4 \u8d64\u306e\u65d7\u3092\u596a\u53d6\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.sendMessage("\u00a7c\ud83c\udff4 \u8d64\u65d7\u596a\u53d6\uff01 \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
             p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
         }
         if (team == TeamColor.BLUE && !this.blueFlagTaken && this.currentMap.getBlueFlagLocation() != null && p.getLocation().distance(this.currentMap.getBlueFlagLocation()) < 2.0) {
@@ -2279,7 +2279,7 @@ public class GameManager {
             if (this.currentMap.getBlueFlagLocation().getBlock().getType() == Material.CYAN_BANNER) {
                 this.currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
             }
-            p.sendMessage("\u00a79\ud83c\udff4 \u9752\u306e\u65d7\u3092\u596a\u53d6\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.sendMessage("\u00a79\ud83c\udff4 \u9752\u65d7\u596a\u53d6\uff01 \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
             p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
         }
         if (team == TeamColor.RED && this.redFlagCarrier != null && this.redFlagCarrier.equals(p.getUniqueId()) && this.currentMap.getRedReturnLocation() != null && p.getLocation().distance(this.currentMap.getRedReturnLocation()) < 3.0) {
@@ -2312,7 +2312,7 @@ public class GameManager {
                 this.redFlagDropLoc.getBlock().setType(Material.AIR);
                 this.redFlagDropLoc = null;
             }
-            p.sendMessage("\u00a7c\u8d64\u306e\u65d7\u3092\u62fe\u3044\u307e\u3057\u305f\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.sendMessage("\u00a7c\ud83c\udff4 \u8d64\u65d7\u56de\u53ce \u00a78\u00bb \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
         }
         if (team == TeamColor.BLUE && !this.blueFlagTaken && this.blueFlagDropTime > 0L && this.blueFlagDropLoc != null && loc.distance(this.blueFlagDropLoc) < 2.0) {
             this.blueFlagCarrier = p.getUniqueId();
@@ -2322,7 +2322,7 @@ public class GameManager {
                 this.blueFlagDropLoc.getBlock().setType(Material.AIR);
                 this.blueFlagDropLoc = null;
             }
-            p.sendMessage("\u00a79\u9752\u306e\u65d7\u3092\u62fe\u3044\u307e\u3057\u305f\uff01\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.sendMessage("\u00a79\ud83c\udff4 \u9752\u65d7\u56de\u53ce \u00a78\u00bb \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
         }
     }
 
@@ -2338,11 +2338,11 @@ public class GameManager {
             if (this.blueFlagCarrier != null) {
                 Player bc = Bukkit.getPlayer((UUID)this.blueFlagCarrier);
                 if (bc != null) {
-                    bc.sendMessage("\u00a79\u76f8\u624b\u304c\u65d7\u3092\u596a\u53d6\u3057\u305f\u305f\u3081\u3001\u9752\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u307e\u3057\u305f");
+                    bc.sendMessage("\u00a79\ud83c\udff4 \u76f8\u624b\u304c\u65d7\u596a\u53d6 \u00a78\u00bb \u00a77\u9752\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u305f");
                 }
                 this.resetBlueFlag();
             }
-            Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udea9 \u8d64\u30c1\u30fc\u30e0\u304c\u8d64\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfRedCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
+            Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udea9 \u8d64\u30c1\u30fc\u30e0\u304c\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfRedCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
         } else {
             ++this.ctfBlueCaptures;
             if (this.blueFlagCarrier != null) {
@@ -2354,11 +2354,11 @@ public class GameManager {
             if (this.redFlagCarrier != null) {
                 Player rc = Bukkit.getPlayer((UUID)this.redFlagCarrier);
                 if (rc != null) {
-                    rc.sendMessage("\u00a7c\u76f8\u624b\u304c\u65d7\u3092\u596a\u53d6\u3057\u305f\u305f\u3081\u3001\u8d64\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u307e\u3057\u305f");
+                    rc.sendMessage("\u00a7c\ud83c\udff4 \u76f8\u624b\u304c\u65d7\u596a\u53d6 \u00a78\u00bb \u00a77\u8d64\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u305f");
                 }
                 this.resetRedFlag();
             }
-            Bukkit.broadcastMessage((String)("\u00a79\u00a7l\ud83d\udea9 \u9752\u30c1\u30fc\u30e0\u304c\u9752\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfBlueCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
+            Bukkit.broadcastMessage((String)("\u00a79\u00a7l\ud83d\udea9 \u9752\u30c1\u30fc\u30e0\u304c\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfBlueCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
         }
         int toWin = this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3);
         if (this.ctfRedCaptures >= toWin) {
@@ -2383,7 +2383,7 @@ public class GameManager {
                 dropLoc = this.findAirAbove(p.getLocation());
                 dropLoc.getBlock().setType(Material.RED_BANNER);
                 this.redFlagDropLoc = dropLoc.clone();
-                p.sendMessage("\u00a7c\u8d64\u306e\u65d7\u3092\u843d\u3068\u3057\u307e\u3057\u305f\uff01");
+                p.sendMessage("\u00a7c\ud83c\udff4 \u8d64\u65d7\u843d\u4e0b \u00a78\u00bb \u00a77\u65d7\u304c\u6226\u5834\u306b\u843d\u3061\u3066\u3044\u308b\uff01");
             }
         }
         if (carrierUuid.equals(this.blueFlagCarrier)) {
@@ -2395,7 +2395,7 @@ public class GameManager {
                 dropLoc = this.findAirAbove(p.getLocation());
                 dropLoc.getBlock().setType(Material.CYAN_BANNER);
                 this.blueFlagDropLoc = dropLoc.clone();
-                p.sendMessage("\u00a79\u9752\u306e\u65d7\u3092\u843d\u3068\u3057\u307e\u3057\u305f\uff01");
+                p.sendMessage("\u00a79\ud83c\udff4 \u9752\u65d7\u843d\u4e0b \u00a78\u00bb \u00a77\u65d7\u304c\u6226\u5834\u306b\u843d\u3061\u3066\u3044\u308b\uff01");
             }
         }
     }
@@ -2575,12 +2575,12 @@ public class GameManager {
 
     private void announceBigPlay(Player killer, int streak) {
         if (streak == 5) {
-            Bukkit.broadcastMessage((String)("\u00a74\u00a7l\u2620 " + killer.getName() + " \u00a7c\u304c PENTA KILL \u3092\u9054\u6210\uff01 \u00a74\u2620"));
+            Bukkit.broadcastMessage((String)("\u00a74\u00a7l\u2605 " + killer.getName() + " \u00a7c\u304c PENTA KILL \u3092\u9054\u6210\uff01 \u00a74\u2605"));
             for (Player p : Bukkit.getOnlinePlayers()) {
                 p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.7f, 0.8f);
             }
         } else if (streak >= 3) {
-            Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2605 " + killer.getName() + " \u00a7e\u304c " + streak + "\u9023\u7d9a\u30ad\u30eb\uff01"));
+            Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2605 " + killer.getName() + " \u00a7e\u304c " + streak + "\u9023\u7d9a\u30ad\u30eb\u3092\u7dcc\u652c\uff01"));
         }
     }
 

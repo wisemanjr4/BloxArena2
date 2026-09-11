@@ -499,7 +499,7 @@ public class SkillManager {
         UUID oldTarget = this.sniperTracker.get(p.getUniqueId());
         if (target == null) {
             if (oldTarget != null) {
-                p.sendMessage("\u00a77\u72d9\u6483\u3092\u4e2d\u6b62\u3057\u307e\u3057\u305f");
+                p.sendMessage("\u00a77\u72d9\u6483\u4e2d\u6b62 \u00a78\u00bb \u00a77\u7167\u6e96\u3092\u5916\u3057\u305f");
             }
             this.sniperAimTick.remove(p.getUniqueId());
             this.sniperTracker.remove(p.getUniqueId());
@@ -512,7 +512,7 @@ public class SkillManager {
             this.sniperTracker.put(p.getUniqueId(), target.getUniqueId());
             this.sniperAimTick.put(p.getUniqueId(), 1);
             if (prevTarget == null) {
-                p.sendMessage("\u00a77\u72d9\u6483\u773c: \u00a7f" + target.getName() + " \u00a77\u3092\u7167\u6e96\u4e2d...");
+                p.sendMessage("\u00a77\ud83c\udfaf \u72d9\u6483\u773c \u00a78\u00bb \u00a7f" + target.getName() + " \u00a77\u7167\u6e96\u4e2d...");
             }
             return;
         }
@@ -520,8 +520,8 @@ public class SkillManager {
         if (ticks >= 7) {
             this.markedForDeath.add(target.getUniqueId());
             this.setCooldown(p.getUniqueId(), 7000L);
-            p.sendMessage("\u00a7c\u00a7l\u72d9\u6483\u773c: \u00a7f" + target.getName() + " \u00a7c\u3092\u30de\u30fc\u30af\u3057\u307e\u3057\u305f\uff01\u6b21\u306e\u4e00\u6483\u3067\u5373\u6b7b\uff01");
-            target.sendMessage("\u00a7c\u00a7l\u26a0 \u72d9\u6483\u3055\u308c\u3066\u3044\u307e\u3059\uff01");
+            p.sendMessage("\u00a7c\u00a7l\ud83c\udfaf \u6b7b\u5370\u5b8c\u6210 \u00a78\u00bb \u00a7f" + target.getName() + " \u00a7c\u00a7l\u3092\u30de\u30fc\u30af\uff01\u6b21\u306e\u4e00\u6483\u3067\u5373\u6b7b\uff01");
+            target.sendMessage("\u00a7c\u00a7l\u26a0 \u72d9\u6483\u773c\u306b\u9396\u5b9a\u3055\u308c\u305f\uff01");
             target.getWorld().playSound(target.getLocation(), Sound.BLOCK_BELL_USE, 1.0f, 0.5f);
             this.sniperAimTick.remove(p.getUniqueId());
             this.sniperTracker.remove(p.getUniqueId());
@@ -580,7 +580,7 @@ public class SkillManager {
         victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.guardBroken.remove(victim.getUniqueId()), 60L);
         victim.getWorld().playSound(victim.getLocation(), Sound.ITEM_SHIELD_BREAK, 1.0f, 0.8f);
-        victim.sendMessage("\u00a7c\u00a7l\ud83d\udee1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\uff01\u00a77\u76f8\u624b\u306e\u6e9c\u3081\u653b\u6483\u30673\u79d2\u9593\u9632\u5177\u7121\u52b9");
+        victim.sendMessage("\u00a7c\u00a7l\ud83d\udee1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af \u00a78\u00bb \u00a77\u6e9c\u3081\u653b\u6483\u30673\u79d2\u9593\u9632\u5177\u7121\u52b9\uff01");
         attacker.sendMessage("\u00a7e\u00a7l\u26a1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\u6210\u529f\uff01");
         attacker.getWorld().playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.5f);
         this.plugin.getTutorialManager().checkGuardBreakUsed(attacker);
@@ -607,7 +607,7 @@ public class SkillManager {
             if (!(e instanceof Player) || !this.gm.isParticipant(target = (Player)e) || this.gm.getTeamOf(target) == this.gm.getTeamOf(p)) continue;
             target.damage(5.0, (Entity)p);
         }
-        p.sendMessage("\u00a77\u00a7l\u30b0\u30e9\u30f3\u30b0\u30d0\u30fc\u30b9\u30c8\uff01");
+        p.sendMessage("\u00a77\u00a7l\u2605 \u30b0\u30e9\u30f3\u30b0\u30d0\u30fc\u30b9\u30c8\uff01");
     }
 
     public boolean tryParryCounter(Player attacker, Player counter) {
@@ -615,7 +615,7 @@ public class SkillManager {
             return false;
         }
         if (this.guardBroken.contains(counter.getUniqueId())) {
-            counter.sendMessage("\u00a7c\u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\u4e2d\uff01");
+            counter.sendMessage("\u00a7c\ud83d\udee1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\u4e2d\uff01");
             return false;
         }
         if (!counter.isBlocking()) {
@@ -656,7 +656,7 @@ public class SkillManager {
         }
         if (this.isOnCooldown(p.getUniqueId())) {
             if (sneaking) {
-                p.sendMessage("\u00a7c\u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u4e2d\uff01");
+                p.sendMessage("\u00a7c\u26a0 \u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u4e2d\uff01");
             }
             return;
         }
@@ -701,7 +701,7 @@ public class SkillManager {
                             double dmg = 18.0 * Math.max(0.5, 1.0 - dist / 6.5);
                             target.damage(dmg, (Entity)pl);
                         }
-                        pl.sendMessage("\u00a77\u00a7l\u6700\u5927\u30c1\u30e3\u30fc\u30b8\u70b8\u88c2\uff01");
+                        pl.sendMessage("\u00a77\u00a7l\u2605 \u6700\u5927\u30c1\u30e3\u30fc\u30b8\u70b8\u88c2\uff01");
                     }
                 }, 10L);
             }
@@ -777,7 +777,7 @@ public class SkillManager {
                 Long curCd = this.skillCooldowns.get(uid);
                 long baseCd = curCd != null && curCd > System.currentTimeMillis() ? curCd : System.currentTimeMillis();
                 this.skillCooldowns.put(uid, baseCd + 9000L);
-                p.sendMessage("\u00a7b\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u7d42\u4e86\uff01CT 9\u79d2");
+                p.sendMessage("\u00a7b\u2726 \u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u7d42\u4e86 \u00a78\u00bb \u00a77CT 9\u79d2");
             } else {
                 new BukkitRunnable(){
 
@@ -829,7 +829,7 @@ public class SkillManager {
                 victim.setVelocity(pull);
             }
         }, 2L);
-        shooter.sendMessage("\u00a73\u30b0\u30e9\u30c3\u30d7\u30eb\u30d2\u30c3\u30c8\uff01\u8ddd\u96e2: \u00a7f" + String.format("%.1f", victim.getLocation().distance(shooter.getLocation())) + "m");
+        shooter.sendMessage("\u00a73\u2693 \u30b0\u30e9\u30c3\u30d7\u30eb\u30d2\u30c3\u30c8 \u00a78\u00bb \u00a77\u8ddd\u96e2 \u00a7f" + String.format("%.1f", victim.getLocation().distance(shooter.getLocation())) + "m");
         victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 40, 1, false, false));
         victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20, 9, false, false));
     }
@@ -866,7 +866,7 @@ public class SkillManager {
             double g = this.vampireGauge.getOrDefault(shooter.getUniqueId(), 0.0) + heal;
             this.vampireGauge.put(shooter.getUniqueId(), Math.min(g, 80.0));
             this.updateVampireStage(shooter, g);
-            shooter.sendMessage("\u00a74\u00a7l\u30c6\u30aa\u30b9\u30d1\u30fc\u30c0\u5438\u53ce\uff01\u00a77\u30b2\u30fc\u30b8+" + String.format("%.0f", heal));
+            shooter.sendMessage("\u00a74\u00a7l\ud83e\uddb4 \u5438\u8840\u6210\u529f \u00a78\u00bb \u00a77\u30b2\u30fc\u30b8+" + String.format("%.0f", heal));
         }
     }
 
@@ -889,7 +889,7 @@ public class SkillManager {
                 victim.setHealth(newMax);
             }
         }
-        victim.sendMessage("\u00a7c\u00a7lHP\u4e0a\u9650\u304c\u4f4e\u4e0b\u3057\u307e\u3057\u305f\uff01\uff08\u30e9\u30a6\u30f3\u30c9\u7d42\u4e86\u307e\u3067\uff09");
+        victim.sendMessage("\u00a7c\u00a7l\u26a0 HP\u4e0a\u9650\u4f4e\u4e0b \u00a78\u00bb \u00a77\u30e9\u30a6\u30f3\u30c9\u7d42\u4e86\u307e\u3067");
     }
 
     public void restoreMaxHp(Player p) {
@@ -920,7 +920,7 @@ public class SkillManager {
             as.remove();
             this.activeRecons.removeIf(r -> r.entity.equals((Object)as));
         }, 600L);
-        p.sendMessage("\u00a7a\u30ea\u30b3\u30f3\u8a2d\u7f6e\uff0130\u79d2\u9593\u7d22\u6575");
+        p.sendMessage("\u00a7a\ud83d\udce1 \u30ea\u30b3\u30f3\u8a2d\u7f6e \u00a78\u00bb \u00a7730\u79d2\u9593\u7d22\u6575");
         this.scoutPulseOnRecon(p, hitLoc);
     }
 
@@ -939,7 +939,7 @@ public class SkillManager {
         }
         p.getPersistentDataContainer().remove(this.KEY_PULSE);
         this.activePulsers.add(new PulseData(hitLoc.clone(), this.gm.getTeamOf(p)));
-        p.sendMessage("\u00a7c\u30d1\u30eb\u30b5\u30fc\u8a2d\u7f6e\uff0130\u79d2\u7bc4\u56f2\u30c0\u30e1\u30fc\u30b8");
+        p.sendMessage("\u00a7c\u26a1 \u30d1\u30eb\u30b5\u30fc\u8a2d\u7f6e \u00a78\u00bb \u00a7730\u79d2\u7bc4\u56f2\u30c0\u30e1\u30fc\u30b8");
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.activePulsers.removeIf(pd -> pd.loc.equals((Object)hitLoc)), 600L);
     }
 
@@ -951,7 +951,7 @@ public class SkillManager {
         attacker.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 1, false, false));
         attacker.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 1, false, false));
         attacker.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0, false, false));
-        attacker.sendMessage("\u00a78\u00a7l\u7f60\u3060\uff01\u00a77\u56ee\u3092\u653b\u6483\u3057\u3066\u5f31\u4f53\u5316\uff0b\u767a\u5149\u3057\u305f\uff01");
+        attacker.sendMessage("\u00a78\u00a7l\u7f60\u3060\uff01 \u00a77\u30c7\u30b3\u30a4\u6572\u304d\u3067\u5f31\u4f53+\u767a\u5149\uff01");
     }
 
     public void onPhantomDamaged(Player p) {
@@ -969,7 +969,7 @@ public class SkillManager {
             if (a == null || b == null) continue;
             if (to.distance(a) < 1.5) {
                 if (this.gm.isFlagCarrier(p.getUniqueId())) {
-                    p.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u30dd\u30fc\u30bf\u30eb\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+                    p.sendMessage("\u00a7c\ud83c\udff4 \u65d7\u6240\u6301\u4e2d\u306f\u30dd\u30fc\u30bf\u30eb\u4e0d\u53ef\uff01");
                     return;
                 }
                 p.teleport(b.clone().add(0.0, 1.0, 0.0));
@@ -982,7 +982,7 @@ public class SkillManager {
             }
             if (!(to.distance(b) < 1.5)) continue;
             if (this.gm.isFlagCarrier(p.getUniqueId())) {
-                p.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u30dd\u30fc\u30bf\u30eb\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+                p.sendMessage("\u00a7c\ud83c\udff4 \u65d7\u6240\u6301\u4e2d\u306f\u30dd\u30fc\u30bf\u30eb\u4e0d\u53ef\uff01");
                 return;
             }
             p.teleport(a.clone().add(0.0, 1.0, 0.0));
@@ -1032,7 +1032,7 @@ public class SkillManager {
             Player t;
             if (!(e instanceof Player) || !this.gm.isParticipant(t = (Player)e) || t == thrower) continue;
             this.applyCookBuff(t, mat);
-            t.sendMessage(this.gm.getTeamOf(t) == this.gm.getTeamOf(thrower) ? "\u00a7a\u5473\u65b9\u304b\u3089\u6599\u7406\u304c\u547d\u4e2d\uff01" : "\u00a7c\u6599\u7406\u304c\u547d\u4e2d\uff01");
+            t.sendMessage(this.gm.getTeamOf(t) == this.gm.getTeamOf(thrower) ? "\u00a76\ud83c\udf5a \u5473\u65b9\u306e\u6599\u7406\u304c\u547d\u4e2d\uff01" : "\u00a76\ud83c\udf5a \u6599\u7406\u304c\u547d\u4e2d\uff01");
         }
     }
 
@@ -1087,7 +1087,7 @@ public class SkillManager {
             if (!p.isOnGround()) continue;
             this.gliderInAir.remove(uUID);
             this.setCooldown(uUID, 12000L);
-            p.sendMessage("\u00a7a\u7740\u5730\uff01\u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u958b\u59cb\uff0812\u79d2\uff09");
+            p.sendMessage("\u00a7a\u2726 \u7740\u5730 \u00a78\u00bb \u00a77\u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u958b\u59cb\uff0812\u79d2\uff09");
         }
         for (ReconData reconData : new ArrayList<ReconData>(this.activeRecons)) {
             if (!reconData.entity.isValid()) {
@@ -1343,7 +1343,7 @@ public class SkillManager {
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.SNIPER || !this.gm.isParticipant(p) || this.markedForDeath.size() <= 0 || p.isOnGround() && p.isSneaking() && p.getInventory().getItemInMainHand().getType() == Material.CROSSBOW) continue;
             this.markedForDeath.clear();
-            p.sendMessage("\u00a77\u72d9\u6483\u773c\u304c\u89e3\u9664\u3055\u308c\u307e\u3057\u305f");
+            p.sendMessage("\u00a77\u72d9\u6483\u773c\u89e3\u9664");
         }
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (!this.guardBroken.contains(p.getUniqueId())) continue;
@@ -1533,7 +1533,7 @@ public class SkillManager {
             return;
         }
         if (this.deadlockedPlayers.contains(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u30c7\u30c3\u30c9\u30ed\u30c3\u30af\u4e2d\u306f\u30b9\u30ad\u30eb\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            p.sendMessage("\u00a7c\u26a0 \u30c7\u30c3\u30c9\u30ed\u30c3\u30af\u4e2d\u306f\u30b9\u30ad\u30eb\u4e0d\u53ef\uff01");
             return;
         }
         if (this.inEnemyHexField(p)) {
@@ -1541,13 +1541,13 @@ public class SkillManager {
             return;
         }
         if (this.gm.isFlagCarrier(p.getUniqueId()) && (kit == KitType.BREAKER || kit == KitType.NINJA || kit == KitType.JESTER || kit == KitType.KREUTZ || kit == KitType.VAMPIRE)) {
-            p.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u79fb\u52d5\u30b9\u30ad\u30eb\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            p.sendMessage("\u00a7c\ud83c\udff4 \u65d7\u6240\u6301\u4e2d\u306f\u79fb\u52d5\u30b9\u30ad\u30eb\u4e0d\u53ef\uff01");
             return;
         }
         if (this.isOnCooldown(p.getUniqueId())) {
             Long cd = this.skillCooldowns.get(p.getUniqueId());
             float remainF = cd != null ? (float)(cd - System.currentTimeMillis()) / 1000.0f : 0.0f;
-            p.sendMessage("\u00a7c\u30b9\u30ad\u30eb\u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u4e2d\uff01 \u00a77\u6b8b\u308a\u00a7f" + String.format("%.1f", Float.valueOf(remainF)) + "\u00a77\u79d2");
+            p.sendMessage("\u00a7c\u26a0 \u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u4e2d \u00a78\u00bb \u00a77\u6b8b\u308a\u00a7f" + String.format("%.1f", Float.valueOf(remainF)) + "\u00a77\u79d2");
             return;
         }
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.5f, 1.8f);
@@ -1733,7 +1733,7 @@ public class SkillManager {
 
     private void useBurst(Player p) {
         if (this.deadlockedPlayers.contains(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u30c7\u30c3\u30c9\u30ed\u30c3\u30af\u4e2d\u306f\u30d0\u30fc\u30b9\u30c8\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            p.sendMessage("\u00a7c\u26a0 \u30c7\u30c3\u30c9\u30ed\u30c3\u30af\u4e2d\u306f\u30d0\u30fc\u30b9\u30c8\u4e0d\u53ef\uff01");
             return;
         }
         if (this.inEnemyHexField(p)) {
@@ -1741,11 +1741,11 @@ public class SkillManager {
             return;
         }
         if (this.burstUsed.contains(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u30d0\u30fc\u30b9\u30c8\u306f\u3053\u306e\u30e9\u30a6\u30f3\u30c9\u3067\u306f\u4f7f\u7528\u6e08\u307f\u3067\u3059\u3002");
+            p.sendMessage("\u00a7c\u26a0 \u30d0\u30fc\u30b9\u30c8\u4f7f\u7528\u6e08\u307f\uff01");
             return;
         }
         if (this.gm.isFlagCarrier(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u30d0\u30fc\u30b9\u30c8\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            p.sendMessage("\u00a7c\ud83c\udff4 \u65d7\u6240\u6301\u4e2d\u306f\u30d0\u30fc\u30b9\u30c8\u4e0d\u53ef\uff01");
             return;
         }
         this.burstUsed.add(p.getUniqueId());
@@ -1761,7 +1761,7 @@ public class SkillManager {
         p.setInvulnerable(true);
         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 10, 1, false, true));
         w.playSound(loc, Sound.BLOCK_BEACON_DEACTIVATE, 2.0f, 2.0f);
-        p.sendMessage("\u00a7c\u00a7l\u30d0\u30fc\u30b9\u30c8\u767a\u52d5\uff01");
+        p.sendMessage("\u00a7c\u00a7l\u26a1 \u30d0\u30fc\u30b9\u30c8\u767a\u52d5\uff01");
         double range = 6.0;
         double knockback = 1.5;
         if (role == KitRole.INITIATOR) {
@@ -1812,7 +1812,7 @@ public class SkillManager {
 
     private void bladeSkill(Player p) {
         if (!p.isSneaking()) {
-            p.sendMessage("\u00a7c\u3057\u3083\u304c\u307f\u306a\u304c\u3089\u4f7f\u7528\u3057\u3066\u304f\u3060\u3055\u3044");
+            p.sendMessage("\u00a7c\u26a0 \u3057\u3083\u304c\u307f\u306a\u304c\u3089\u4f7f\u7528\u305b\u3088");
             return;
         }
         this.setCooldown(p.getUniqueId(), 10000L);
@@ -1881,7 +1881,7 @@ public class SkillManager {
                 p.removePotionEffect(PotionEffectType.SPEED);
             }
         }, 160L);
-        p.sendMessage("\u00a72\u00a7l\u96a0\u5f62\uff01");
+        p.sendMessage("\u00a75\u00a7l\u2726 \u96a0\u5f62\uff01");
     }
 
     private void berserkerSkill(final Player p) {
@@ -1892,7 +1892,7 @@ public class SkillManager {
         if (w == null) {
             return;
         }
-        p.sendMessage("\u00a74\u00a7l\u6012\u6d9b\u7206\u7815\uff01");
+        p.sendMessage("\u00a76\u00a7l\u6012\u6d9b\u7206\u7815\uff01");
         new BukkitRunnable(){
             int t = 0;
 
@@ -1952,7 +1952,7 @@ public class SkillManager {
                         t.damage(5.0, (Entity)p);
                         t.setCooldown(Material.SHIELD, 20);
                         t.getWorld().playSound(t.getLocation(), Sound.ITEM_SHIELD_BREAK, 1.0f, 0.8f);
-                        t.sendMessage("\u00a7c\u76fe\u8d8a\u3057\u306b5\u30c0\u30e1\u30fc\u30b8\u8cab\u901a\uff01");
+                        t.sendMessage("\u00a7c\u2694 \u76fe\u8d8a\u3057 \u00a78\u00bb \u00a75\u30c0\u30e1\u30fc\u30b8\u8cab\u901a\uff01");
                     } else {
                         t.damage(9.0, (Entity)p);
                     }
@@ -2021,7 +2021,7 @@ public class SkillManager {
                 return;
             }
             if (this.getKreutzMana(p.getUniqueId()) < 5.0) {
-                p.sendMessage("\u00a7c\u30de\u30ca\u304c\u8db3\u308a\u307e\u305b\u3093");
+                p.sendMessage("\u00a7c\u26a0 \u30de\u30ca\u4e0d\u8db3");
                 return;
             }
             this.setCooldown(p.getUniqueId(), 1000L);
@@ -2029,14 +2029,14 @@ public class SkillManager {
             int cap = this.kreutzFullOrder.contains(p.getUniqueId()) ? 4 : 1;
             List<String> hand = this.kreutzHand.getOrDefault(p.getUniqueId(), new ArrayList<String>());
             if (hand.size() >= cap) {
-                p.sendMessage("\u00a7c\u624b\u672d\u304c\u6700\u5927" + cap + "\u679a\u3067\u3059\uff01\u30ab\u30fc\u30c9\u3092\u7a7a\u3051\u3066\u304b\u3089\u5f15\u3044\u3066\u304f\u3060\u3055\u3044");
+                p.sendMessage("\u00a7c\u26a0 \u624b\u672d\u6700\u5927" + cap + "\u679a \u00a78\u00bb \u00a77\u30ab\u30fc\u30c9\u3092\u7a7a\u3051\u3066\u5f15\u3051");
                 this.addKreutzMana(p.getUniqueId(), 5.0);
                 return;
             }
             String card = this.KREUTZ_CARDS[new Random().nextInt(this.KREUTZ_CARDS.length)];
             hand.add(card);
             this.kreutzHand.put(p.getUniqueId(), hand);
-            p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f\uff01 \u624b\u672d: " + String.join(", ", hand));
+            p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f \u00a78| \u00a7f\u624b\u672d: " + String.join(", ", hand));
             return;
         }
         List<String> castHand = this.kreutzHand.get(p.getUniqueId());
@@ -2062,17 +2062,17 @@ public class SkillManager {
             }
         }
         if (needsTarget && target == null) {
-            p.sendMessage("\u00a7c\u5bfe\u8c61\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\uff01\u30ab\u30fc\u30c9\u306f\u6d88\u8cbb\u3055\u308c\u307e\u305b\u3093");
+            p.sendMessage("\u00a7c\ud83c\udfaf \u5bfe\u8c61\u306a\u3057 \u00a78\u00bb \u00a77\u30ab\u30fc\u30c9\u306f\u6d88\u8cbb\u3055\u308c\u306a\u3044");
             return;
         }
         if (this.getKreutzMana(p.getUniqueId()) < 30.0) {
-            p.sendMessage("\u00a7c\u30de\u30ca\u304c\u8db3\u308a\u307e\u305b\u3093");
+            p.sendMessage("\u00a7c\u26a0 \u30de\u30ca\u4e0d\u8db3");
             return;
         }
         castHand.remove(0);
         this.addKreutzMana(p.getUniqueId(), -30.0);
         int remaining = castHand.size();
-        p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5531\u3048\u305f\uff01" + (remaining > 0 ? " \u624b\u672d: " + String.join(", ", castHand) : " \u624b\u672d\u306f\u7a7a\u306b\u306a\u3063\u305f"));
+        p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5531\u3048\u305f\uff01" + (remaining > 0 ? " \u00a78| \u00a7f\u624b\u672d: " + String.join(", ", castHand) : " \u00a78| \u00a77\u624b\u672d\u7a76\u5c3d"));
         switch (card) {
             case "\u30d5\u30a1\u30a4\u30a2\u30dc\u30fc\u30eb": {
                 final Snowball b = (Snowball)p.launchProjectile(Snowball.class);
@@ -2232,7 +2232,7 @@ public class SkillManager {
                 this.activeTraps.add(tpTrap);
                 tl.getWorld().spawnParticle(Particle.PORTAL, tl, 20, 0.5, 0.5, 0.5, 0.05);
                 p.getWorld().playSound(p.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 0.5f, 2.0f);
-                p.sendMessage("\u00a75\u00a7l\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7\u8a2d\u7f6e\uff01\u00a77\u89e6\u308c\u305f\u6575\u304c\u81ea\u5206\u306e\u5143\u306bTP");
+                p.sendMessage("\u00a75\u00a7l\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7\u8a2d\u7f6e \u00a78\u00bb \u00a77\u89e6\u308c\u305f\u6575\u3092\u53ec\u559a");
                 break;
             }
             case "\u30d5\u30a1\u30f3\u30b0": {
@@ -2258,13 +2258,13 @@ public class SkillManager {
                 target.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 200, 0, false, true));
                 target.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "kreutz_pierced"), PersistentDataType.BYTE, (byte)1);
                 Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> target.getPersistentDataContainer().remove(new NamespacedKey((Plugin)this.plugin, "kreutz_pierced")), 200L);
-                p.sendMessage("\u00a75\u00a7l\u30d4\u30a2\u30c3\u30b7\u30f3\u30b0\uff01\u00a77" + target.getName() + "\u3092\u8cab\u901a\u30de\u30fc\u30af\uff0810\u79d2\uff09");
-                target.sendMessage("\u00a75\u00a7l\u8cab\u901a\u30de\u30fc\u30af\u3055\u308c\u3066\u3044\u307e\u3059\uff01");
+                p.sendMessage("\u00a75\u00a7l\u30d4\u30a2\u30c3\u30b7\u30f3\u30b0 \u00a78\u00bb \u00a7f" + target.getName() + " \u00a77\u8cab\u901a\u30de\u30fc\u30af\uff0810\u79d2\uff09");
+                target.sendMessage("\u00a75\u00a7l\u26a0 \u8cab\u901a\u30de\u30fc\u30af\u3055\u308c\u305f\uff01");
                 target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1.0f, 2.0f);
                 break;
             }
             default: {
-                p.sendMessage("\u00a7c\u00a7l\u30a8\u30e9\u30fc\uff1a\u7121\u52b9\u306a\u30ab\u30fc\u30c9");
+                p.sendMessage("\u00a7c\u00a7l\u30a8\u30e9\u30fc \u00a78\u00bb \u00a77\u7121\u52b9\u306a\u30ab\u30fc\u30c9");
             }
         }
     }
@@ -2274,7 +2274,7 @@ public class SkillManager {
         this.vampireBloodMode.put(p.getUniqueId(), inBlood);
         double gauge = this.vampireGauge.getOrDefault(p.getUniqueId(), 0.0);
         this.applyVampireStage(p, gauge >= 55.0 ? 4 : (gauge >= 40.0 ? 3 : (gauge >= 25.0 ? 2 : (gauge >= 10.0 ? 1 : 0))));
-        p.sendMessage(inBlood ? "\u00a74\u00a7l\u30d6\u30e9\u30c3\u30c9\u30e2\u30fc\u30c9\u8d77\u52d5\uff01" : "\u00a77\u30c9\u30ec\u30a4\u30f3\u30e2\u30fc\u30c9\u306b\u623b\u308a\u307e\u3057\u305f");
+        p.sendMessage(inBlood ? "\u00a74\u00a7l\ud83e\uddb4 \u30d6\u30e9\u30c3\u30c9\u30e2\u30fc\u30c9\u8d77\u52d5\uff01" : "\u00a77\u30c9\u30ec\u30a4\u30f3\u30e2\u30fc\u30c9\u306b\u623b\u3063\u305f");
     }
 
     private void bomberSkill(Player p) {
@@ -2298,18 +2298,18 @@ public class SkillManager {
             a.getPersistentDataContainer().set(this.KEY_MINE, PersistentDataType.BYTE, (byte)1);
         });
         this.activeMines.add(new MineData(as, p.getUniqueId()));
-        p.sendMessage("\u00a7c\u00a7l\u5730\u96f7\u8a2d\u7f6e\uff01\u00a77\u53f3\u30af\u30ea\u3067\u8d77\u7206");
+        p.sendMessage("\u00a7c\u00a7l\ud83d\udca3 \u5730\u96f7\u8a2d\u7f6e \u00a78\u00bb \u00a77\u53f3\u30af\u30ea\u30c3\u30af\u3067\u8d77\u7206");
     }
 
     public void detonateMines(Player p) {
         long ready = this.activeMines.stream().filter(m -> m.owner.equals(p.getUniqueId())).count();
         if (ready == 0L) {
-            p.sendMessage("\u00a7c\u8d77\u7206\u3067\u304d\u308b\u5730\u96f7\u304c\u3042\u308a\u307e\u305b\u3093\u3002");
+            p.sendMessage("\u00a7c\ud83d\udca3 \u8d77\u7206\u53ef\u80fd\u306a\u5730\u96f7\u306a\u3057");
             return;
         }
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_LEVER_CLICK, 1.0f, 1.5f);
         this.setCooldown(p.getUniqueId(), 7000L);
-        p.sendMessage("\u00a7c\u00a7l\u8d77\u7206\uff01");
+        p.sendMessage("\u00a7c\u00a7l\u26a1 \u8d77\u7206\uff01");
         for (MineData m2 : new ArrayList<MineData>(this.activeMines)) {
             if (!m2.owner.equals(p.getUniqueId())) continue;
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
@@ -2340,11 +2340,11 @@ public class SkillManager {
         if (p.isSneaking()) {
             this.setCooldown(p.getUniqueId(), 8000L);
             p.getPersistentDataContainer().set(this.KEY_PULSE, PersistentDataType.BYTE, (byte)1);
-            p.sendMessage("\u00a7c\u00a7l\u30d1\u30eb\u30b9\u30dc\u30eb\u30c8\u6e96\u5099\u5b8c\u4e86\uff01");
+            p.sendMessage("\u00a7c\u26a1 \u30d1\u30eb\u30b9\u30dc\u30eb\u30c8\u6e96\u5099\u5b8c\u4e86\uff01");
         } else {
             this.setCooldown(p.getUniqueId(), 10000L);
             p.getPersistentDataContainer().set(this.KEY_RECON, PersistentDataType.BYTE, (byte)1);
-            p.sendMessage("\u00a7a\u00a7l\u30ea\u30b3\u30f3\u30dc\u30eb\u30c8\u6e96\u5099\u5b8c\u4e86\uff01");
+            p.sendMessage("\u00a7a\ud83d\udce1 \u30ea\u30b3\u30f3\u30dc\u30eb\u30c8\u6e96\u5099\u5b8c\u4e86\uff01");
         }
     }
 
@@ -2360,17 +2360,17 @@ public class SkillManager {
     private void marksmanSkill(Player p) {
         this.setCooldown(p.getUniqueId(), 12000L);
         p.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "heavy_bolt"), PersistentDataType.BYTE, (byte)1);
-        p.sendMessage("\u00a7c\u00a7l\u30d8\u30f4\u30a3\u30fc\u30dc\u30eb\u30c8\u6e96\u5099\u5b8c\u4e86\uff01");
+        p.sendMessage("\u00a7c\ud83c\udfaf \u30d8\u30f4\u30a3\u30fc\u30dc\u30eb\u30c8\u6e96\u5099\u5b8c\u4e86\uff01");
     }
 
     private void sundanceSkill(Player p) {
         if (this.sundanceRevolver.containsKey(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u307e\u3060\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u4e2d\u3067\u3059\uff01");
+            p.sendMessage("\u00a7c\u26a0 \u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u4e2d\uff01");
             return;
         }
         if (this.isOnCooldown(p.getUniqueId())) {
             long remain = (this.skillCooldowns.get(p.getUniqueId()) - System.currentTimeMillis()) / 1000L;
-            p.sendMessage("\u00a7c\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0CT: \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
+            p.sendMessage("\u00a7c\u26a0 \u30ea\u30dc\u30eb\u30d3\u30f3\u30b0CT \u00a78\u00bb \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
             return;
         }
         this.sundanceRevolver.put(p.getUniqueId(), 5);
@@ -2390,7 +2390,7 @@ public class SkillManager {
                 xbow.setItemMeta((ItemMeta)cm);
             }
         }
-        p.sendMessage("\u00a7b\u00a7l\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u30fb\u30af\u30ed\u30b9\u30dc\u30a6\u8d77\u52d5\uff015\u767a\u81ea\u52d5\u88c5\u586b");
+        p.sendMessage("\u00a7b\u00a7l\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u8d77\u52d5 \u00a78\u00bb \u00a7f5\u767a\u81ea\u52d5\u88c5\u586b");
     }
 
     private void rocketerSkill(Player p) {
@@ -2407,7 +2407,7 @@ public class SkillManager {
             rocket.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "rocket_origin_z"), PersistentDataType.DOUBLE, p.getLocation().getZ());
             rocket.setGlowing(true);
             rocket.setGravity(false);
-            p.sendMessage("\u00a7e\u00a7l\u30e1\u30ac\u30ed\u30b1\u30c3\u30c8\u767a\u5c04\uff01");
+            p.sendMessage("\u00a76\u00a7l\u30e1\u30ac\u30ed\u30b1\u30c3\u30c8\u767a\u5c04\uff01");
             new BukkitRunnable(){
                 int ticks = 0;
 
@@ -2459,7 +2459,7 @@ public class SkillManager {
         rocket.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "rocket_origin_z"), PersistentDataType.DOUBLE, p.getLocation().getZ());
         rocket.setGravity(false);
         rocket.setGlowing(true);
-        p.sendMessage("\u00a7e\u00a7l\u8a98\u5c0e\u30ed\u30b1\u30c3\u30c8\uff01");
+        p.sendMessage("\u00a76\u00a7l\u8a98\u5c0e\u30ed\u30b1\u30c3\u30c8\uff01");
         new BukkitRunnable(){
             int ticks = 0;
 
@@ -2551,7 +2551,7 @@ public class SkillManager {
         }
         Location loc = p.getLocation().clone();
         this.activeTraps.add(new TrapData(p.getUniqueId(), loc));
-        p.sendMessage("\u00a73\u00a7l\u7f60\u8a2d\u7f6e\uff01\u6700\u5927" + maxTraps + "\u500b" + (this.trapperUltimate.contains(p.getUniqueId()) ? "\uff08\u4e0d\u53ef\u8996\uff09" : ""));
+        p.sendMessage("\u00a73\u00a7l\u7f60\u8a2d\u7f6e \u00a78\u00bb \u00a7f\u6700\u5927" + maxTraps + "\u500b" + (this.trapperUltimate.contains(p.getUniqueId()) ? "\uff08\u4e0d\u53ef\u8996\uff09" : ""));
     }
 
     private void triggerTrap(TrapData t, Player victim) {
@@ -2562,9 +2562,9 @@ public class SkillManager {
                 victim.teleport(owner.getLocation());
                 victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
                 victim.getWorld().spawnParticle(Particle.PORTAL, victim.getLocation().add(0.0, 1.0, 0.0), 30, 0.5, 0.5, 0.5, 0.05);
-                owner.sendMessage("\u00a75\u00a7l\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7\u767a\u52d5\uff01\u00a77" + victim.getName() + "\u304c\u8ee2\u9001\u3055\u308c\u307e\u3057\u305f");
+                owner.sendMessage("\u00a75\u00a7l\u30c8\u30e9\u30c3\u30d7\u767a\u52d5 \u00a78\u00bb \u00a7f" + victim.getName() + " \u00a77\u3092\u53ec\u559a");
                 victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20, 9, false, true));
-                victim.sendMessage("\u00a75\u00a7l\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7\uff01\u00a77\u7f60\u306b\u89e6\u308c\u3066\u8ee2\u9001\u3055\u308c\u305f");
+                victim.sendMessage("\u00a75\u00a7l\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7\uff01\u00a77\u7f60\u306b\u5f15\u304d\u305a\u3089\u308c\u305f");
             }
             this.activeTraps.remove(t);
             return;
@@ -2584,7 +2584,7 @@ public class SkillManager {
                 victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0, false, false));
                 victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 1, false, false));
                 victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 1, false, false));
-                victim.sendMessage("\u00a7c\u7f60\u304c\u7206\u767a\u3057\u305f\uff01");
+                victim.sendMessage("\u00a7c\ud83d\udca5 \u7f60\u7206\u767a\uff01");
             }
             this.activeTraps.remove(t);
         }, 6L);
@@ -2595,7 +2595,7 @@ public class SkillManager {
         p.setInvulnerable(true);
         this.guardianEndTime.put(p.getUniqueId(), System.currentTimeMillis() + 7000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 140, 1, false, false));
-        p.sendMessage("\u00a7f\u00a7l\u9244\u58c1\uff017\u79d2\u9593\u7121\u6575");
+        p.sendMessage("\u00a7f\u00a7l\u9244\u58c1 \u00a78\u00bb \u00a7f7\u79d2\u9593\u7121\u6575");
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             p.setInvulnerable(false);
             this.guardianEndTime.remove(p.getUniqueId());
@@ -2670,12 +2670,12 @@ public class SkillManager {
         }
         this.portalBlocks.add(loc.clone());
         this.startPortalParticles(loc, team);
-        p.sendMessage("\u00a73\u00a7l\u30dd\u30fc\u30bf\u30ebA\uff08\u5165\u53e3\uff09\u8a2d\u7f6e\uff01");
+        p.sendMessage("\u00a73\u00a7l\u30dd\u30fc\u30bf\u30ebA \u00a78\u00bb \u00a7f\u5165\u53e3\u8a2d\u7f6e\uff01");
     }
 
     private void placePortalB(Player p) {
         if (!this.portalA.containsKey(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u5148\u306b\u5de6\u30af\u30ea\u30c3\u30af\u3067\u30dd\u30fc\u30bf\u30ebA\u3092\u8a2d\u7f6e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+            p.sendMessage("\u00a7c\u26a0 \u5148\u306b\u5de6\u30af\u30ea\u30c3\u30af\u3067\u30dd\u30fc\u30bf\u30ebA\u3092\u8a2d\u7f6e\u305b\u3088");
             return;
         }
         this.setCooldown(p.getUniqueId(), 15000L);
@@ -2688,7 +2688,7 @@ public class SkillManager {
         }
         TeamColor team = this.gm.getTeamOf(p);
         if (loc.distance(this.portalA.get(p.getUniqueId())) < 3.0) {
-            p.sendMessage("\u00a7c\u8fd1\u3059\u304e\u307e\u3059");
+            p.sendMessage("\u00a7c\u26a0 \u8a2d\u7f6e\u5730\u70b9\u304c\u8fd1\u3059\u304e\u308b");
             return;
         }
         Location oldB = this.portalB.remove(p.getUniqueId());
@@ -2698,7 +2698,7 @@ public class SkillManager {
         this.portalB.put(p.getUniqueId(), loc);
         this.portalBlocks.add(loc.clone());
         this.startPortalParticles(loc, team);
-        p.sendMessage("\u00a73\u00a7l\u30dd\u30fc\u30bf\u30ebB\uff08\u51fa\u53e3\uff09\u8a2d\u7f6e\uff01");
+        p.sendMessage("\u00a73\u00a7l\u30dd\u30fc\u30bf\u30ebB \u00a78\u00bb \u00a7f\u51fa\u53e3\u8a2d\u7f6e\uff01");
     }
 
     private void startPortalParticles(final Location loc, TeamColor team) {
@@ -2729,8 +2729,8 @@ public class SkillManager {
             return;
         }
         this.setCooldown(target.getUniqueId(), 5000L);
-        p.sendMessage("\u00a75\u00a7l" + target.getName() + " \u306e\u30b9\u30ad\u30eb\u3092\u30b3\u30d4\u30fc\uff01");
-        target.sendMessage("\u00a75\u30b9\u30ad\u30eb\u30b3\u30d4\u30fc\u3055\u308c\u305f\uff01\u30af\u30fc\u30eb\u30bf\u30a4\u30e05\u79d2");
+        p.sendMessage("\u00a75\u00a7l\ud83d\udd01 " + target.getName() + " \u306e\u30b9\u30ad\u30eb\u3092\u30b3\u30d4\u30fc\uff01");
+        target.sendMessage("\u00a75\u30b9\u30ad\u30eb\u30b3\u30d4\u30fc\u3055\u308c\u305f\uff01\u00a77\u30af\u30fc\u30eb\u30bf\u30a4\u30e05\u79d2");
         switch (targetKit) {
             case MARKSMAN: {
                 this.mimicCopyMarksman(p, target);
@@ -2768,7 +2768,7 @@ public class SkillManager {
             }
         }
         target.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "hp_reduced"), PersistentDataType.BYTE, (byte)1);
-        target.sendMessage("\u00a7c\u00a7lHP\u4e0a\u9650\u304c10\u4f4e\u4e0b\u3057\u307e\u3057\u305f\uff01");
+        target.sendMessage("\u00a7c\u00a7l\u26a0 HP\u4e0a\u9650-10\uff01");
         p.sendMessage("\u00a7c\u00a7l\u30d8\u30f4\u30a3\u30fc\u30dc\u30eb\u30c8\u30b3\u30d4\u30fc\uff01");
     }
 
@@ -2785,11 +2785,11 @@ public class SkillManager {
             this.activeRecons.removeIf(r -> r.entity.equals((Object)as));
         }, 1200L);
         p.sendMessage("\u00a7a\u30ea\u30b3\u30f3\u8a2d\u7f6e\uff01");
-        target.sendMessage("\u00a7c\u00a7l\u30ea\u30b3\u30f3\u3092\u8a2d\u7f6e\u3055\u308c\u305f\uff01");
+        target.sendMessage("\u00a7c\u00a7l\ud83d\udce1 \u30ea\u30b3\u30f3\u8a2d\u7f6e\u3055\u308c\u305f\uff01");
     }
 
     private void mimicCopySundance(Player p, Player target) {
-        p.sendMessage("\u00a7b\u00a7l\u2744 \u30ea\u30dc\u30eb\u30d0\u30fc6\u9023\u5c04\u30b3\u30d4\u30fc\uff01");
+        p.sendMessage("\u00a7b\u00a7l\u2744 \u30ea\u30dc\u30eb\u30d0\u30fc6\u9023\u5c04 \u00a78\u00bb \u00a7f\u30b3\u30d4\u30fc\uff01");
         for (int i = 0; i < 6; ++i) {
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
                 if (target.isValid() && p.isOnline()) {
@@ -2802,8 +2802,8 @@ public class SkillManager {
 
     private void mimicCopySniper(Player p, Player target) {
         this.markedForDeath.add(target.getUniqueId());
-        p.sendMessage("\u00a7c\u00a7l\u72d9\u6483\u773c: \u00a7f" + target.getName() + " \u00a7c\u3092\u30de\u30fc\u30af\u3057\u307e\u3057\u305f\uff01");
-        target.sendMessage("\u00a7c\u00a7l\u26a0 \u72d9\u6483\u3055\u308c\u3066\u3044\u307e\u3059\uff01");
+        p.sendMessage("\u00a7c\u00a7l\ud83c\udfaf \u6b7b\u5370\u5b8c\u6210 \u00a78\u00bb \u00a7f" + target.getName() + " \u00a7c\u00a7l\u3092\u30de\u30fc\u30af\uff01");
+        target.sendMessage("\u00a7c\u00a7l\u26a0 \u72d9\u6483\u773c\u306b\u9396\u5b9a\u3055\u308c\u305f\uff01");
         target.getWorld().playSound(target.getLocation(), Sound.BLOCK_BELL_USE, 1.0f, 0.5f);
     }
 
@@ -2818,7 +2818,7 @@ public class SkillManager {
         if (mark != null) {
             target.teleport(mark);
             target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20, 9, false, true));
-            p.sendMessage("\u00a75\u00a7l\u30bb\u30ec\u30af\u30c8\u30b9\u30ef\u30c3\u30d7\uff01");
+            p.sendMessage("\u00a75\u00a7l\u2726 \u30bb\u30ec\u30af\u30c8\u30b9\u30ef\u30c3\u30d7\uff01");
             return;
         }
         Location pLoc = p.getLocation().clone();
@@ -2903,7 +2903,7 @@ public class SkillManager {
         p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 120, 0, false, false));
         long endTime = System.currentTimeMillis() + 6000L;
         this.phantomEnd.put(p.getUniqueId(), endTime);
-        p.sendMessage("\u00a77\u00a7l\u970a\u4f53\u5316\uff016\u79d2\u9593\u900f\u660e\uff0b\u7121\u6575");
+        p.sendMessage("\u00a77\u00a7l\u970a\u4f53\u5316 \u00a78\u00bb \u00a7f6\u79d2\u9593\u900f\u660e+\u7121\u6575");
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PHANTOM_AMBIENT, 1.0f, 0.5f);
         this.hideArmor(p);
         UUID uid = p.getUniqueId();
@@ -2923,7 +2923,7 @@ public class SkillManager {
     private void anchorSkill(Player p) {
         this.setCooldown(p.getUniqueId(), 20000L);
         this.anchorFields.put(p.getUniqueId(), p.getLocation().clone());
-        p.sendMessage("\u00a79\u00a7l\u78c1\u5834\u5c55\u958b\uff0115\u79d2\u9593 \u534a\u5f848m\u306e\u6575\u3092\u6e1b\u901f\uff0b\u5f31\u4f53\u5316\uff0b\u7d99\u7d9a\u30c0\u30e1");
+        p.sendMessage("\u00a79\u00a7l\u78c1\u5834\u5c55\u958b \u00a78\u00bb \u00a7715\u79d2\u9593 \u534a\u5f848m \u6e1b\u901f+\u5f31\u4f53+\u7d99\u7d9a\u30c0\u30e1");
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 0.5f);
         final UUID uid = p.getUniqueId();
         new BukkitRunnable(){
@@ -2991,7 +2991,7 @@ public class SkillManager {
 
     private void mistralSkill(Player p) {
         if (this.gm.isFlagCarrier(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u70c8\u98a8\u7832\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            p.sendMessage("\u00a7c\ud83c\udff4 \u65d7\u6240\u6301\u4e2d\u306f\u70c8\u98a8\u7832\u4e0d\u53ef\uff01");
             return;
         }
         this.setCooldown(p.getUniqueId(), 15000L);
@@ -3037,7 +3037,7 @@ public class SkillManager {
 
     private void superiorMistralSkill(Player p) {
         if (this.gm.isFlagCarrier(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u7a76\u6975\u70c8\u98a8\u7832\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            p.sendMessage("\u00a7c\ud83c\udff4 \u65d7\u6240\u6301\u4e2d\u306f\u7a76\u6975\u70c8\u98a8\u7832\u4e0d\u53ef\uff01");
             return;
         }
         this.setCooldown(p.getUniqueId(), 5000L);
@@ -3099,7 +3099,7 @@ public class SkillManager {
         if (this.isOnCooldown(p.getUniqueId())) {
             Long cd = this.skillCooldowns.get(p.getUniqueId());
             long remain = cd != null ? (cd - System.currentTimeMillis()) / 1000L : 0L;
-            p.sendMessage("\u00a7c\u30b9\u30ad\u30eb\u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u4e2d\uff01 \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
+            p.sendMessage("\u00a7c\u26a0 \u30af\u30fc\u30eb\u30bf\u30a4\u30e0\u4e2d \u00a78\u00bb \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
             return;
         }
         this.setCooldown(p.getUniqueId(), 5000L);
@@ -3148,7 +3148,7 @@ public class SkillManager {
             return;
         }
         if (this.releaserMegaUsed.contains(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u8d85\u5927\u89e3\u653e\u306f\u3053\u306e\u30e9\u30a6\u30f3\u30c9\u4f7f\u7528\u6e08\u307f\u3067\u3059\u3002");
+            p.sendMessage("\u00a7c\u26a0 \u8d85\u5927\u89e3\u653e\u4f7f\u7528\u6e08\u307f\uff01");
             return;
         }
         this.releaserMegaUsed.add(p.getUniqueId());
@@ -3172,7 +3172,7 @@ public class SkillManager {
         if (this.isOnCooldown(p.getUniqueId())) {
             Long cd = this.skillCooldowns.get(p.getUniqueId());
             long remain = cd != null ? (cd - System.currentTimeMillis()) / 1000L : 0L;
-            p.sendMessage("\u00a7c\u30ea\u30ea\u30fc\u30b9CT\u4e2d\uff01 \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
+            p.sendMessage("\u00a7c\u26a0 \u30ea\u30ea\u30fc\u30b9CT\u4e2d \u00a78\u00bb \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
             return;
         }
         this.setCooldown(p.getUniqueId(), 8000L);
@@ -3206,10 +3206,10 @@ public class SkillManager {
             ball.setVelocity(p.getLocation().getDirection().normalize().multiply(1.2));
             ball.setCustomName("theos_pada");
             ball.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "theos_pada"), PersistentDataType.BYTE, (byte)1);
-            p.sendMessage("\u00a74\u00a7l\u30c6\u30aa\u30b9\u30d1\u30fc\u30c0\uff08\u5438\u53ce\u5f3e\uff09\uff01");
+            p.sendMessage("\u00a74\u00a7l\ud83e\uddb4 \u30c6\u30aa\u30b9\u30d1\u30fc\u30c0 \u00a78\u00bb \u00a7f\u5438\u53ce\u5f3e\uff01");
         } else {
             if (gauge < 5.0) {
-                p.sendMessage("\u00a7c\u5438\u8840\u30b2\u30fc\u30b8\u304c\u8db3\u308a\u307e\u305b\u3093\uff08\u5fc5\u8981:5\uff09");
+                p.sendMessage("\u00a7c\u26a0 \u5438\u8840\u30b2\u30fc\u30b8\u4e0d\u8db3 \u00a78\u00bb \u00a77\u5fc5\u8981:5");
                 return;
             }
             this.vampireGauge.put(p.getUniqueId(), gauge - 5.0);
@@ -3220,7 +3220,7 @@ public class SkillManager {
             }
             target.damage(5.0, (Entity)p);
             target.getWorld().spawnParticle(Particle.SWEEP_ATTACK, target.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.3, 0.3, 0.1);
-            p.sendMessage("\u00a74\u00a7l\u30c6\u30aa\u30b9\u30d1\u30fc\u30c0\uff08\u7834\u58ca\u5149\u7dda\uff09\uff01\u00a77\u30b2\u30fc\u30b8-5");
+            p.sendMessage("\u00a74\u00a7l\u30c6\u30aa\u30b9\u30d1\u30fc\u30c0 \u00a78\u00bb \u00a7f\u7834\u58ca\u5149\u7dda \u00a78| \u00a77\u30b2\u30fc\u30b8-5");
             target.sendMessage("\u00a74\u00a7l\u30c6\u30aa\u30b9\u30d1\u30fc\u30c0\u304c\u76f4\u6483\uff01");
         }
     }
@@ -3285,13 +3285,13 @@ public class SkillManager {
     public void setLancerUltimate(Player p) {
         this.lancerUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 1200, 0, false, true));
-        p.sendMessage("\u00a7b\u00a7l\u30c0\u30a4\u30ca\u30e2\u30e9\u30f3\u30b9\uff011\u5206\u9593\u69cd\u306e\u30ea\u30fc\u30c110m\uff01");
+        p.sendMessage("\u00a7b\u00a7l\u30c0\u30a4\u30ca\u30e2\u30e9\u30f3\u30b9 \u00a78\u00bb \u00a7f1\u5206\u9593 \u69cd\u30ea\u30fc\u30c110m\uff01");
     }
 
     public void setVampireUltimate(Player p) {
         this.vampireUltimate.add(p.getUniqueId());
         this.vampireGauge.put(p.getUniqueId(), 80.0);
-        p.sendMessage("\u00a74\u00a7l\u6e07\u671b\uff01\u30b9\u30c6\u30fc\u30b85\u30fb6\u89e3\u653e\uff01");
+        p.sendMessage("\u00a74\u00a7l\ud83e\uddb4 \u6e07\u671b \u00a78\u00bb \u00a7f\u30b9\u30c6\u30fc\u30b85\u30fb6\u89e3\u653e\uff01");
         this.updateVampireStage(p, 80.0);
         p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 1200, 4, false, true));
         p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 1200, 1, false, true));
@@ -3300,13 +3300,13 @@ public class SkillManager {
     public void setGrangUltimate(Player p) {
         this.grangUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 1200, 1, false, true));
-        p.sendMessage("\u00a77\u00a7l\u6a5f\u52d5\u8981\u585e\uff011\u5206\u9593\u30c1\u30e3\u30fc\u30b8\u9ad8\u901f\u30fb\u8010\u6027II\uff01");
+        p.sendMessage("\u00a77\u00a7l\u6a5f\u52d5\u8981\u585e \u00a78\u00bb \u00a7f1\u5206\u9593 \u30c1\u30e3\u30fc\u30b8\u9ad8\u901f\u30fb\u8010\u6027II\uff01");
     }
 
     public void setSundanceUltimate(Player p) {
         this.sundanceUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
         this.sundanceRevolver.put(p.getUniqueId(), 12);
-        p.sendMessage("\u00a7b\u00a7l\u30ec\u30f4\u30a9\u30ea\u30e5\u30fc\u30b7\u30e7\u30f3\uff011\u5206\u9593\u88c5\u586b12\u767a\u30fbCT\u77ed\u7e2e\uff01");
+        p.sendMessage("\u00a7b\u00a7l\u30ec\u30f4\u30a9\u30ea\u30e5\u30fc\u30b7\u30e7\u30f3 \u00a78\u00bb \u00a7f1\u5206\u9593\u88c5\u586b12\u767a\u30fbCT\u77ed\u7e2e\uff01");
     }
 
     public void setSwapperMark(Player p, Location mark) {
@@ -3315,17 +3315,17 @@ public class SkillManager {
 
     public void setTransporterUltimate(Player p) {
         this.transporterUltimate.add(p.getUniqueId());
-        p.sendMessage("\u00a73\u00a7l\u30dd\u30fc\u30bf\u30eb\u30ac\u30f3\uff01\u8a2d\u7f6e\u4f4d\u7f6e\u304c\u8996\u7dda\u5148\u306b\u5909\u66f4\uff01");
+        p.sendMessage("\u00a73\u00a7l\u30dd\u30fc\u30bf\u30eb\u30ac\u30f3 \u00a78\u00bb \u00a7f\u8a2d\u7f6e\u4f4d\u7f6e\u3092\u8996\u7dda\u5148\u306b\u5909\u66f4\uff01");
     }
 
     public void setBulwarkUltimate(Player p) {
         this.bulwarkUltimate.add(p.getUniqueId());
-        p.sendMessage("\u00a7f\u00a7l\u8d85\u30fb\u7121\u6575\u8981\u585e\uff01\u58c1\u306eCT\u77ed\u7e2e\uff01");
+        p.sendMessage("\u00a7f\u00a7l\u2605 \u8d85\u30fb\u7121\u6575\u8981\u585e \u00a78\u00bb \u00a77\u58c1CT\u77ed\u7e2e\uff01");
     }
 
     public void setGlaciesUltimate(Player p) {
         this.glaciesUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
-        p.sendMessage("\u00a7b\u00a7l\u30af\u30e9\u30a4\u30aa\u30ad\u30cd\u30b7\u30b9\uff011\u5206\u9593\u30d2\u30c3\u30c8\u3067\u51cd\u7d50\uff01");
+        p.sendMessage("\u00a7b\u00a7l\u30af\u30e9\u30a4\u30aa\u30ad\u30cd\u30b7\u30b9 \u00a78\u00bb \u00a7f1\u5206\u9593\u30d2\u30c3\u30c8\u3067\u51cd\u7d50\uff01");
     }
 
     public boolean hasGlaciesUltimate(UUID uid) {
@@ -3344,12 +3344,12 @@ public class SkillManager {
         this.glaciesUltimateCooldown.put(attacker.getUniqueId(), now + 10000L);
         victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 254, false, false));
         victim.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, 127, false, false));
-        victim.sendMessage("\u00a7b\u00a7l\u51cd\u7d50\uff015\u79d2\u9593\u79fb\u52d5\u4e0d\u80fd\uff01");
+        victim.sendMessage("\u00a7b\u00a7l\u51cd\u7d50 \u00a78\u00bb \u00a7f5\u79d2\u9593\u79fb\u52d5\u4e0d\u80fd\uff01");
     }
 
     public void setSuperiorMistralUltimate(Player p) {
         this.superiorMistralUltimate.add(p.getUniqueId());
-        p.sendMessage("\u00a76\u00a7l\u30d5\u30e9\u30f3\u30b9\u306e\u51b7\u305f\u3044\u7a81\u98a8\uff01\u70c8\u98a8\u7832\u306e\u7bc4\u56f2\u62e1\u5927\uff01");
+        p.sendMessage("\u00a76\u00a7l\u2605 \u30d5\u30e9\u30f3\u30b9\u306e\u51b7\u305f\u3044\u7a81\u98a8 \u00a78\u00bb \u00a77\u70c8\u98a8\u7832\u7bc4\u56f2\u62e1\u5927\uff01");
     }
 
     public void setDeadlocked(Player p, long millis) {
@@ -3361,7 +3361,7 @@ public class SkillManager {
     public void setMirrorUltimate(Player p) {
         this.mirrorEndTime.put(p.getUniqueId(), System.currentTimeMillis() + 10000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 200, 1, false, true));
-        p.sendMessage("\u00a7d\u00a7l\u30a4\u30aa\u30f3\u30df\u30e9\u30fc\u30fb\u30b7\u30fc\u30eb\u30c9\uff0110\u79d2\u9593\u767a\u5c04\u7269\u53cd\u5c04\uff01");
+        p.sendMessage("\u00a7d\u00a7l\u30a4\u30aa\u30f3\u30df\u30e9\u30fc\u30fb\u30b7\u30fc\u30eb\u30c9 \u00a78\u00bb \u00a7f10\u79d2\u9593\u767a\u5c04\u7269\u53cd\u5c04\uff01");
     }
 
     public void onJesterBindHit(Player victim) {
@@ -3370,7 +3370,7 @@ public class SkillManager {
         }
         victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 200, 254, false, false));
         victim.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 200, 127, false, false));
-        victim.sendMessage("\u00a7e\u00a7l\u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af\uff0110\u79d2\u9593\u79fb\u52d5\u4e0d\u80fd\uff01");
+        victim.sendMessage("\u00a7e\u00a7l\u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af \u00a78\u00bb \u00a7f10\u79d2\u9593\u79fb\u52d5\u4e0d\u80fd\uff01");
         victim.getWorld().spawnParticle(Particle.CRIT_MAGIC, victim.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.5, 0.3, 0.1);
     }
 
@@ -3388,7 +3388,7 @@ public class SkillManager {
             food.setItemMeta(meta);
             p.getInventory().addItem(new ItemStack[]{food});
         }
-        p.sendMessage("\u00a76\u00a7l\u30d5\u30eb\u30b3\u30fc\u30b9\uff01\u98df\u67505\u500b\u5165\u624b\u30fb\u30b9\u30c8\u30c3\u30af\u6700\u59275\uff01");
+        p.sendMessage("\u00a76\u00a7l\u2605 \u30d5\u30eb\u30b3\u30fc\u30b9 \u00a78\u00bb \u00a7f\u98df\u67505\u500b\u30fb\u30b9\u30c8\u30c3\u30af\u6700\u59275\uff01");
     }
 
     public void expandNecroArmy(final Player p, int target) {
@@ -3426,7 +3426,7 @@ public class SkillManager {
             }
             team.addEntry(skel.getUniqueId().toString());
         }
-        p.sendMessage("\u00a78\u00a7l\u30bd\u30f3\u30b0\u30aa\u30d6\u30b6\u30c7\u30c3\u30c9\uff01\u8ecd\u56e310\u4f53\u306b\u5897\u52a0\uff01");
+        p.sendMessage("\u00a78\u00a7l\ud83d\udc80 \u30bd\u30f3\u30b0\u30aa\u30d6\u30b6\u30c7\u30c3\u30c9 \u00a78\u00bb \u00a77\u8ecd\u56e3\u309210\u4f53\u306b\u5897\u52a0\uff01");
     }
 
     public void kreutzFullOrder(Player p) {
@@ -3438,7 +3438,7 @@ public class SkillManager {
         }
         this.kreutzHand.put(p.getUniqueId(), hand);
         this.kreutzFullOrder.add(p.getUniqueId());
-        p.sendMessage("\u00a75\u00a7l\u30d5\u30eb\u30aa\u30fc\u30c0\u30fc\uff01\u30ab\u30fc\u30c9\u30b9\u30ed\u30c3\u30c8\u30924\u306b\u62e1\u5927\uff01\u624b\u672d: " + String.join(", ", hand));
+        p.sendMessage("\u00a75\u00a7l\u2605 \u30d5\u30eb\u30aa\u30fc\u30c0\u30fc \u00a78\u00bb \u00a7f\u30b9\u30ed\u30c3\u30c84\u679a \u00a78| \u00a7f\u624b\u672d: " + String.join(", ", hand));
     }
 
     public void resetKreutzMana(Player p) {
@@ -3563,7 +3563,7 @@ public class SkillManager {
         }
         int maxFood = this.cookUltimate.contains(p.getUniqueId()) ? 5 : 3;
         if (existing >= maxFood) {
-            p.sendMessage("\u00a7c\u98df\u6750\u306f\u6700\u5927" + maxFood + "\u500b\u307e\u3067\u3057\u304b\u6301\u3066\u307e\u305b\u3093\uff01\u30b9\u30ad\u30eb\u661f\u3067\u6d88\u8cbb\u3057\u3066\u304f\u3060\u3055\u3044");
+            p.sendMessage("\u00a7c\u26a0 \u98df\u6750\u4e0a\u9650" + maxFood + "\u500b \u00a78\u00bb \u00a77\u30b9\u30ad\u30eb\u661f\u3067\u6d88\u8cbb\u305b\u3088");
             return;
         }
         this.setCooldown(p.getUniqueId(), 1000L);
@@ -3582,7 +3582,7 @@ public class SkillManager {
     private void cookSkill(Player p) {
         List<Material> foods = this.findAllCookFoods(p);
         if (foods.isEmpty()) {
-            p.sendMessage("\u00a7c\u98df\u6750\u3092\u6301\u3063\u3066\u3044\u307e\u305b\u3093\uff01\u5263\u3092\u53f3\u30af\u30ea\u30c3\u30af\u3067\u5165\u624b");
+            p.sendMessage("\u00a7c\ud83c\udf5a \u98df\u6750\u306a\u3057 \u00a78\u00bb \u00a77\u5263\u53f3\u30af\u30ea\u30c3\u30af\u3067\u5165\u624b");
             return;
         }
         this.setCooldown(p.getUniqueId(), 1000L);
@@ -3596,7 +3596,7 @@ public class SkillManager {
     private void cookThrowFood(Player p) {
         List<Material> foods = this.findAllCookFoods(p);
         if (foods.isEmpty()) {
-            p.sendMessage("\u00a7c\u98df\u6750\u3092\u6301\u3063\u3066\u3044\u307e\u305b\u3093\uff01\u5263\u3092\u53f3\u30af\u30ea\u30c3\u30af\u3067\u5165\u624b");
+            p.sendMessage("\u00a7c\ud83c\udf5a \u98df\u6750\u306a\u3057 \u00a78\u00bb \u00a77\u5263\u53f3\u30af\u30ea\u30c3\u30af\u3067\u5165\u624b");
             return;
         }
         this.setCooldown(p.getUniqueId(), 1000L);
@@ -3787,7 +3787,7 @@ public class SkillManager {
         } else {
             Block targetBlock = p.getTargetBlockExact(30, FluidCollisionMode.NEVER);
             if (targetBlock == null) {
-                p.sendMessage("\u00a7c\u76ee\u6a19\u5730\u70b9\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
+                p.sendMessage("\u00a7c\ud83c\udfaf \u76ee\u6a19\u5730\u70b9\u306a\u3057");
                 return;
             }
             Location targetLoc = targetBlock.getLocation().add(0.5, 0.0, 0.5);
@@ -3995,12 +3995,12 @@ public class SkillManager {
         this.setCooldown(p.getUniqueId(), 30000L);
         Deque<Snapshot> snaps = this.timeSnapshots.get(p.getUniqueId());
         if (snaps == null || snaps.isEmpty()) {
-            p.sendMessage("\u00a77[\u30bf\u30a4\u30e0\u30ad\u30fc\u30d1\u30fc] \u30ea\u30ef\u30a4\u30f3\u30c9\u3059\u308b\u30b9\u30ca\u30c3\u30d7\u30b7\u30e7\u30c3\u30c8\u304c\u3042\u308a\u307e\u305b\u3093");
+            p.sendMessage("\u00a77\u30bf\u30a4\u30e0\u30ad\u30fc\u30d1\u30fc \u00a78\u00bb \u00a77\u30b9\u30ca\u30c3\u30d7\u30b7\u30e7\u30c3\u30c8\u4e0d\u8db3");
             return;
         }
         Snapshot snap = snaps.peekLast();
         if (snap == null || snap.loc == null || snap.loc.getWorld() == null) {
-            p.sendMessage("\u00a77[\u30bf\u30a4\u30e0\u30ad\u30fc\u30d1\u30fc] \u30ea\u30ef\u30a4\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8\u304c\u7121\u52b9\u3067\u3059");
+            p.sendMessage("\u00a77\u30bf\u30a4\u30e0\u30ad\u30fc\u30d1\u30fc \u00a78\u00bb \u00a77\u30ea\u30ef\u30a4\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8\u7121\u52b9");
             return;
         }
         p.teleport(snap.loc.clone());
@@ -4039,7 +4039,7 @@ public class SkillManager {
         }, 100L);
         w.spawnParticle(Particle.SPELL_INSTANT, p.getLocation().add(0.0, 1.0, 0.0), 30, 6.0, 3.0, 6.0, 0.1);
         w.playSound(p.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1.0f, 1.5f);
-        p.sendMessage("\u00a7b\u00a7l\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7\uff01\u00a77\u5468\u56f26m\u306e\u5f3e\u306e\u6642\u9593\u3092\u6b62\u3081\u305f");
+        p.sendMessage("\u00a7b\u00a7l\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7 \u00a78\u00bb \u00a77\u5468\u56f26m\u306e\u5f3e\u3092\u51cd\u7d50");
     }
 
     private void aegisSkill(Player p) {
@@ -4057,14 +4057,14 @@ public class SkillManager {
             ally = t;
         }
         if (ally == null) {
-            p.sendMessage("\u00a7c\u30dc\u30f3\u30c9\u3067\u304d\u308b\u53cb\u65b9\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\uff08\u534a\u5f8415m\u5185\uff09");
+            p.sendMessage("\u00a7c\ud83d\udd17 \u30dc\u30f3\u30c9\u53ef\u80fd\u306a\u5473\u65b9\u306a\u3057 \u00a78\u00bb \u00a77\u534a\u5f8415m\u5185");
             return;
         }
         this.setCooldown(p.getUniqueId(), 22000L);
         long endTime = System.currentTimeMillis() + 8000L;
         this.activeBonds.put(ally.getUniqueId(), new Bond(p.getUniqueId(), endTime));
-        p.sendMessage("\u00a7f\u00a7l\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9\uff01 \u00a77" + ally.getName() + " \u306e\u53d7\u3051\u305f\u30c0\u30e1\u30fc\u30b8\u306e50%\u3092\u80a9\u4ee3\u308f\u308a\u3057\u307e\u3059\uff088\u79d2\u9593\uff09");
-        ally.sendMessage("\u00a7f" + p.getName() + " \u304c\u3042\u306a\u305f\u306b\u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9\u3092\u7d50\u3093\u3067\u3044\u307e\u3059\uff088\u79d2\u9593\uff09");
+        p.sendMessage("\u00a7f\u00a7l\ud83d\udd17 \u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9 \u00a78\u00bb \u00a7f" + ally.getName() + " \u00a77\u306e\u88ab\u30c0\u30e1\u30fc\u30b850%\u3092\u80a9\u4ee3\u308f\u308a\uff088\u79d2\u9593\uff09");
+        ally.sendMessage("\u00a7f\u00a7l\ud83d\udd17 " + p.getName() + " \u00a77\u304c\u3042\u306a\u305f\u306b\u30dc\u30f3\u30c9\u3092\u7d50\u3093\u3060\uff088\u79d2\u9593\uff09");
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.5f);
     }
 
@@ -4095,7 +4095,7 @@ public class SkillManager {
         Location center = p.getEyeLocation().clone().add(dir.clone().multiply(5.0));
         center.setY(p.getLocation().getY());
         this.activeHexFields.add(new HexField(center.clone(), p.getUniqueId(), System.currentTimeMillis() + 12000L));
-        p.sendMessage("\u00a75\u00a7l\u546a\u7e1b\u9818\u57df\uff01\u00a77\u534a\u5f845m\u5185\u306e\u6575\u306f\u30b9\u30ad\u30eb\u30fb\u30d0\u30fc\u30b9\u30c8\u4f7f\u7528\u4e0d\u53ef\uff0812\u79d2\u9593\uff09");
+        p.sendMessage("\u00a75\u00a7l\u546a\u7e1b\u9818\u57df \u00a78\u00bb \u00a77\u534a\u5f845m\u5185\u306e\u6575\u306f\u30b9\u30ad\u30eb\u30fb\u30d0\u30fc\u30b9\u30c8\u4e0d\u53ef\uff0812\u79d2\u9593\uff09");
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 0.8f);
     }
 
@@ -4125,7 +4125,7 @@ public class SkillManager {
         this.setCooldown(p.getUniqueId(), 20000L);
         this.mirrorEndTime.put(p.getUniqueId(), System.currentTimeMillis() + 3000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1, false, true));
-        p.sendMessage("\u00a7d\u00a7l\u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9\uff01\u00a77\u767a\u5c04\u7269\u3092\u53cd\u5c04\u3057\u307e\u3059\uff083\u79d2\u9593\uff09");
+        p.sendMessage("\u00a7d\u00a7l\u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9 \u00a78\u00bb \u00a77\u767a\u5c04\u7269\u53cd\u5c04\uff083\u79d2\u9593\uff09");
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
         UUID uid = p.getUniqueId();
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.mirrorEndTime.remove(uid), 60L);
@@ -4179,7 +4179,7 @@ public class SkillManager {
         World w = p.getWorld();
         w.spawnParticle(Particle.SNOWBALL, center.clone().add(0.0, 1.0, 0.0), 15, 0.3, 0.3, 0.3, 0.1);
         w.playSound(center, Sound.BLOCK_GLASS_PLACE, 0.8f, 0.5f);
-        p.sendMessage("\u00a7b\u00a7l\u51b7\u6c17\u584a\u8a2d\u7f6e\uff01\u00a77\u305d\u306e\u5834\u6240\u306b\u51b7\u6c17\u304c\u6269\u6563\u3059\u308b");
+        p.sendMessage("\u00a7b\u00a7l\u51b7\u6c17\u584a\u8a2d\u7f6e \u00a78\u00bb \u00a77\u51b7\u6c17\u304c\u6269\u6563\u3059\u308b");
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             w.spawnParticle(Particle.SNOW_SHOVEL, center.clone().add(0.0, 0.5, 0.0), 40, 0.5, 0.5, 0.5, 0.3);
             w.playSound(center, Sound.BLOCK_GLASS_BREAK, 1.0f, 1.5f);

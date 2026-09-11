@@ -161,7 +161,7 @@ public class UltimateManager {
 
     public String getUltimateBarText(Player p) {
         int c = this.getCharge(p.getUniqueId());
-        return "\u00a7dULT \u00a7f[" + c + "%]";
+        return c >= 100 ? "\u00a7d\u26a1 ULT \u6e96\u5099\u5b8c\u4e86\uff01 \u00a77\u3057\u3083\u304c\u307f+\u5de6\u30af\u30ea\u30c3\u30af\u3067\u89e3\u653e" : "\u00a7d\u26a1 ULT \u00a7f[" + c + "%]";
     }
 
     public void activateUltimate(Player p) {
@@ -169,7 +169,7 @@ public class UltimateManager {
             return;
         }
         if (!this.canUltimate(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u30a2\u30eb\u30c6\u30a3\u30e1\u30c3\u30c8\u30c1\u30e3\u30fc\u30b8\u304c\u4e0d\u8db3\u3057\u3066\u3044\u307e\u3059\uff08\u73fe\u5728 " + this.getCharge(p.getUniqueId()) + "%\uff09");
+            p.sendMessage("\u00a7c\u26a1 ULT\u30c1\u30e3\u30fc\u30b8\u4e0d\u8db3 \u00a78\u00bb \u00a77\u73fe\u5728 " + this.getCharge(p.getUniqueId()) + "%/100%");
             return;
         }
         KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
@@ -177,7 +177,7 @@ public class UltimateManager {
             return;
         }
         this.charge.put(p.getUniqueId(), 0);
-        p.sendMessage("\u00a7d\u00a7l\u2605 ALTMATE \u767a\u52d5\uff01 " + this.ultimateName(kit));
+        Bukkit.broadcastMessage((String)("\u00a7d\u26a1 \u00a7f" + p.getName() + " \u00a7d\u00a7l\u304c\u30a2\u30eb\u30c6\u30a3\u30e1\u30c3\u30c8\u300c" + this.ultimateName(kit) + "\u300d\u3092\u89e3\u653e\uff01"));
         this.playUltimateIntro(p, kit);
         switch (kit) {
             case BLADE: this.bladeUltimate(p); break;
@@ -289,7 +289,7 @@ public class UltimateManager {
     private void ninjaUltimate(Player p) {
         Player target = this.skillManager.getTargetInSight(p, 6);
         if (target == null) {
-            p.sendMessage("\u00a7c\u5c04\u7a0b\u5185\u306b\u30bf\u30fc\u30b2\u30c3\u30c8\u304c\u3044\u307e\u305b\u3093\u3002");
+            p.sendMessage("\u00a7c\ud83c\udfaf \u5c04\u7a0b\u5185\u306b\u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
             return;
         }
         Vector back = target.getLocation().getDirection().multiply(-1.0).setY(0).normalize();
@@ -388,7 +388,7 @@ public class UltimateManager {
         ball.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "jester_bind"), PersistentDataType.BYTE, (byte)1);
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 1.0f, 1.4f);
         p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation().add(0.0, 1.0, 0.0), 20, 0.4, 0.8, 0.4, 0.1);
-        p.sendMessage("\u00a7e\u00a7l\u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af\uff01");
+        p.sendMessage("\u00a7e\u00a7l\u2726 \u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af\uff01");
     }
 
     private void bomberUltimate(final Player p) {
@@ -397,7 +397,7 @@ public class UltimateManager {
             Player ally = Bukkit.getPlayer(uid);
             if (ally == null || !participant(ally)) continue;
             if (team != null && this.gm.getTeamOf(ally) != team) continue;
-            ally.sendMessage("\u00a7c\u00a7l\u26a0 \u3042\u306a\u305f\u306f\u7206\u5f3e\u3067\u3059\uff0110\u79d2\u5f8c\u306b\u7206\u767a\u3057\u307e\u3059\uff01");
+            ally.sendMessage("\u00a7c\u00a7l\u26a0 \u3042\u306a\u305f\u306f\u7206\u5f3e \u00a78\u00bb \u00a7710\u79d2\u5f8c\u306b\u7206\u767a\uff01");
             final Location loc = ally.getLocation().clone();
             final Player owner = p;
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
@@ -443,7 +443,7 @@ public class UltimateManager {
         this.skillManager.setSwapperMark(p, mark);
         mark.getWorld().spawnParticle(Particle.PORTAL, mark, 30, 0.5, 1.0, 0.5, 0.1);
         p.getWorld().playSound(mark, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.8f);
-        p.sendMessage("\u00a75\u00a7l\u30de\u30fc\u30af\u4f4d\u7f6e\u3092\u8a18\u9332\u3057\u307e\u3057\u305f\uff01");
+        p.sendMessage("\u00a75\u00a7l\u30de\u30fc\u30af\u8a18\u9332 \u00a78\u00bb \u00a77\u30bb\u30ec\u30af\u30c8\u30b9\u30ef\u30c3\u30d7\u6e96\u5099\u5b8c\u4e86");
     }
 
     private void stickerUltimate(final Player p) {
@@ -505,7 +505,7 @@ public class UltimateManager {
     private void nilgiritarUltimate(final Player p) {
         final Player target = this.skillManager.getTargetInSight(p, 15);
         if (target == null) {
-            p.sendMessage("\u00a7c\u30bf\u30fc\u30b2\u30c3\u30c8\u304c\u3044\u307e\u305b\u3093\u3002");
+            p.sendMessage("\u00a7c\ud83c\udfaf \u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
             return;
         }
         Vector dir = target.getLocation().toVector().subtract(p.getLocation().toVector()).setY(0).normalize().multiply(2.0);
@@ -552,7 +552,7 @@ public class UltimateManager {
         final Location target = b != null ? b.getLocation().add(0.5, 0.5, 0.5) : p.getLocation().clone();
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WITHER_SHOOT, 1.0f, 0.5f);
         p.getWorld().spawnParticle(Particle.FLAME, p.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.3, 0.3, 0.1);
-        p.sendMessage("\u00a7e\u00a7l\u30e1\u30ac\u30df\u30b5\u30a4\u30eb\u767a\u5c04\uff0110\u79d2\u5f8c\u306b\u7740\u5f3e\uff01");
+        p.sendMessage("\u00a76\u00a7l\u30e1\u30ac\u30df\u30b5\u30a4\u30eb\u767a\u5c04 \u00a78\u00bb \u00a7710\u79d2\u5f8c\u7740\u5f3e\uff01");
         final Player owner = p;
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             World w = target.getWorld();
@@ -588,7 +588,7 @@ public class UltimateManager {
     private void engineerUltimate(final Player p) {
         p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 200, 254, false, false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 200, 127, false, false));
-        p.sendMessage("\u00a76\u00a7l\u30c8\u30ea\u30ac\u30fc\u30cf\u30c3\u30d4\u30fc\uff01");
+        p.sendMessage("\u00a76\u00a7l\u2726 \u30c8\u30ea\u30ac\u30fc\u30cf\u30c3\u30d4\u30fc\uff01");
         final Player owner = p;
         new BukkitRunnable(){
             int t = 0;
@@ -609,27 +609,27 @@ public class UltimateManager {
     private void restrictionerUltimate(Player p) {
         Player target = this.skillManager.getTargetInSight(p, 5);
         if (target == null) {
-            p.sendMessage("\u00a7c\u5c04\u7a0b\u5185\u306b\u30bf\u30fc\u30b2\u30c3\u30c8\u304c\u3044\u307e\u305b\u3093\u3002");
+            p.sendMessage("\u00a7c\ud83c\udfaf \u5c04\u7a0b\u5185\u306b\u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
             return;
         }
         this.skillManager.setDeadlocked(target, 15000L);
         target.getWorld().spawnParticle(Particle.CRIT_MAGIC, target.getLocation().add(0.0, 1.0, 0.0), 30, 0.4, 0.8, 0.4, 0.1);
         target.getWorld().playSound(target.getLocation(), Sound.BLOCK_ANVIL_LAND, 1.0f, 1.5f);
-        target.sendMessage("\u00a78\u00a7l\u30de\u30b9\u30ed\u30c3\u30af\uff01");
-        p.sendMessage("\u00a78\u00a7l\u30de\u30b9\u30ed\u30c3\u30af\u6210\u529f\uff01");
+        target.sendMessage("\u00a78\u00a7l\u26a0 \u30de\u30b9\u30ed\u30c3\u30af\u3055\u308c\u305f\uff01");
+        p.sendMessage("\u00a78\u00a7l\u2726 \u30de\u30b9\u30ed\u30c3\u30af\u6210\u529f\uff01");
     }
 
     private void timekeeperUltimate(Player p) {
         Player target = this.skillManager.getTargetInSight(p, 20);
         if (target == null) {
-            p.sendMessage("\u00a7c\u30bf\u30fc\u30b2\u30c3\u30c8\u304c\u3044\u307e\u305b\u3093\u3002");
+            p.sendMessage("\u00a7c\ud83c\udfaf \u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
             return;
         }
         final Location mark = target.getLocation().clone();
         final Player victim = target;
         target.getWorld().playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 0.7f);
         target.getWorld().spawnParticle(Particle.PORTAL, mark.clone().add(0.0, 1.0, 0.0), 20, 0.4, 0.8, 0.4, 0.05);
-        target.sendMessage("\u00a7b\u00a7l\u30ea\u30ef\u30a4\u30f3\u30c9\u30de\u30fc\u30af\uff0110\u79d2\u5f8c\u306b\u623b\u3055\u308c\u307e\u3059\uff01");
+        target.sendMessage("\u00a7b\u00a7l\u30ea\u30ef\u30a4\u30f3\u30c9\u30de\u30fc\u30af \u00a78\u00bb \u00a7710\u79d2\u5f8c\u623b\u3055\u308c\u308b\uff01");
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             if (victim.isOnline() && victim.isValid()) {
                 victim.teleport(mark);
@@ -653,7 +653,7 @@ public class UltimateManager {
             ++count;
         }
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 1.0f, 0.6f);
-        p.sendMessage("\u00a75\u00a7l\u546a\u7e1b\u9818\u57df\uff01" + count + "\u4eba\u306b\u65bd\u3057\u307e\u3057\u305f\uff01");
+        p.sendMessage("\u00a75\u00a7l\u546a\u7e1b\u9818\u57df \u00a78\u00bb \u00a7f" + count + " \u4eba\u3092\u546a\u3044\u305f\uff01");
     }
 
     private void guardianUltimate(Player p) {
@@ -673,11 +673,11 @@ public class UltimateManager {
                 }
             }, 200L);
         }
-        p.sendMessage("\u00a7f\u00a7l\u30da\u30eb\u30d5\u30a7\u30af\u30c6\u30f4\u30a7\u30eb\u30c8\uff01\u5468\u56f2\u306e\u5473\u65b9\u304c\u7121\u6575\u5316\uff01");
+        p.sendMessage("\u00a7f\u00a7l\u2605 \u30da\u30eb\u30d5\u30a7\u30af\u30c6\u30f4\u30a7\u30eb\u30c8 \u00a78\u00bb \u00a77\u5473\u65b9\u7121\u6575\u5316\uff01");
     }
 
     private void medicUltimate(final Player p) {
-        p.sendMessage("\u00a75\u00a7l\u30ea\u30a2\u30af\u30c6\u30a3\u30d6\u30d2\u30fc\u30eb\uff0130\u79d2\u9593\u5473\u65b9\u306b\u518d\u751f\uff01");
+        p.sendMessage("\u00a75\u00a7l\u30ea\u30a2\u30af\u30c6\u30a3\u30d6\u30d2\u30fc\u30eb \u00a78\u00bb \u00a7730\u79d2\u9593\u5473\u65b9\u518d\u751f\uff01");
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.6f);
         p.getWorld().spawnParticle(Particle.HEART, p.getLocation().add(0.0, 1.5, 0.0), 10, 0.4, 0.6, 0.4, 0.0);
         final TeamColor team = this.gm.getTeamOf(p);
@@ -708,7 +708,7 @@ public class UltimateManager {
             ally.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 600, 1, false, true));
             ally.getWorld().spawnParticle(Particle.CRIT_MAGIC, ally.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
         }
-        p.sendMessage("\u00a7a\u00a7l\u30d5\u30eb\u30a2\u30fc\u30de\u30fc\uff01\u5473\u65b9\u306b\u57fa\u790e\u30d0\u30d5\uff01");
+        p.sendMessage("\u00a7a\u00a7l\u2605 \u30d5\u30eb\u30a2\u30fc\u30de\u30fc \u00a78\u00bb \u00a77\u5473\u65b9\u57fa\u790e\u30d0\u30d5\uff01");
     }
 
     private void phantomUltimate(Player p) {
@@ -717,7 +717,7 @@ public class UltimateManager {
         p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 200, 1, false, false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 200, 1, false, false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 200, 1, false, false));
-        p.sendMessage("\u00a77\u00a7l\u30d5\u30a1\u30f3\u30c8\u30e0\u30da\u30a4\u30f3\uff01\u970a\u4f53\u72b6\u614b\u304c\u5927\u5e45\u5f37\u5316\uff01");
+        p.sendMessage("\u00a77\u00a7l\u2726 \u30d5\u30a1\u30f3\u30c8\u30e0\u30da\u30a4\u30f3 \u00a78\u00bb \u00a77\u970a\u4f53\u5316\u5927\u5e45\u5f37\u5316\uff01");
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PHANTOM_AMBIENT, 1.0f, 0.8f);
     }
 
@@ -741,7 +741,7 @@ public class UltimateManager {
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 10L);
-        p.sendMessage("\u00a79\u00a7l\u30a2\u30f3\u30d3\u30eb\u30be\u30fc\u30f3\uff01");
+        p.sendMessage("\u00a79\u00a7l\u2726 \u30a2\u30f3\u30d3\u30eb\u30be\u30fc\u30f3\uff01");
     }
 
     private void releaserUltimate(Player p) {
@@ -757,7 +757,7 @@ public class UltimateManager {
             t.damage(10.0, (Entity)p);
             t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(2.5).setY(1.0));
         }
-        p.sendMessage("\u00a7e\u00a7l\u30ab\u30bf\u30b9\u30c8\u30ed\u30d5\uff01");
+        p.sendMessage("\u00a76\u00a7l\u2726 \u30ab\u30bf\u30b9\u30c8\u30ed\u30d5\uff01");
     }
 
     private void aegisUltimate(Player p) {
@@ -769,7 +769,7 @@ public class UltimateManager {
             ally.getWorld().spawnParticle(Particle.CRIT_MAGIC, ally.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
         }
         p.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 2, false, true));
-        p.sendMessage("\u00a7a\u00a7l\u5b8c\u5168\u5e87\u62a0\uff01\u5473\u65b9\u306e\u53d7\u3051\u308b\u30c0\u30e1\u30fc\u30b8\u304c\u534a\u6e1b\uff01");
+        p.sendMessage("\u00a7a\u00a7l\u2605 \u5b8c\u5168\u5e87\u62a0 \u00a78\u00bb \u00a77\u5473\u65b9\u88ab\u30c0\u30e1\u30fc\u30b8\u534a\u6e1b\uff01");
     }
 
     private void reflectorUltimate(Player p) {
