@@ -1352,6 +1352,10 @@ public class SkillManager {
                 p.setShieldBlockingDelay(20);
             }
         }
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!this.gm.isParticipant(p) || this.gm.isSpectator(p) || !this.plugin.getUltimateManager().canUltimate(p.getUniqueId())) continue;
+            p.getWorld().spawnParticle(Particle.END_ROD, p.getLocation().add(0.0, 1.0, 0.0), 2, 0.3, 0.6, 0.3, 0.02);
+        }
     }
 
     public void updateKitActionBars() {

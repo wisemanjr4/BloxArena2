@@ -877,7 +877,7 @@ TabCompleter {
                     sender.sendMessage("\u00a77\u65e7BloxArena\u306econfig\u304b\u3089 \u00a7e" + merged + "\u00a77\u30bb\u30af\u30b7\u30e7\u30f3\u3092\u5f15\u304d\u7d99\u304e\u307e\u3057\u305f\u3002");
                 }
                 if (!cfg.isConfigurationSection("game_modes")) {
-                    cfg.set("game_modes.enabled", List.of("BATTLE_ARENA", "TEAM_DEATHMATCH", "BOMB_MISSION", "DOMINATION", "CAPTURE_THE_FLAG", "FFA"));
+                    cfg.set("game_modes.enabled", List.of("BATTLE_ARENA", "TEAM_DEATHMATCH", "BOMB_MISSION", "DOMINATION", "CAPTURE_THE_FLAG"));
                     ++added;
                 }
                 if (!cfg.isConfigurationSection("team_deathmatch")) {
@@ -1114,7 +1114,7 @@ TabCompleter {
     }
 
     private String modeFlags(MapConfig mc) {
-        return (mc.isReadyFor(GameMode.BATTLE_ARENA) ? "\u00a7fBA " : "\u00a78BA ") + (mc.isReadyFor(GameMode.TEAM_DEATHMATCH) ? "\u00a7fTDM " : "\u00a78TDM ") + (mc.isReadyFor(GameMode.BOMB_MISSION) ? "\u00a7cB " : "\u00a78B ") + (mc.isReadyFor(GameMode.DOMINATION) ? "\u00a7eD " : "\u00a78D ") + (mc.isReadyFor(GameMode.CAPTURE_THE_FLAG) ? "\u00a79CTF " : "\u00a78CTF ") + (mc.isReadyFor(GameMode.FFA) ? "\u00a7fFFA" : "\u00a78FFA");
+        return (mc.isReadyFor(GameMode.BATTLE_ARENA) ? "\u00a7fBA " : "\u00a78BA ") + (mc.isReadyFor(GameMode.TEAM_DEATHMATCH) ? "\u00a7fTDM " : "\u00a78TDM ") + (mc.isReadyFor(GameMode.BOMB_MISSION) ? "\u00a7cB " : "\u00a78B ") + (mc.isReadyFor(GameMode.DOMINATION) ? "\u00a7eD " : "\u00a78D ") + (mc.isReadyFor(GameMode.CAPTURE_THE_FLAG) ? "\u00a79CTF" : "\u00a78CTF");
     }
 
     private String fmtNull(Location l) {

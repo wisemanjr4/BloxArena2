@@ -165,12 +165,6 @@ public class GameManager {
     private Location ctfBlueFlagSpawn = null;
     private int ctfRedTeamSize = 0;
     private int ctfBlueTeamSize = 0;
-    private final List<UUID> ffaParticipants = new ArrayList<UUID>();
-    private final Set<UUID> ffaEliminated = new HashSet<UUID>();
-    private final Map<UUID, Integer> ffaKills = new HashMap<UUID, Integer>();
-    private final Map<UUID, Long> ffaNoCombatUntil = new HashMap<UUID, Long>();
-    private int ffaTimeLimit = 300;
-    private BukkitTask ffaTimerTask = null;
     private final Set<UUID> underdogPlayers = new HashSet<UUID>();
     private final Map<UUID, Long> underdogCooldown = new HashMap<UUID, Long>();
 
@@ -208,7 +202,6 @@ public class GameManager {
                 case BOMB_MISSION -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u653b\u6483\u5074\u306f\u7206\u5f3e\u3092\u8a2d\u7f6e(5\u79d2)\u2192\u7206\u767a45\u79d2\u3002\u5b88\u5099\u5074\u306f\u89e3\u9664(7\u79d2)\u305b\u3088\uff01\u30e9\u30a6\u30f3\u30c9\u6bce\u306b\u653b\u5b88\u4ea4\u4ee3\u3002";
                 case DOMINATION -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u62e0\u70b9\u306b\u7acb\u3061\u7d9a\u3051\u3066\u5360\u9818\u305b\u3088\uff01\u5360\u9818\u62e0\u70b9\u304b\u3089\u6bce\u79d2\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3002\u5148\u306b\u76ee\u6a19\u30dd\u30a4\u30f3\u30c8\u5230\u9054\u3067\u52dd\u5229\u3002";
                 case CAPTURE_THE_FLAG -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u6575\u9663\u306e\u65d7\u3092\u596a\u3044\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01\u5148\u306b3\u56de\u596a\u53d6\u3067\u52dd\u5229\u3002\u6b7b\u4ea1\u6642\u306f\u65d7\u3092\u843d\u3068\u3059\u3002";
-                case FFA -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u5168\u54e1\u304c\u6575\uff01\u6700\u5f8c\u306e1\u4eba\u306b\u306a\u308b\u307e\u3067\u6226\u3048\uff01\u30ea\u30b9\u30dd\u30fc\u30f3\u306a\u3057\u3002";
                 default -> throw new IncompatibleClassChangeError();
             };
             Bukkit.broadcastMessage((String)rules);
@@ -227,80 +220,46 @@ public class GameManager {
         this.deadPlayers.clear();
         this.underdogPlayers.clear();
         this.underdogCooldown.clear();
-        if (this.currentGameMode == GameMode.FFA) {
-            this.ffaParticipants.clear();
-            this.ffaParticipants.addAll(participants);
-        } else {
-            this.assignTeams(participants);
-        }
+        this.assignTeams(participants);
         for (UUID uid : participants) {
             Player pp = Bukkit.getPlayer((UUID)uid);
             if (pp == null) continue;
             this.plugin.getSkillManager().restoreMaxHp(pp);
         }
         Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2605 MAP \u00a78\u00bb \u00a7e" + map.getDisplayName()));
-        if (this.currentGameMode != GameMode.FFA) {
-            this.broadcastTeamAnnouncement();
-        } else {
-            for (UUID uid : participants) {
-                Player pl = Bukkit.getPlayer((UUID)uid);
-                if (pl == null) continue;
-                pl.sendTitle("\u00a7e\u00a7l\u2726 FFA \u2726", "\u00a77\u5168\u54e1\u304c\u6575 \u2014 \u6700\u5f8c\u306e1\u4eba\u306b\u306a\u308b\u307e\u3067\u751f\u304d\u6b8b\u308c", 5, 60, 10);
-                pl.playSound(pl.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-            }
-        }
+        this.broadcastTeamAnnouncement();
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             for (UUID uid : participants) {
                 Player pl = Bukkit.getPlayer((UUID)uid);
                 if (pl == null || !pl.isOnline()) continue;
                 TeamColor t = this.getTeamOf(pl);
-                if (t != null) {
-                    pl.sendTitle(t.getColorCode() + "\u00a7l\u2605 \u3042\u306a\u305f\u306f " + t.getDisplayName() + " \u30c1\u30fc\u30e0", "\u00a77\u30ad\u30c3\u30c8\u9078\u629e\u753b\u9762\u3067\u6e96\u5099\u305b\u3088", 5, 40, 10);
-                    continue;
-                }
-                if (this.currentGameMode != GameMode.FFA) continue;
-                pl.sendTitle("\u00a7e\u00a7lFFA", "\u00a77\u30ad\u30c3\u30c8\u9078\u629e\u753b\u9762\u3067\u6e96\u5099\u3057\u3066\u304f\u3060\u3055\u3044", 5, 40, 10);
+                if (t == null) continue;
+                pl.sendTitle(t.getColorCode() + "\u00a7l\u2605 \u3042\u306a\u305f\u306f " + t.getDisplayName() + " \u30c1\u30fc\u30e0", "\u00a77\u30ad\u30c3\u30c8\u9078\u629e\u753b\u9762\u3067\u6e96\u5099\u305b\u3088", 5, 40, 10);
             }
         }, 50L);
         this.initCenterBlocks(map);
         this.placeGates(map);
         this.plugin.getBotManager().spawnBotsForGame(this.redTeam, this.blueTeam, map);
-        if (this.currentGameMode == GameMode.FFA) {
-            for (UUID uid : participants) {
-                Player p = Bukkit.getPlayer((UUID)uid);
-                if (p == null) continue;
-                this.ffaKills.put(uid, 0);
-                this.kills.put(uid, 0);
-                this.deaths.put(uid, 0);
-                p.setGameMode(org.bukkit.GameMode.SURVIVAL);
-                p.teleport(this.getRandomSpawnPoint(map));
-            }
-        } else {
-            for (UUID uid : this.redTeam) {
-                Player p = Bukkit.getPlayer((UUID)uid);
-                if (p == null) continue;
-                this.kills.put(uid, 0);
-                this.deaths.put(uid, 0);
-                p.setGameMode(org.bukkit.GameMode.SURVIVAL);
-                this.teleportToSpawnZonePublic(p, map, TeamColor.RED);
-            }
-            for (UUID uid : this.blueTeam) {
-                Player p = Bukkit.getPlayer((UUID)uid);
-                if (p == null) continue;
-                this.kills.put(uid, 0);
-                this.deaths.put(uid, 0);
-                p.setGameMode(org.bukkit.GameMode.SURVIVAL);
-                this.teleportToSpawnZonePublic(p, map, TeamColor.BLUE);
-            }
+        for (UUID uid : this.redTeam) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            this.kills.put(uid, 0);
+            this.deaths.put(uid, 0);
+            p.setGameMode(org.bukkit.GameMode.SURVIVAL);
+            this.teleportToSpawnZonePublic(p, map, TeamColor.RED);
+        }
+        for (UUID uid : this.blueTeam) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null) continue;
+            this.kills.put(uid, 0);
+            this.deaths.put(uid, 0);
+            p.setGameMode(org.bukkit.GameMode.SURVIVAL);
+            this.teleportToSpawnZonePublic(p, map, TeamColor.BLUE);
         }
         int timeoutSeconds = this.plugin.getConfig().getInt("kit_select.timeout_seconds", 30);
         KitSelectGUI gui = new KitSelectGUI(this.plugin, this);
         this.plugin.getGameListeners().setActiveGUI(gui);
-        if (this.currentGameMode == GameMode.FFA) {
-            gui.openForAll(this.ffaParticipants, new ArrayList<UUID>(), timeoutSeconds);
-        } else {
-            gui.openForAll(this.redTeam, this.blueTeam, timeoutSeconds);
-        }
+        gui.openForAll(this.redTeam, this.blueTeam, timeoutSeconds);
     }
 
     public void onKitSelectDone() {
@@ -320,50 +279,15 @@ public class GameManager {
             }
             this.selectedBgm.play(players);
         }
-        if (this.currentGameMode == GameMode.FFA) {
-            for (UUID uUID : this.ffaParticipants) {
-                Player p = Bukkit.getPlayer((UUID)uUID);
-                if (p == null) continue;
-                this.plugin.getSkillManager().refreshBurst(p);
-                this.grantFFASpawnProtection(p);
-            }
-        } else {
-            for (UUID uUID : this.redTeam) {
-                Player p = Bukkit.getPlayer((UUID)uUID);
-                if (p == null) continue;
-                this.plugin.getSkillManager().refreshBurst(p);
-            }
-            for (UUID uUID : this.blueTeam) {
-                Player p = Bukkit.getPlayer((UUID)uUID);
-                if (p == null) continue;
-                this.plugin.getSkillManager().refreshBurst(p);
-            }
+        for (UUID uUID : this.redTeam) {
+            Player p = Bukkit.getPlayer((UUID)uUID);
+            if (p == null) continue;
+            this.plugin.getSkillManager().refreshBurst(p);
         }
-        if (this.currentGameMode == GameMode.FFA) {
-            this.ffaTimeLimit = this.currentGameMode.getDefaultTimeLimitSeconds();
-            this.ffaTimerTask = new BukkitRunnable(){
-
-                public void run() {
-                    if (GameManager.this.state != GameState.IN_GAME) {
-                        this.cancel();
-                        return;
-                    }
-                    --GameManager.this.ffaTimeLimit;
-                    if (GameManager.this.ffaTimeLimit <= 0) {
-                        this.cancel();
-                        GameManager.this.state = GameState.ENDING;
-                        UUID topKiller = GameManager.this.determineFFAWinner();
-                        Player winner = topKiller != null ? Bukkit.getPlayer(topKiller) : null;
-                        String winName = winner != null ? winner.getName() : "\u306a\u3057";
-                        if (topKiller != null) {
-                            Bukkit.broadcastMessage((String)("\u00a7e\u23f0 \u5236\u9650\u6642\u9593\u7d42\u4e86 \u00a78\u00bb \u00a7f" + winName + " \u00a7e\u304c\u6700\u591a\u30ad\u30eb\u3067\u52dd\u5229\uff01"));
-                        } else {
-                            Bukkit.broadcastMessage((String)"\u00a7e\u23f0 \u5236\u9650\u6642\u9593\u7d42\u4e86 \u00a78\u00bb \u00a77\u5f15\u304d\u5206\u3051\uff01");
-                        }
-                        GameManager.this.endGame(null, WinCondition.ELIMINATION);
-                    }
-                }
-            }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
+        for (UUID uUID : this.blueTeam) {
+            Player p = Bukkit.getPlayer((UUID)uUID);
+            if (p == null) continue;
+            this.plugin.getSkillManager().refreshBurst(p);
         }
         if (this.currentGameMode == GameMode.DOMINATION) {
             this.domPointsRed = 0;
@@ -484,9 +408,6 @@ public class GameManager {
     private void applyUnderdogBonus() {
         this.underdogPlayers.clear();
         this.underdogCooldown.clear();
-        if (this.currentGameMode == GameMode.FFA) {
-            return;
-        }
         int red = this.redTeam.size();
         int blue = this.blueTeam.size();
         TeamColor disadvantaged = null;
@@ -947,101 +868,10 @@ public class GameManager {
         p.teleport(new Location(min.getWorld(), x, y, z));
     }
 
-    private Location getRandomSpawnPoint(MapConfig map) {
-        World world = map.getWorld() != null ? Bukkit.getWorld((String)map.getWorld()) : null;
-        if (world == null) {
-            world = (World)Bukkit.getWorlds().get(0);
-        }
-        Location min = map.getOobMin();
-        Location max = map.getOobMax();
-        if (min == null || max == null) {
-            Location fallback = this.randomSpawnZoneLocation(map);
-            if (fallback != null) {
-                return fallback;
-            }
-            Location center = map.getCenter();
-            return center != null ? center.clone().add(0.0, 1.0, 0.0) : world.getSpawnLocation();
-        }
-        Random r = new Random();
-        int minX = Math.min(min.getBlockX(), max.getBlockX()) + 2;
-        int maxX = Math.max(min.getBlockX(), max.getBlockX()) - 2;
-        int minZ = Math.min(min.getBlockZ(), max.getBlockZ()) + 2;
-        int maxZ = Math.max(min.getBlockZ(), max.getBlockZ()) - 2;
-        if (minX > maxX) {
-            minX = maxX = (minX + maxX) / 2;
-        }
-        if (minZ > maxZ) {
-            minZ = maxZ = (minZ + maxZ) / 2;
-        }
-        for (int attempt = 0; attempt < 20; ++attempt) {
-            int x = minX + r.nextInt(Math.max(1, maxX - minX + 1));
-            int z = minZ + r.nextInt(Math.max(1, maxZ - minZ + 1));
-            for (int y = world.getMaxHeight() - 1; y > world.getMinHeight(); --y) {
-                Block ground = world.getBlockAt(x, y, z);
-                Material mat = ground.getType();
-                if (mat.isAir()) continue;
-                if (mat == Material.BARRIER) continue;
-                if (!mat.isSolid()) continue;
-                Material aboveMat = world.getBlockAt(x, y + 1, z).getType();
-                Material above2Mat = world.getBlockAt(x, y + 2, z).getType();
-                if (aboveMat.isSolid() || above2Mat.isSolid()) break;
-                return new Location(world, (double)x + 0.5, (double)(y + 1) + 0.1, (double)z + 0.5);
-            }
-        }
-        Location fallback = this.randomSpawnZoneLocation(map);
-        return fallback != null ? fallback : world.getSpawnLocation();
-    }
 
-    private Location randomSpawnZoneLocation(MapConfig map) {
-        List<Location> options = new ArrayList<Location>();
-        Location redMin = map.getRedSpawnMin();
-        Location redMax = map.getRedSpawnMax();
-        Location blueMin = map.getBlueSpawnMin();
-        Location blueMax = map.getBlueSpawnMax();
-        if (redMin != null && redMax != null) {
-            options.add(new Location(redMin.getWorld(), (redMin.getBlockX() + redMax.getBlockX()) / 2.0 + 0.5, redMax.getBlockY() + 1.1, (redMin.getBlockZ() + redMax.getBlockZ()) / 2.0 + 0.5));
-        }
-        if (blueMin != null && blueMax != null) {
-            options.add(new Location(blueMin.getWorld(), (blueMin.getBlockX() + blueMax.getBlockX()) / 2.0 + 0.5, blueMax.getBlockY() + 1.1, (blueMin.getBlockZ() + blueMax.getBlockZ()) / 2.0 + 0.5));
-        }
-        if (map.getCenter() != null) {
-            options.add(map.getCenter().clone().add(0.0, 1.0, 0.0));
-        }
-        if (options.isEmpty()) {
-            return null;
-        }
-        return options.get(new Random().nextInt(options.size()));
-    }
-
-    public boolean isInFFANoCombatWindow(UUID uid) {
-        Long end = this.ffaNoCombatUntil.get(uid);
-        if (end == null) {
-            return false;
-        }
-        if (System.currentTimeMillis() >= end) {
-            this.ffaNoCombatUntil.remove(uid);
-            return false;
-        }
-        return true;
-    }
-
-    private void grantFFASpawnProtection(Player p) {
-        UUID uid = p.getUniqueId();
-        this.ffaNoCombatUntil.put(uid, System.currentTimeMillis() + 5000L);
-        p.setInvulnerable(true);
-        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
-            Player pp = Bukkit.getPlayer(uid);
-            if (pp != null) {
-                pp.setInvulnerable(false);
-            }
-        }, 100L);
-    }
 
     public void checkEliminationWin() {
         if (this.state != GameState.IN_GAME) {
-            return;
-        }
-        if (this.currentGameMode == GameMode.FFA) {
             return;
         }
         long redAlive = this.getAliveCount(TeamColor.RED);
@@ -1161,10 +991,6 @@ public class GameManager {
     }
 
     public void endGame(TeamColor winner, WinCondition condition) {
-        if (this.currentGameMode == GameMode.FFA) {
-            this.endMatch(winner, condition);
-            return;
-        }
         if (this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
             this.endMatch(winner, condition);
         } else {
@@ -1299,71 +1125,22 @@ public class GameManager {
         }
     }
 
-    private UUID determineFFAWinner() {
-        UUID topKiller = null;
-        int topKills = -1;
-        for (Map.Entry<UUID, Integer> entry : this.ffaKills.entrySet()) {
-            if (entry.getValue() <= topKills) continue;
-            topKills = entry.getValue();
-            topKiller = entry.getKey();
-        }
-        if (topKiller != null && topKills > 0) {
-            boolean tie = false;
-            for (Map.Entry<UUID, Integer> entry : this.ffaKills.entrySet()) {
-                if (entry.getKey().equals(topKiller)) continue;
-                if (entry.getValue() != topKills) continue;
-                tie = true;
-                break;
-            }
-            if (!tie) {
-                return topKiller;
-            }
-        }
-        UUID survivor = null;
-        for (UUID uid : this.ffaParticipants) {
-            if (this.ffaEliminated.contains(uid)) continue;
-            if (survivor != null) {
-                return null;
-            }
-            survivor = uid;
-        }
-        return survivor;
-    }
-
     private void endMatch(TeamColor winner, WinCondition condition) {
         StatsManager sm = this.plugin.getStatsManager();
-        if (this.currentGameMode == GameMode.FFA) {
-            UUID winnerUid = this.determineFFAWinner();
-            if (winnerUid != null) {
-                sm.addWin(winnerUid);
+        List<UUID> loseTeam;
+        List<UUID> winTeam = winner == TeamColor.RED ? this.redTeam : this.blueTeam;
+        List<UUID> list = loseTeam = winner == TeamColor.RED ? this.blueTeam : this.redTeam;
+        if (winner != null) {
+            for (UUID uid : winTeam) {
+                sm.addWin(uid);
             }
-            for (UUID uid : this.ffaParticipants) {
-                if (uid.equals(winnerUid)) continue;
+            for (UUID uid : loseTeam) {
                 sm.addLoss(uid);
             }
-            sm.save();
-            this.showMatchReport(null, winnerUid);
-            Effects.playVictoryEffect(null, condition, this.getAllParticipantsAndSpectators(), Collections.emptyList(), Collections.emptyList(), this.currentMap, this.kills, this.deaths, this.plugin, winnerUid);
-            if (this.ffaTimerTask != null) {
-                this.ffaTimerTask.cancel();
-                this.ffaTimerTask = null;
-            }
-        } else {
-            List<UUID> loseTeam;
-            List<UUID> winTeam = winner == TeamColor.RED ? this.redTeam : this.blueTeam;
-            List<UUID> list = loseTeam = winner == TeamColor.RED ? this.blueTeam : this.redTeam;
-            if (winner != null) {
-                for (UUID uid : winTeam) {
-                    sm.addWin(uid);
-                }
-                for (UUID uid : loseTeam) {
-                    sm.addLoss(uid);
-                }
-            }
-            sm.save();
-            this.showMatchReport(winner, null);
-            Effects.playVictoryEffect(winner, condition, this.getAllParticipantsAndSpectators(), this.redTeam, this.blueTeam, this.currentMap, this.kills, this.deaths, this.plugin, null);
         }
+        sm.save();
+        this.showMatchReport(winner);
+        Effects.playVictoryEffect(winner, condition, this.getAllParticipantsAndSpectators(), this.redTeam, this.blueTeam, this.currentMap, this.kills, this.deaths, this.plugin, null);
         if (this.selectedBgm != null) {
             this.selectedBgm.stop();
         }
@@ -1378,16 +1155,10 @@ public class GameManager {
         }.runTaskLater((Plugin)this.plugin, 100L);
     }
 
-    private void showMatchReport(TeamColor winner, UUID ffaWinnerUid) {
+    private void showMatchReport(TeamColor winner) {
         List<UUID> all = this.getAllParticipantsAndSpectators();
         String header = "\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501";
-        String winStr;
-        if (ffaWinnerUid != null) {
-            String ffaName = Bukkit.getOfflinePlayer((UUID)ffaWinnerUid).getName();
-            winStr = "\u00a7e\u2605 " + (ffaName != null ? ffaName : "???") + " \u00a7a\u304c\u52dd\u5229\uff01";
-        } else {
-            winStr = winner != null ? winner.getColorCode() + "\u00a7l" + winner.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01" : "\u00a77\u5f15\u304d\u5206\u3051";
-        }
+        String winStr = winner != null ? winner.getColorCode() + "\u00a7l" + winner.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01" : "\u00a77\u5f15\u304d\u5206\u3051";
         UUID mvpUid = this.matchStats.getMVP();
         UUID mostDmgUid = this.matchStats.getMostDamage();
         String mvpName = mvpUid != null ? Bukkit.getOfflinePlayer((UUID)mvpUid).getName() : "\u306a\u3057";
@@ -1517,15 +1288,6 @@ public class GameManager {
         this.bombCleanup();
         this.bombRoundAttackerRed = true;
         this.cancelHoldTimer();
-        this.ffaParticipants.clear();
-        this.ffaEliminated.clear();
-        this.ffaKills.clear();
-        this.ffaNoCombatUntil.clear();
-        this.ffaTimeLimit = 300;
-        if (this.ffaTimerTask != null) {
-            this.ffaTimerTask.cancel();
-            this.ffaTimerTask = null;
-        }
     }
 
     public void rejoinPlayer(Player p) {
@@ -1626,39 +1388,6 @@ public class GameManager {
             if (rk == 5) {
                 this.announceBigPlay(killer, rk);
             }
-        }
-        if (this.currentGameMode == GameMode.FFA) {
-            if (killer != null) {
-                this.ffaKills.merge(killer.getUniqueId(), 1, Integer::sum);
-            }
-            this.plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
-            this.ffaEliminated.add(victim.getUniqueId());
-            this.deadPlayers.add(victim.getUniqueId());
-            Player ffv = victim;
-            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
-                if (this.deadPlayers.contains(ffv.getUniqueId())) {
-                    this.addSpectator(ffv);
-                }
-            }, 1L);
-            long aliveCount = this.ffaParticipants.size() - this.ffaEliminated.size();
-            if (aliveCount <= 1L) {
-                this.state = GameState.ENDING;
-                UUID winnerUid = null;
-                for (UUID uid : this.ffaParticipants) {
-                    if (this.ffaEliminated.contains(uid)) continue;
-                    winnerUid = uid;
-                    break;
-                }
-                Player winner = winnerUid != null ? Bukkit.getPlayer(winnerUid) : null;
-                String winName = winner != null ? winner.getName() : "\u306a\u3057";
-                Bukkit.broadcastMessage((String)("\u00a76\u00a7l\ud83c\udfc6 FFA \u7d42\u4e86 \u00a78\u00bb \u00a7e" + winName + " \u00a7f\u304c\u6700\u5f8c\u306e\u751f\u5b58\u8005\uff01"));
-                if (this.ffaTimerTask != null) {
-                    this.ffaTimerTask.cancel();
-                    this.ffaTimerTask = null;
-                }
-                Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.endGame(null, WinCondition.ELIMINATION), 60L);
-            }
-            return;
         }
         if (this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
             this.plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
@@ -2051,9 +1780,6 @@ public class GameManager {
 
     public TeamColor getTeamOf(Player p) {
         UUID uid = p.getUniqueId();
-        if (this.currentGameMode == GameMode.FFA) {
-            return null;
-        }
         if (this.redTeam.contains(uid)) {
             return TeamColor.RED;
         }
@@ -2064,9 +1790,6 @@ public class GameManager {
     }
 
     public TeamColor getTeam(UUID uid) {
-        if (this.currentGameMode == GameMode.FFA) {
-            return null;
-        }
         if (this.redTeam.contains(uid)) {
             return TeamColor.RED;
         }
@@ -2077,12 +1800,6 @@ public class GameManager {
     }
 
     public TeamColor getKitTeam(UUID uid) {
-        if (this.currentGameMode == GameMode.FFA) {
-            if (this.ffaParticipants.contains(uid)) {
-                return TeamColor.RED;
-            }
-            return null;
-        }
         if (this.redTeam.contains(uid)) {
             return TeamColor.RED;
         }
@@ -2093,9 +1810,6 @@ public class GameManager {
     }
 
     public List<UUID> getTeamOf(UUID uid) {
-        if (this.currentGameMode == GameMode.FFA) {
-            return Collections.emptyList();
-        }
         if (this.redTeam.contains(uid)) {
             return this.redTeam;
         }
@@ -2107,9 +1821,6 @@ public class GameManager {
 
     public boolean isParticipant(Player p) {
         UUID uid = p.getUniqueId();
-        if (this.currentGameMode == GameMode.FFA) {
-            return this.ffaParticipants.contains(uid);
-        }
         return this.redTeam.contains(uid) || this.blueTeam.contains(uid);
     }
 
@@ -2152,9 +1863,6 @@ public class GameManager {
     }
 
     private List<UUID> getAllParticipants() {
-        if (this.currentGameMode == GameMode.FFA) {
-            return new ArrayList<UUID>(this.ffaParticipants);
-        }
         ArrayList<UUID> all = new ArrayList<UUID>(this.redTeam);
         all.addAll(this.blueTeam);
         return all;
@@ -2461,10 +2169,6 @@ public class GameManager {
         return this.blueTeam;
     }
 
-    public List<UUID> getAllParticipantsFFA() {
-        return new ArrayList<UUID>(this.ffaParticipants);
-    }
-
     public Set<UUID> getSpectators() {
         return this.spectators;
     }
@@ -2543,22 +2247,6 @@ public class GameManager {
             this.selectedBgm = song;
             return;
         }
-    }
-
-    public int getFFAAliveCount() {
-        return this.ffaParticipants.size() - this.ffaEliminated.size();
-    }
-
-    public int getFFAKills(UUID uid) {
-        return this.ffaKills.getOrDefault(uid, 0);
-    }
-
-    public int getFFATimeRemaining() {
-        return this.ffaTimeLimit;
-    }
-
-    public int getFFAAliveTotal() {
-        return this.ffaParticipants.size();
     }
 
     public int getAliveCount(TeamColor team) {

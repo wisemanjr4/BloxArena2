@@ -2,6 +2,7 @@ package com.bloxarena.ultimate;
 
 import com.bloxarena.BloxArenaPlugin;
 import com.bloxarena.game.GameManager;
+import com.bloxarena.game.GameMode;
 import com.bloxarena.game.GameState;
 import com.bloxarena.game.TeamColor;
 import com.bloxarena.kit.KitBuilder;
@@ -57,8 +58,74 @@ public class UltimateManager {
     }
 
     public void addCharge(UUID player, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        if (this.gm.getCurrentGameMode() == GameMode.BATTLE_ARENA) {
+            amount = (int)Math.round((double)amount * 0.5);
+        }
+        KitType kit = this.gm.getPlayerKitType(player);
         int cur = this.charge.getOrDefault(player, 0);
-        this.charge.put(player, Math.min(100, cur + amount));
+        this.charge.put(player, Math.min(this.requiredCharge(kit), cur + amount));
+    }
+
+    public int requiredCharge(KitType kit) {
+        if (kit == null) {
+            return 100;
+        }
+        switch (kit) {
+            case BLADE:
+            case BREAKER:
+            case NINJA:
+            case BERSERKER:
+            case COUNTER:
+            case SNIPER:
+            case KREUTZ:
+            case NECRO:
+            case GUARDIAN: {
+                return 120;
+            }
+            case PYRO:
+            case ROCKETER:
+            case BOMBER:
+            case RELEASER:
+            case LANCER:
+            case MARKSMAN:
+            case SUNDANCE:
+            case GRANG:
+            case HEXER:
+            case RESTRICTIONER:
+            case TRAPPER:
+            case AEGIS:
+            case REFLECTOR:
+            case BULWARK:
+            case GLACIES: {
+                return 110;
+            }
+            case SCOUT:
+            case FLASHER:
+            case MEDIC:
+            case SUPPORTER:
+            case PHANTOM:
+            case ANCHOR:
+            case JESTER:
+            case COOK:
+            case ALCHEMIST:
+            case WHIRLWIND:
+            case MISTRAL:
+            case NILGIRITAR:
+            case TIMEKEEPER:
+            case STICKER:
+            case DECOY:
+            case SWAPPER:
+            case TRANSPORTER:
+            case ENGINEER: {
+                return 90;
+            }
+            default: {
+                return 100;
+            }
+        }
     }
 
     public int getCharge(UUID player) {
@@ -66,7 +133,7 @@ public class UltimateManager {
     }
 
     public boolean canUltimate(UUID player) {
-        return this.charge.getOrDefault(player, 0) >= 100;
+        return this.charge.getOrDefault(player, 0) >= this.requiredCharge(this.gm.getPlayerKitType(player));
     }
 
     public void resetAll() {
@@ -160,8 +227,9 @@ public class UltimateManager {
     }
 
     public String getUltimateBarText(Player p) {
+        int req = this.requiredCharge(this.gm.getPlayerKitType(p.getUniqueId()));
         int c = this.getCharge(p.getUniqueId());
-        return c >= 100 ? "\u00a7d\u26a1 ULT \u6e96\u5099\u5b8c\u4e86\uff01 \u00a77\u3057\u3083\u304c\u307f+\u5de6\u30af\u30ea\u30c3\u30af\u3067\u89e3\u653e" : "\u00a7d\u26a1 ULT \u00a7f[" + c + "%]";
+        return c >= req ? "\u00a7d\u26a1 ULT \u6e96\u5099\u5b8c\u4e86\uff01 \u00a77\u3057\u3083\u304c\u307f+\u5de6\u30af\u30ea\u30c3\u30af\u3067\u89e3\u653e" : "\u00a7d\u26a1 ULT \u00a7f[" + c + "%/" + req + "%]";
     }
 
     public void activateUltimate(Player p) {
@@ -169,7 +237,8 @@ public class UltimateManager {
             return;
         }
         if (!this.canUltimate(p.getUniqueId())) {
-            p.sendMessage("\u00a7c\u26a1 ULT\u30c1\u30e3\u30fc\u30b8\u4e0d\u8db3 \u00a78\u00bb \u00a77\u73fe\u5728 " + this.getCharge(p.getUniqueId()) + "%/100%");
+            int req = this.requiredCharge(this.gm.getPlayerKitType(p.getUniqueId()));
+            p.sendMessage("\u00a7c\u26a1 ULT\u30c1\u30e3\u30fc\u30b8\u4e0d\u8db3 \u00a78\u00bb \u00a77\u73fe\u5728 " + this.getCharge(p.getUniqueId()) + "%/" + req + "%");
             return;
         }
         KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
@@ -317,11 +386,16 @@ public class UltimateManager {
             int t = 0;
             Location cur = start.clone();
             public void run() {
-                if (this.t++ > 60) {
+                if (this.t++ > 215) {
                     this.cancel();
                     return;
                 }
-                this.cur.add(dir.clone().multiply(0.5));
+                if (this.t <= 15) {
+                    w.spawnParticle(Particle.FLAME, start.clone().add(0.0, 1.0, 0.0), 12, 0.4, 0.6, 0.4, 0.02);
+                    w.spawnParticle(Particle.SMOKE_NORMAL, start.clone().add(0.0, 0.5, 0.0), 5, 0.3, 0.3, 0.3, 0.01);
+                    return;
+                }
+                this.cur.add(dir.clone().multiply(0.15));
                 w.createExplosion(this.cur, 0.0f, false, false, (Entity)p);
                 w.spawnParticle(Particle.FLAME, this.cur, 10, 0.6, 0.6, 0.6, 0.03);
                 for (Entity e : w.getNearbyEntities(this.cur, 3.0, 2.0, 3.0)) {
@@ -350,9 +424,9 @@ public class UltimateManager {
                     we.spawnParticle(Particle.EXPLOSION_HUGE, this.cur, 5, 1.0, 1.0, 1.0, 0.1);
                     we.spawnParticle(Particle.FLAME, this.cur, 60, 2.0, 2.0, 2.0, 0.05);
                     we.spawnParticle(Particle.LAVA, this.cur, 20, 1.5, 1.5, 1.5, 0.0);
-                    for (Entity e : we.getNearbyEntities(this.cur, 3.0, 3.0, 3.0)) {
+                    for (Entity e : we.getNearbyEntities(this.cur, 4.0, 4.0, 4.0)) {
                         if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
-                        ((Player)e).damage(6.0, (Entity)p);
+                        ((Player)e).damage(10.0, (Entity)p);
                     }
                     this.cancel();
                     return;
@@ -370,10 +444,10 @@ public class UltimateManager {
                 for (Entity e : w.getNearbyEntities(this.cur, 2.5, 2.5, 2.5)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player t2 = (Player)e;
-                    t2.setFireTicks(80);
+                    t2.setFireTicks(100);
                     Bukkit.getScheduler().runTaskLater((Plugin)UltimateManager.this.plugin, () -> {
                         if (t2.isOnline() && t2.getFireTicks() > 0) {
-                            t2.damage(8.0, (Entity)p);
+                            t2.damage(12.0, (Entity)p);
                         }
                     }, 20L);
                 }
@@ -597,9 +671,9 @@ public class UltimateManager {
                     this.cancel();
                     return;
                 }
-                Player target = UltimateManager.this.skillManager.getTargetInSight(owner, 40);
+                Player target = UltimateManager.this.skillManager.getTargetInSight(owner, 45);
                 if (target == null) return;
-                target.damage(2.0, (Entity)owner);
+                target.damage(4.0, (Entity)owner);
                 target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0.0, 1.0, 0.0), 4, 0.2, 0.3, 0.2, 0.1);
                 owner.getWorld().playSound(owner.getLocation(), Sound.ENTITY_ARROW_SHOOT, 0.6f, 1.5f);
             }
@@ -769,7 +843,7 @@ public class UltimateManager {
             ally.getWorld().spawnParticle(Particle.CRIT_MAGIC, ally.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
         }
         p.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 2, false, true));
-        p.sendMessage("\u00a7a\u00a7l\u2605 \u5b8c\u5168\u5e87\u62a0 \u00a78\u00bb \u00a77\u5473\u65b9\u88ab\u30c0\u30e1\u30fc\u30b8\u534a\u6e1b\uff01");
+        p.sendMessage("\u00a7a\u00a7l\u2605 \u5b8c\u5168\u5e87\u8b77 \u00a78\u00bb \u00a77\u5473\u65b9\u88ab\u30c0\u30e1\u30fc\u30b8\u534a\u6e1b\uff01");
     }
 
     private void reflectorUltimate(Player p) {
@@ -881,7 +955,7 @@ public class UltimateManager {
             case ANCHOR: return "\u30a2\u30f3\u30d3\u30eb\u30be\u30fc\u30f3";
             case RELEASER: return "\u30ab\u30bf\u30b9\u30c8\u30ed\u30d5";
             case BULWARK: return "\u8d85\u30fb\u7121\u6575\u8981\u585e";
-            case AEGIS: return "\u5b8c\u5168\u5e87\u62a0";
+            case AEGIS: return "\u5b8c\u5168\u5e87\u8b77";
             case REFLECTOR: return "\u30a4\u30aa\u30f3\u30df\u30e9\u30fc\u30fb\u30b7\u30fc\u30eb\u30c9";
             default: return "ALTMATE";
         }

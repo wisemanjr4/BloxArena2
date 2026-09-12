@@ -57,51 +57,35 @@ public class ScoreboardManager {
     private void setupPlayerBoards(GameManager gm) {
         this.playerBoards.clear();
         ArrayList<UUID> allUids = new ArrayList<UUID>();
-        if (gm.getCurrentGameMode() == GameMode.FFA) {
-            allUids.addAll(gm.getAllParticipantsFFA());
-        } else {
-            allUids.addAll(gm.getRedTeam());
-            allUids.addAll(gm.getBlueTeam());
-        }
+        allUids.addAll(gm.getRedTeam());
+        allUids.addAll(gm.getBlueTeam());
         for (UUID uid : allUids) {
             Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
             Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
-            if (gm.getCurrentGameMode() == GameMode.FFA) {
-                Team ffaTeam = board.registerNewTeam("ffa");
-                ffaTeam.setColor(ChatColor.GOLD);
-                ffaTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
-                for (UUID fid : gm.getAllParticipantsFFA()) {
-                    Player fp = Bukkit.getPlayer((UUID)fid);
-                    if (fp == null) continue;
-                    ffaTeam.addEntry(fp.getName());
-                }
-                ffaTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
-            } else {
-                Team redTeam = board.registerNewTeam("blox_red");
-                redTeam.setColor(ChatColor.RED);
-                redTeam.setPrefix("\u00a7c");
-                redTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
-                redTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-                Team blueTeam = board.registerNewTeam("blox_blue");
-                blueTeam.setColor(ChatColor.AQUA);
-                blueTeam.setPrefix("\u00a7b");
-                blueTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
-                blueTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-                Team necroRed = board.registerNewTeam("necro_red");
-                necroRed.setAllowFriendlyFire(false);
-                Team necroBlue = board.registerNewTeam("necro_blue");
-                necroBlue.setAllowFriendlyFire(false);
-                for (UUID rid : gm.getRedTeam()) {
-                    Player rp = Bukkit.getPlayer((UUID)rid);
-                    if (rp == null) continue;
-                    redTeam.addEntry(rp.getName());
-                }
-                for (UUID bid : gm.getBlueTeam()) {
-                    Player bp = Bukkit.getPlayer((UUID)bid);
-                    if (bp == null) continue;
-                    blueTeam.addEntry(bp.getName());
-                }
+            Team redTeam = board.registerNewTeam("blox_red");
+            redTeam.setColor(ChatColor.RED);
+            redTeam.setPrefix("\u00a7c");
+            redTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
+            redTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+            Team blueTeam = board.registerNewTeam("blox_blue");
+            blueTeam.setColor(ChatColor.AQUA);
+            blueTeam.setPrefix("\u00a7b");
+            blueTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OTHER_TEAMS);
+            blueTeam.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+            Team necroRed = board.registerNewTeam("necro_red");
+            necroRed.setAllowFriendlyFire(false);
+            Team necroBlue = board.registerNewTeam("necro_blue");
+            necroBlue.setAllowFriendlyFire(false);
+            for (UUID rid : gm.getRedTeam()) {
+                Player rp = Bukkit.getPlayer((UUID)rid);
+                if (rp == null) continue;
+                redTeam.addEntry(rp.getName());
+            }
+            for (UUID bid : gm.getBlueTeam()) {
+                Player bp = Bukkit.getPlayer((UUID)bid);
+                if (bp == null) continue;
+                blueTeam.addEntry(bp.getName());
             }
             this.prepareBoard(board);
             p.setScoreboard(board);
@@ -202,11 +186,6 @@ public class ScoreboardManager {
             redAlive = gm.getCtfRedCaptures();
             blueAlive = gm.getCtfBlueCaptures();
         }
-        if (gm.getCurrentGameMode() == GameMode.FFA) {
-            redAlive = gm.getFFAAliveCount();
-            blueAlive = gm.getFFAAliveTotal();
-            time = gm.getFFATimeRemaining() + "s";
-        }
         if (gm.getCurrentGameMode() == GameMode.BOMB_MISSION) {
             if (gm.isBombPlanted()) {
                 time = "\u00a7c\ud83d\udca3 " + gm.getBombSecondsRemaining() + "s";
@@ -272,24 +251,12 @@ public class ScoreboardManager {
             return;
         }
         GameManager gm = this.plugin.getGameManager();
-        if (gm.getCurrentGameMode() == GameMode.FFA) {
-            Team ffaTeam = board.getTeam("ffa");
-            if (ffaTeam != null) {
-                ffaTeam.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
-                for (UUID fid : gm.getAllParticipantsFFA()) {
-                    Player fp = Bukkit.getPlayer((UUID)fid);
-                    if (fp == null) continue;
-                    ffaTeam.addEntry(fp.getName());
-                }
-            }
-        }
         if (p.getScoreboard() != board) {
             p.setScoreboard(board);
         }
         boolean isTDM = gm.getCurrentGameMode() == GameMode.TEAM_DEATHMATCH;
         boolean isDom = gm.getCurrentGameMode() == GameMode.DOMINATION;
         boolean isCTF = gm.getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG;
-        boolean isFFA = gm.getCurrentGameMode() == GameMode.FFA;
         ArrayList<String> lines = new ArrayList<String>();
         lines.add("\u00a76\u00a7l\u00a7m\u2501\u2501\u2501\u2501 BAII WoNG \u2501\u2501\u2501\u2501\u00a7r");
         MapConfig currentMap = gm.getCurrentMap();
@@ -297,36 +264,28 @@ public class ScoreboardManager {
             String mapName = currentMap.getDisplayName() != null ? currentMap.getDisplayName() : currentMap.getId();
             lines.add("\u00a7eMAP \u00a77\u00bb \u00a7f" + mapName);
         }
-        if (!(isTDM || isCTF || isFFA)) {
+        if (!(isTDM || isCTF)) {
             lines.add("\u00a76\u30e9\u30a6\u30f3\u30c9 \u00a77\u00bb \u00a7f" + round);
         }
         lines.add("\u00a7d" + gm.getCurrentGameMode().getDisplayName());
-        if (!(isTDM || isCTF || isFFA)) {
+        if (!(isTDM || isCTF)) {
             lines.add("\u00a7c" + "\u25cf".repeat(winsRed) + "\u00a77" + "\u25cb".repeat(winsToWin - winsRed) + " \u00a77vs \u00a79" + "\u25cf".repeat(winsBlue) + "\u00a77" + "\u25cb".repeat(winsToWin - winsBlue));
         }
         lines.add("\u00a7r");
-        if (isFFA) {
-            lines.add("\u00a7e\u751f\u5b58\u8005: \u00a7f" + red + "\u00a77/\u00a7f" + blue);
-            lines.add("\u00a77\u5236\u9650\u6642\u9593: \u00a7f" + time);
-        } else {
-            String unit = isTDM ? "\u30ad\u30eb" : (isDom ? "pts" : (isCTF ? "\u596a\u53d6" : "\u4eba"));
-            lines.add("\u00a7c\u8d64: \u00a7f" + red + unit);
-            lines.add("\u00a79\u9752: \u00a7f" + blue + unit);
-            lines.add("\u00a7r");
-            lines.add("\u00a77\u7d4c\u904e: \u00a7f" + time);
-        }
+        String unit = isTDM ? "\u30ad\u30eb" : (isDom ? "pts" : (isCTF ? "\u596a\u53d6" : "\u4eba"));
+        lines.add("\u00a7c\u8d64: \u00a7f" + red + unit);
+        lines.add("\u00a79\u9752: \u00a7f" + blue + unit);
+        lines.add("\u00a7r");
+        lines.add("\u00a77\u7d4c\u904e: \u00a7f" + time);
         lines.add("\u00a7r");
         if (kit != null) {
             lines.add("\u00a7e\u30ad\u30c3\u30c8: \u00a7f" + kit.getDisplayName());
-        }
-        if (isFFA) {
-            lines.add("\u00a76\u30ad\u30eb: \u00a7f" + gm.getFFAKills(p.getUniqueId()));
         }
         if (team != null) {
             lines.add("\u00a77\u30c1\u30fc\u30e0: " + team.getColorCode() + team.getDisplayName());
         }
         int ultCharge = this.plugin.getUltimateManager().getCharge(p.getUniqueId());
-        if (ultCharge >= 100) {
+        if (this.plugin.getUltimateManager().canUltimate(p.getUniqueId())) {
             lines.add("\u00a7d\u00a7l\u26a1 ULT READY!");
         } else {
             lines.add("\u00a7dULT \u00a7f[" + ultCharge + "%]");

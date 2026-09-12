@@ -60,7 +60,6 @@ public class MapConfig {
         return switch (mode) {
             case BATTLE_ARENA -> true;
             case TEAM_DEATHMATCH -> true;
-            case FFA -> true;
             case BOMB_MISSION -> {
                 if (this.bombSite != null && this.defusePoint != null) {
                     yield true;
