@@ -402,7 +402,7 @@ public class UltimateManager {
             int t = 0;
             Location cur = start.clone();
             public void run() {
-                if (this.t++ > 215) {
+                if (this.t++ > 115) {
                     this.cancel();
                     return;
                 }
@@ -411,7 +411,7 @@ public class UltimateManager {
                     w.spawnParticle(Particle.SMOKE_NORMAL, start.clone().add(0.0, 0.5, 0.0), 5, 0.3, 0.3, 0.3, 0.01);
                     return;
                 }
-                this.cur.add(dir.clone().multiply(0.15));
+                this.cur.add(dir.clone().multiply(0.3));
                 w.createExplosion(this.cur, 0.0f, false, false, (Entity)p);
                 w.spawnParticle(Particle.FLAME, this.cur, 10, 0.6, 0.6, 0.6, 0.03);
                 for (Entity e : w.getNearbyEntities(this.cur, 3.0, 2.0, 3.0)) {
