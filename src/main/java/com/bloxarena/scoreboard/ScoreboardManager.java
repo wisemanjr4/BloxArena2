@@ -284,11 +284,10 @@ public class ScoreboardManager {
         if (team != null) {
             lines.add("\u00a77\u30c1\u30fc\u30e0: " + team.getColorCode() + team.getDisplayName());
         }
-        int ultCharge = this.plugin.getUltimateManager().getCharge(p.getUniqueId());
         if (this.plugin.getUltimateManager().canUltimate(p.getUniqueId())) {
             lines.add("\u00a7d\u00a7l\u26a1 ULT READY!");
         } else {
-            lines.add("\u00a7dULT \u00a7f[" + ultCharge + "%]");
+            lines.add("\u00a7dULT \u00a7f[" + this.plugin.getUltimateManager().getChargePercent(p.getUniqueId()) + "%]");
         }
         lines.add("\u00a77\u00a7m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u00a7r");
         this.applyLines(board, obj, lines);

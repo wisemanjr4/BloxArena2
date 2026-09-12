@@ -73,7 +73,7 @@ public class UltimateManager {
         if (cur < required && next >= required) {
             Player ready = Bukkit.getPlayer((UUID)player);
             if (ready != null && ready.isOnline()) {
-                AnimatedText.rainbowBar(this.plugin, List.of(ready), "\u26a1 ULT READY \u26a1 \u3057\u3083\u304c\u307f+\u5de6\u30af\u30ea\u30c3\u30af\u3067\u89e3\u653e", 40);
+                AnimatedText.slideIn(this.plugin, List.of(ready), "\u26a1 ULT READY \u26a1 \u3057\u3083\u304c\u307f+\u5de6\u30af\u30ea\u30c3\u30af\u3067\u89e3\u653e", 40);
                 ready.playSound(ready.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.7f);
             }
         }
@@ -140,6 +140,14 @@ public class UltimateManager {
 
     public int getCharge(UUID player) {
         return this.charge.getOrDefault(player, 0);
+    }
+
+    public int getChargePercent(UUID player) {
+        int req = this.requiredCharge(this.gm.getPlayerKitType(player));
+        if (req <= 0) {
+            return 100;
+        }
+        return Math.min(100, (int)Math.round((double)this.getCharge(player) * 100.0 / (double)req));
     }
 
     public boolean canUltimate(UUID player) {
@@ -237,9 +245,8 @@ public class UltimateManager {
     }
 
     public String getUltimateBarText(Player p) {
-        int req = this.requiredCharge(this.gm.getPlayerKitType(p.getUniqueId()));
-        int c = this.getCharge(p.getUniqueId());
-        return c >= req ? "\u00a7d\u26a1 ULT \u6e96\u5099\u5b8c\u4e86\uff01 \u00a77\u3057\u3083\u304c\u307f+\u5de6\u30af\u30ea\u30c3\u30af\u3067\u89e3\u653e" : "\u00a7d\u26a1 ULT \u00a7f[" + c + "%/" + req + "%]";
+        int pct = this.getChargePercent(p.getUniqueId());
+        return pct >= 100 ? "\u00a7d\u26a1 ULT \u6e96\u5099\u5b8c\u4e86\uff01 \u00a77\u3057\u3083\u304c\u307f+\u5de6\u30af\u30ea\u30c3\u30af\u3067\u89e3\u653e" : "\u00a7d\u26a1 ULT \u00a7f[" + pct + "%]";
     }
 
     public void activateUltimate(Player p) {
@@ -247,8 +254,7 @@ public class UltimateManager {
             return;
         }
         if (!this.canUltimate(p.getUniqueId())) {
-            int req = this.requiredCharge(this.gm.getPlayerKitType(p.getUniqueId()));
-            p.sendMessage("\u00a7c\u26a1 ULT\u30c1\u30e3\u30fc\u30b8\u4e0d\u8db3 \u00a78\u00bb \u00a77\u73fe\u5728 " + this.getCharge(p.getUniqueId()) + "%/" + req + "%");
+            p.sendMessage("\u00a7c\u26a1 ULT\u30c1\u30e3\u30fc\u30b8\u4e0d\u8db3 \u00a78\u00bb \u00a77\u73fe\u5728 " + this.getChargePercent(p.getUniqueId()) + "%");
             return;
         }
         KitType kit = this.gm.getPlayerKitType(p.getUniqueId());

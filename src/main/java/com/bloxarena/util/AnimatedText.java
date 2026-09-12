@@ -145,7 +145,8 @@ public final class AnimatedText {
         }.runTaskTimer(plugin, 0L, 1L);
     }
 
-    public static void rainbowBar(Plugin plugin, Collection<Player> players, String text, int ticks) {
+    public static void slideIn(Plugin plugin, Collection<Player> players, String text, int ticks) {
+        final String body = plain(text);
         new BukkitRunnable() {
             int f = 0;
 
@@ -154,13 +155,13 @@ public final class AnimatedText {
                     this.cancel();
                     return;
                 }
-                String frame = AnimatedText.colorWave(text, this.f);
+                String frame = "\u00a7d\u00a7l" + " ".repeat(Math.max(0, 40 - this.f * 2)) + body;
                 for (Player p : players) {
                     if (p == null || !p.isOnline()) continue;
                     p.sendActionBar(Component.text(frame));
                 }
                 ++this.f;
             }
-        }.runTaskTimer(plugin, 0L, 2L);
+        }.runTaskTimer(plugin, 0L, 1L);
     }
 }
