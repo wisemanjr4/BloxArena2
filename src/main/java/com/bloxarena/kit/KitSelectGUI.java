@@ -21,6 +21,7 @@ import com.bloxarena.game.GameManager;
 import com.bloxarena.game.TeamColor;
 import com.bloxarena.kit.KitBuilder;
 import com.bloxarena.kit.KitType;
+import com.bloxarena.util.AnimatedText;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -93,7 +94,7 @@ public class KitSelectGUI {
                 if (this.confirmed.contains(uid) || (p = Bukkit.getPlayer((UUID)uid)) == null) continue;
                 KitType heldKit = this.getHeldKit(p);
                 String title = heldKit != null ? "\u00a7e" + heldKit.getName() : "\u00a7e\u30ad\u30c3\u30c8\u3092\u9078\u629e";
-                p.sendTitle(title, "\u00a7e\u6b8b\u308a \u00a7c" + remaining[0] + "\u00a7e \u79d2", 0, 20, 0);
+                p.sendTitle(AnimatedText.colorWave(title, remaining[0]), "\u00a7e\u6b8b\u308a \u00a7c" + remaining[0] + "\u00a7e \u79d2", 0, 20, 0);
                 if (heldKit != null) {
                     p.sendActionBar((Component)Component.text((String)("\u00a77" + heldKit.getDescription() + " \u00a7f" + heldKit.getLore())));
                 } else {

@@ -53,6 +53,7 @@ import com.bloxarena.map.MapConfig;
 import com.bloxarena.song.NbsPlayer;
 import com.bloxarena.stats.MatchStats;
 import com.bloxarena.stats.StatsManager;
+import com.bloxarena.util.AnimatedText;
 import com.bloxarena.util.Effects;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -193,7 +194,7 @@ public class GameManager {
         for (UUID uid : participants) {
             Player pl = Bukkit.getPlayer((UUID)uid);
             if (pl == null) continue;
-            pl.sendTitle("\u00a7d\u26a1 " + this.currentGameMode.getDisplayName() + " \u26a1", "\u00a77" + this.currentGameMode.getDescription(), 5, 50, 15);
+            AnimatedText.wave(this.plugin, List.of(pl), "\u26a1 " + this.currentGameMode.getDisplayName() + " \u26a1", "\u00a77" + this.currentGameMode.getDescription(), 10);
         }
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             String rules = switch (this.currentGameMode) {
@@ -1358,31 +1359,34 @@ public class GameManager {
         victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.2f, 0.8f);
         victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.4f);
         if (killerDisplay != null) {
-            victim.sendTitle("\u00a7c\u00a7l\u2620  YOU DIED", killerColor + "\u00a7l" + killerDisplay + " \u00a77\u306e\u653b\u6483\u306b\u3088\u308a\u6483\u7834", 3, 50, 10);
+            AnimatedText.glitch(this.plugin, List.of(victim), "\u2620 YOU DIED", killerColor + killerDisplay + " \u306e\u653b\u6483\u306b\u3088\u308a\u6483\u7834", 10);
         } else {
-            victim.sendTitle("\u00a7c\u00a7l\u2620  YOU DIED", "\u00a77\u6230\u529b\u55aa\u5931", 3, 50, 10);
+            AnimatedText.glitch(this.plugin, List.of(victim), "\u2620 YOU DIED", "\u6230\u529b\u55aa\u5931", 10);
         }
         victim.playSound(victim.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 1.0f, 0.5f);
         if (killer != null) {
             int rk = this.roundKills.merge(killer.getUniqueId(), 1, Integer::sum);
             String streakTitle = this.getStreakTitle(rk);
             if (rk == 1) {
-                killer.sendTitle("\u00a7c\u00a7l\u2694 KILL!", victimColor + victim.getName() + " \u00a77\u3092\u6483\u7834", 3, 30, 6);
+                AnimatedText.wave(this.plugin, List.of(killer), "\u2694 KILL!", victimColor + victim.getName() + " \u3092\u6483\u7834", 8);
                 killer.playSound(killer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.6f);
                 killer.spawnParticle(Particle.VILLAGER_HAPPY, killer.getLocation().add(0.0, 2.0, 0.0), 15, 0.4, 0.4, 0.4, 0.1);
             } else {
-                killer.sendTitle(streakTitle, "\u00a7e" + rk + " kills \u00a77in a row!", 3, 45, 10);
+                AnimatedText.pop(this.plugin, List.of(killer), streakTitle, "\u00a7e" + rk + " kills \u00a77in a row!", 10);
                 killer.playSound(killer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f + (float)(rk - 2) * 0.15f);
                 killer.playSound(killer.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.8f);
                 killer.spawnParticle(Particle.TOTEM, killer.getLocation().add(0.0, 1.0, 0.0), 60, 0.5, 1.0, 0.5, 0.5);
                 killer.spawnParticle(Particle.CRIT, killer.getLocation().add(0.0, 1.0, 0.0), 40, 0.4, 0.4, 0.4, 0.4);
                 if (rk >= 3) {
+                    ArrayList<Player> watchers = new ArrayList<Player>();
                     for (UUID uid : this.getAllParticipantsAndSpectators()) {
                         Player pp = Bukkit.getPlayer((UUID)uid);
                         if (pp == null) continue;
                         pp.playSound(pp.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.4f);
+                        watchers.add(pp);
                     }
                     this.spawnKillStreakFirework(killer, rk);
+                    AnimatedText.scroll(this.plugin, watchers, "\u2694 " + killer.getName() + " \u304c " + rk + " \u9023\u7d9a\u30ad\u30eb\u4e2d\uff01", 60);
                 }
             }
             if (rk == 5) {
@@ -1567,7 +1571,7 @@ public class GameManager {
             Player pl = Bukkit.getPlayer((UUID)uid);
             if (pl == null) continue;
             String role = this.getTeamOf(pl) == attacker ? "\u00a7c\u2694 \u653b\u6483\u5074 \u00a78\u00bb \u00a7f\u7206\u5f3e\u3092\u8a2d\u7f6e\u305b\u3088\uff01" : "\u00a79\u2694 \u5b88\u5099\u5074 \u00a78\u00bb \u00a7f\u8a2d\u7f6e\u3092\u963b\u6b62\u305b\u3088\uff01";
-            pl.sendTitle(attacker.getColorCode() + "\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound, role, 5, 50, 10);
+            AnimatedText.wave(this.plugin, List.of(pl), attacker.getColorCode() + "\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound, role, 10);
         }
     }
 

@@ -122,7 +122,7 @@ public class Effects {
                     }
                     if (isWinner) {
                         String title = ffaWinner != null ? "\u00a76\u00a7l\u2605 \u52dd\u5229 \u2605" : winner.getColorCode() + "\u00a7l\u2605 \u52dd\u5229 \u2605";
-                        p.sendTitle(title, "\u00a7e" + conditionStr + "\u3067\u52dd\u5229\uff01", 5, 70, 15);
+                        AnimatedText.typewriter(plugin, List.of(p), title, "\u00a7e" + conditionStr + "\u3067\u52dd\u5229\uff01", 2);
                         p.playSound(p.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.6f, 1.2f);
                         p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
                         continue;

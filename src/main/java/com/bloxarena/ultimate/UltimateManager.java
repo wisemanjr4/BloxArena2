@@ -9,6 +9,7 @@ import com.bloxarena.kit.KitBuilder;
 import com.bloxarena.kit.KitRole;
 import com.bloxarena.kit.KitType;
 import com.bloxarena.skill.SkillManager;
+import com.bloxarena.util.AnimatedText;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,8 +66,17 @@ public class UltimateManager {
             amount = (int)Math.round((double)amount * 0.5);
         }
         KitType kit = this.gm.getPlayerKitType(player);
+        int required = this.requiredCharge(kit);
         int cur = this.charge.getOrDefault(player, 0);
-        this.charge.put(player, Math.min(this.requiredCharge(kit), cur + amount));
+        int next = Math.min(required, cur + amount);
+        this.charge.put(player, next);
+        if (cur < required && next >= required) {
+            Player ready = Bukkit.getPlayer((UUID)player);
+            if (ready != null && ready.isOnline()) {
+                AnimatedText.rainbowBar(this.plugin, List.of(ready), "\u26a1 ULT READY \u26a1 \u3057\u3083\u304c\u307f+\u5de6\u30af\u30ea\u30c3\u30af\u3067\u89e3\u653e", 40);
+                ready.playSound(ready.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.7f);
+            }
+        }
     }
 
     public int requiredCharge(KitType kit) {
@@ -577,23 +587,60 @@ public class UltimateManager {
     }
 
     private void nilgiritarUltimate(final Player p) {
-        final Player target = this.skillManager.getTargetInSight(p, 15);
-        if (target == null) {
-            p.sendMessage("\u00a7c\ud83c\udfaf \u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
-            return;
-        }
-        Vector dir = target.getLocation().toVector().subtract(p.getLocation().toVector()).setY(0).normalize().multiply(2.0);
-        p.setVelocity(dir.clone().setY(0.3));
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 1.5f);
+        final Player aim = this.skillManager.getTargetInSight(p, 15);
+        final Vector dir = aim != null ? aim.getLocation().toVector().subtract(p.getLocation().toVector()).setY(0).normalize() : p.getLocation().getDirection().setY(0).normalize();
+        p.setVelocity(dir.clone().multiply(1.9).setY(0.35));
+        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 1.5f, 1.4f);
+        AnimatedText.pop(this.plugin, List.of(p), "\u30d1\u30a4\u30eb\u30c9\u30e9\u30a4\u30d0\u30fc", "\u7a81\u9032\uff01\u547d\u4e2d\u3055\u305b\u308d\uff01", 8);
         final Player owner = p;
-        for (int i = 0; i < 20; ++i) {
-            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
-                if (target.isOnline() && target.isValid()) {
-                    target.damage(1.0, (Entity)owner);
-                    target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0.0, 1.0, 0.0), 3, 0.2, 0.2, 0.2, 0.1);
+        new BukkitRunnable() {
+            int t = 0;
+
+            public void run() {
+                if (this.t++ > 20 || !owner.isOnline()) {
+                    this.cancel();
+                    return;
                 }
-            }, (long)(i * 2));
-        }
+                owner.getWorld().spawnParticle(Particle.CLOUD, owner.getLocation(), 5, 0.3, 0.2, 0.3, 0.02);
+                owner.getWorld().spawnParticle(Particle.CRIT, owner.getLocation().add(0.0, 1.0, 0.0), 4, 0.3, 0.3, 0.3, 0.05);
+                for (Entity e : owner.getNearbyEntities(1.8, 1.6, 1.8)) {
+                    if (!(e instanceof Player)) continue;
+                    Player victim = (Player)e;
+                    if (!UltimateManager.this.isEnemy(owner, victim)) continue;
+                    this.cancel();
+                    UltimateManager.this.pileDriver(owner, victim);
+                    return;
+                }
+            }
+        }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
+    }
+
+    private void pileDriver(final Player owner, final Player victim) {
+        victim.setVelocity(new Vector(0, 0, 0));
+        victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_IRON_GOLEM_ATTACK, 1.5f, 1.6f);
+        AnimatedText.glitch(this.plugin, List.of(victim), "\u00a7c\u00a7l\u30d1\u30a4\u30eb\u30c9\u30e9\u30a4\u30d0\u30fc", "\u9023\u6483\u3092\u53d7\u3051\u3066\u3044\u308b\uff01", 10);
+        new BukkitRunnable() {
+            int hit = 0;
+
+            public void run() {
+                if (this.hit++ >= 20) {
+                    this.cancel();
+                    victim.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, victim.getLocation().add(0.0, 1.0, 0.0), 2, 0.3, 0.3, 0.3, 0.0);
+                    victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.2f);
+                    victim.setVelocity(new Vector(0, 0.6, 0).add(owner.getLocation().getDirection().setY(0).normalize().multiply(1.0)));
+                    return;
+                }
+                if (!victim.isOnline() || !victim.isValid()) {
+                    this.cancel();
+                    return;
+                }
+                victim.setVelocity(new Vector(0, 0, 0));
+                victim.setNoDamageTicks(0);
+                victim.damage(1.0, (Entity)owner);
+                victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0.0, 1.0, 0.0), 6, 0.3, 0.4, 0.3, 0.15);
+                victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.7f, 1.2f + (float)this.hit * 0.03f);
+            }
+        }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
     }
 
     private void mistralUltimate(final Player p) {
