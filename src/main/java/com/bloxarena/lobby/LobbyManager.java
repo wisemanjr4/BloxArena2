@@ -273,21 +273,9 @@ public class LobbyManager {
         this.voteParticipants = new ArrayList<UUID>(participants);
         this.pendingVotes.clear();
         this.voteOptions.clear();
-        Set<String> usedCombos = new LinkedHashSet<String>();
-        for (int attempt = 0; attempt < 30 && this.voteOptions.size() < 3; ++attempt) {
-            GameMode mode = GameMode.random(participants.size());
-            MapConfig map = this.plugin.getMapManager().selectMap(mode);
-            if (map == null) {
-                continue;
-            }
-            String key = map.getId() + "|" + mode.name();
-            if (!usedCombos.add(key)) {
-                continue;
-            }
-            this.voteOptions.add(new Object[]{map, mode});
-        }
-        if (this.voteOptions.isEmpty()) {
-            this.broadcastWaiting("\u00a7c\u4f7f\u7528\u53ef\u80fd\u306a\u30de\u30c3\u30d7\u304c\u3042\u308a\u307e\u305b\u3093\u3002config.yml \u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+        this.buildVoteOptions(participants.size());
+        if (this.voteOptions.size() < 2) {
+            this.broadcastWaiting("\u00a7c\u6295\u7968\u5019\u88dc\u30922\u7a2e\u985e\u4ee5\u4e0a\u7528\u610f\u3067\u304d\u307e\u305b\u3093\u3002\u30de\u30c3\u30d7\u3068\u30ec\u30ae\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3\u306e\u8a2d\u5b9a\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
             return;
         }
         for (UUID uid : participants) {
@@ -308,6 +296,33 @@ public class LobbyManager {
                 LobbyManager.this.finishVoting();
             }
         }.runTaskLater((Plugin)this.plugin, 300L);
+    }
+
+    private void buildVoteOptions(int playerCount) {
+        this.voteOptions.clear();
+        boolean teamModes = playerCount % 2 == 0 && playerCount > 3;
+        ArrayList<GameMode> modes = new ArrayList<GameMode>();
+        for (GameMode mode : GameMode.values()) {
+            if (!teamModes && (mode == GameMode.DOMINATION || mode == GameMode.CAPTURE_THE_FLAG)) continue;
+            modes.add(mode);
+        }
+        Collections.shuffle(modes);
+        Set<String> usedCombos = new LinkedHashSet<String>();
+        for (GameMode mode : modes) {
+            if (this.voteOptions.size() >= 3) break;
+            MapConfig map = this.plugin.getMapManager().selectMap(mode);
+            if (map == null || !usedCombos.add(map.getId() + "|" + mode.name())) continue;
+            this.voteOptions.add(new Object[]{map, mode});
+        }
+        if (this.voteOptions.size() >= 3) return;
+        for (MapConfig map : this.plugin.getMapManager().getMaps()) {
+            if (this.voteOptions.size() >= 3) break;
+            for (GameMode mode : modes) {
+                if (this.voteOptions.size() >= 3) break;
+                if (!map.isReadyFor(mode) || !usedCombos.add(map.getId() + "|" + mode.name())) continue;
+                this.voteOptions.add(new Object[]{map, mode});
+            }
+        }
     }
 
     private void finishVoting() {

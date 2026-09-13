@@ -369,23 +369,55 @@ public class UltimateManager {
     }
 
     private void ninjaUltimate(Player p) {
-        Player target = this.skillManager.getTargetInSight(p, 6);
-        if (target == null) {
-            p.sendMessage("\u00a7c\ud83c\udfaf \u5c04\u7a0b\u5185\u306b\u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
-            return;
+        Location origin = p.getLocation().clone();
+        this.skillManager.spawnDecoy(p, origin);
+        this.skillManager.hideArmor(p);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100, 0, false, false));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 160, 1, false, false));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 160, 1, false, false));
+        p.getWorld().spawnParticle(Particle.PORTAL, origin.clone().add(0.0, 1.0, 0.0), 40, 0.4, 0.9, 0.4, 0.1);
+        p.getWorld().playSound(origin, Sound.ENTITY_ENDERMAN_TELEPORT, 1.2f, 1.4f);
+        Player aimer = this.findAimer(p, 15.0);
+        if (aimer != null) {
+            Vector back = aimer.getLocation().getDirection().multiply(-1.0).setY(0).normalize();
+            Location behind = aimer.getLocation().clone().add(back.clone().multiply(1.5));
+            if (behind.getBlock().getType().isSolid() || behind.clone().add(0.0, 1.0, 0.0).getBlock().getType().isSolid()) {
+                behind = aimer.getLocation().clone();
+            }
+            behind.setY(behind.getY() + 0.2);
+            behind.setDirection(aimer.getLocation().getDirection());
+            p.teleport(behind);
+            p.getWorld().spawnParticle(Particle.PORTAL, behind.clone().add(0.0, 1.0, 0.0), 40, 0.4, 0.9, 0.4, 0.1);
+            p.getWorld().playSound(behind, Sound.ENTITY_ENDERMAN_TELEPORT, 1.2f, 1.4f);
+            p.sendMessage("\u00a75\u00a7l\u5f71\u6e21\u308a\uff01 \u00a77\u76f8\u624b\u306e\u80cc\u5f8c\u3078\u8ee2\u79fb\u3057\u305f");
+        } else {
+            p.sendMessage("\u00a75\u00a7l\u5f71\u6e21\u308a\uff01 \u00a77\u72d9\u3063\u3066\u3044\u308b\u6575\u304c\u3044\u306a\u3044\u305f\u3081\u305d\u306e\u5834\u306b\u6b62\u307e\u3063\u305f");
         }
-        Vector back = target.getLocation().getDirection().multiply(-1.0).setY(0).normalize();
-        Location behind = target.getLocation().clone().add(back.clone().multiply(1.5));
-        if (behind.getBlock().getType().isSolid()) {
-            behind = target.getLocation().clone();
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (p.isOnline()) {
+                this.skillManager.showArmor(p);
+                p.removePotionEffect(PotionEffectType.INVISIBILITY);
+            }
+        }, 100L);
+    }
+
+    private Player findAimer(Player self, double range) {
+        Player best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (Entity e : self.getNearbyEntities(range, range, range)) {
+            if (!(e instanceof Player)) continue;
+            Player other = (Player)e;
+            if (!this.isEnemy(self, other)) continue;
+            double dist = other.getLocation().distance(self.getLocation());
+            if (dist > range || dist >= bestDist) continue;
+            Vector toSelf = self.getEyeLocation().toVector().subtract(other.getEyeLocation().toVector());
+            if (toSelf.lengthSquared() < 1.0E-4) continue;
+            if (other.getEyeLocation().getDirection().dot(toSelf.normalize()) < 0.9) continue;
+            if (!this.skillManager.hasLineOfSight(other.getEyeLocation(), self.getEyeLocation())) continue;
+            best = other;
+            bestDist = dist;
         }
-        behind.setY(behind.getY() + 0.2);
-        p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.8, 0.3, 0.1);
-        p.teleport(behind);
-        target.setNoDamageTicks(0);
-        target.damage(1000.0, (Entity)p);
-        this.killEffect(target);
-        p.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.5f);
+        return best;
     }
 
     private void berserkerUltimate(final Player p) {
@@ -967,7 +999,7 @@ public class UltimateManager {
         switch (kit) {
             case BLADE: return "\u30c7\u30a3\u30e1\u30f3\u30b7\u30e7\u30f3\u30fb\u30d6\u30ec\u30a4\u30af";
             case BREAKER: return "\u30d1\u30ef\u30fc\u30bf\u30c3\u30af\u30eb";
-            case NINJA: return "\u5fcd\u6bba";
+            case NINJA: return "\u5f71\u6e21\u308a";
             case BERSERKER: return "\u30c7\u30c3\u30c9\u30ea\u30fc\u30ec\u30a4\u30f4";
             case SNIPER: return "\u30a2\u30a4\u30fb\u30aa\u30d6\u30fb\u30db\u30eb\u30b9";
             case COUNTER: return "\u81f4\u547d\u306e\u4e00\u6483";
@@ -975,13 +1007,13 @@ public class UltimateManager {
             case LANCER: return "\u30c0\u30a4\u30ca\u30e2\u30e9\u30f3\u30b9";
             case JESTER: return "\u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af";
             case VAMPIRE: return "\u6e07\u671b";
-            case BOMBER: return "\u7206\u5f3e\u9b54";
+            case BOMBER: return "\"\u7206\u5f3e\u9b54\"\u306b\u6c17\u3092\u3064\u3051\u308d\u3088";
             case COOK: return "\u30d5\u30eb\u30b3\u30fc\u30b9";
             case GRANG: return "\u6a5f\u52d5\u8981\u585e";
             case SCOUT: return "\u30db\u30fc\u30af\u30a2\u30a4";
             case FLASHER: return "\u30b0\u30ed\u30fc\u30ea\u30a2\u30b9\u30d5\u30e9\u30c3\u30b7\u30e5";
             case MARKSMAN: return "\u30e1\u30ac\u30dc\u30eb\u30c8";
-            case SUNDANCE: return "\u30ec\u30f4\u30a9\u30ea\u30e5\u30fc\u30b7\u30e7\u30f3";
+            case SUNDANCE: return "\u4ffa\u306e\u30ea\u30ed\u30fc\u30c9\u306f\"\u30ec\u30f4\u30a9\u30ea\u30e5\u30fc\u30b7\u30e7\u30f3\"\u3060\uff01";
             case SWAPPER: return "\u30bb\u30ec\u30af\u30c8\u30b9\u30ef\u30c3\u30d7";
             case STICKER: return "\u30df\u30cb\u30d6\u30e9\u30c3\u30af";
             case DECOY: return "\u30b4\u30fc\u30c8\u30a5\u30bc\u30ed";

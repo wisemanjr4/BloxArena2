@@ -2875,61 +2875,64 @@ public class SkillManager {
     private void decoySkill(final Player p) {
         this.setCooldown(p.getUniqueId(), 10000L);
         Location center = p.getLocation();
-        ItemStack[] decoyArmor = new ItemStack[]{p.getInventory().getHelmet(), p.getInventory().getChestplate(), p.getInventory().getLeggings(), p.getInventory().getBoots()};
         this.hideArmor(p);
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.showArmor(p), 120L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 120, 0, false, false));
         for (int i = 0; i < 8; ++i) {
             double angle = (double)i * Math.PI / 4.0;
             Location sl = center.clone().add(Math.cos(angle) * 2.0, 0.0, Math.sin(angle) * 2.0);
-            Skeleton skel = (Skeleton)center.getWorld().spawn(sl, Skeleton.class, s -> {
-                s.setAI(false);
-                s.setRemoveWhenFarAway(false);
-                s.setSilent(true);
-                s.setCustomName(p.getName());
-                s.setCustomNameVisible(true);
-                s.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 500, 0, false, false));
-                s.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 500, 9, false, false));
-                s.setPersistent(true);
-            });
-            if (skel.getEquipment() != null) {
-                skel.getEquipment().setHelmet(decoyArmor[0]);
-                skel.getEquipment().setChestplate(decoyArmor[1]);
-                skel.getEquipment().setLeggings(decoyArmor[2]);
-                skel.getEquipment().setBoots(decoyArmor[3]);
-                skel.getEquipment().setHelmetDropChance(0.0f);
-                skel.getEquipment().setChestplateDropChance(0.0f);
-                skel.getEquipment().setLeggingsDropChance(0.0f);
-                skel.getEquipment().setBootsDropChance(0.0f);
-                ItemStack stick = new ItemStack(Material.STICK);
-                stick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
-                skel.getEquipment().setItemInMainHand(stick);
-            }
-            skel.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "decoy"), PersistentDataType.BYTE, (byte)1);
-            skel.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "decoy_owner"), PersistentDataType.STRING, p.getUniqueId().toString());
-            final Skeleton finalSkel = skel;
-            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
-                if (finalSkel.isValid()) {
-                    finalSkel.setAI(true);
-                }
-            }, 2L);
-            new BukkitRunnable(){
-
-                public void run() {
-                    Player tp;
-                    if (!finalSkel.isValid()) {
-                        this.cancel();
-                        return;
-                    }
-                    LivingEntity tgt = finalSkel.getTarget();
-                    if (tgt instanceof Player && SkillManager.this.gm.getTeamOf(tp = (Player)tgt) == SkillManager.this.gm.getTeamOf(p)) {
-                        finalSkel.setTarget(null);
-                    }
-                }
-            }.runTaskTimer((Plugin)this.plugin, 40L, 40L);
-            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> skel.remove(), 160L);
+            this.spawnDecoy(p, sl);
         }
         p.sendMessage("\u00a78\u00a7l\u30c7\u30b3\u30a4\u5c55\u958b\uff01");
+    }
+
+    public void spawnDecoy(Player p, Location at) {
+        final ItemStack[] decoyArmor = new ItemStack[]{p.getInventory().getHelmet(), p.getInventory().getChestplate(), p.getInventory().getLeggings(), p.getInventory().getBoots()};
+        final Skeleton skel = (Skeleton)at.getWorld().spawn(at, Skeleton.class, s -> {
+            s.setAI(false);
+            s.setRemoveWhenFarAway(false);
+            s.setSilent(true);
+            s.setCustomName(p.getName());
+            s.setCustomNameVisible(true);
+            s.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 500, 0, false, false));
+            s.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 500, 9, false, false));
+            s.setPersistent(true);
+        });
+        if (skel.getEquipment() != null) {
+            skel.getEquipment().setHelmet(decoyArmor[0]);
+            skel.getEquipment().setChestplate(decoyArmor[1]);
+            skel.getEquipment().setLeggings(decoyArmor[2]);
+            skel.getEquipment().setBoots(decoyArmor[3]);
+            skel.getEquipment().setHelmetDropChance(0.0f);
+            skel.getEquipment().setChestplateDropChance(0.0f);
+            skel.getEquipment().setLeggingsDropChance(0.0f);
+            skel.getEquipment().setBootsDropChance(0.0f);
+            ItemStack stick = new ItemStack(Material.STICK);
+            stick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
+            skel.getEquipment().setItemInMainHand(stick);
+        }
+        skel.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "decoy"), PersistentDataType.BYTE, (byte)1);
+        skel.getPersistentDataContainer().set(new NamespacedKey((Plugin)this.plugin, "decoy_owner"), PersistentDataType.STRING, p.getUniqueId().toString());
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (skel.isValid()) {
+                skel.setAI(true);
+            }
+        }, 2L);
+        new BukkitRunnable(){
+
+            public void run() {
+                Player tp;
+                if (!skel.isValid()) {
+                    this.cancel();
+                    return;
+                }
+                LivingEntity tgt = skel.getTarget();
+                if (tgt instanceof Player && SkillManager.this.gm.getTeamOf(tp = (Player)tgt) == SkillManager.this.gm.getTeamOf(p)) {
+                    skel.setTarget(null);
+                }
+            }
+        }.runTaskTimer((Plugin)this.plugin, 40L, 40L);
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> skel.remove(), 160L);
     }
 
     private void phantomSkill(Player p) {
@@ -4298,7 +4301,10 @@ public class SkillManager {
         return cd != null && System.currentTimeMillis() < cd;
     }
 
-    private void hideArmor(Player p) {
+    public void hideArmor(Player p) {
+        if (this.storedArmor.containsKey(p.getUniqueId())) {
+            return;
+        }
         ItemStack[] armor = new ItemStack[]{p.getInventory().getHelmet(), p.getInventory().getChestplate(), p.getInventory().getLeggings(), p.getInventory().getBoots()};
         this.storedArmor.put(p.getUniqueId(), armor);
         p.getInventory().setHelmet(null);
@@ -4307,7 +4313,7 @@ public class SkillManager {
         p.getInventory().setBoots(null);
     }
 
-    private void showArmor(Player p) {
+    public void showArmor(Player p) {
         ItemStack[] armor = this.storedArmor.remove(p.getUniqueId());
         if (armor != null) {
             ItemStack boots = armor[0];
