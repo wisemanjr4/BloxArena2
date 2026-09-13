@@ -159,6 +159,9 @@ public class BotManager {
         if (z.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED) != null) {
             z.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0.2);
         }
+        if (z.getAttribute(Attribute.ZOMBIE_SPAWN_REINFORCEMENTS) != null) {
+            z.getAttribute(Attribute.ZOMBIE_SPAWN_REINFORCEMENTS).setBaseValue(0.0);
+        }
         z.getEquipment().setItemInMainHandDropChance(0.0f);
         z.getEquipment().setHelmetDropChance(0.0f);
         Material wool = team == TeamColor.RED ? Material.RED_WOOL : Material.CYAN_WOOL;

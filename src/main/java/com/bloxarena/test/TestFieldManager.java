@@ -140,6 +140,8 @@ public class TestFieldManager {
         p.sendMessage("\u00a77\u00a7f/ba test leave \u00a77\u3067\u9000\u51fa\uff08\u72b6\u614b\u30ea\u30bb\u30c3\u30c8\uff09");
         if (this.dummies.isEmpty()) {
             this.spawnDummies();
+        } else {
+            this.purgeLooseZombies();
         }
         if (this.skillUpdateTask == null) {
             this.skillUpdateTask = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, () -> {
@@ -221,30 +223,7 @@ public class TestFieldManager {
             int idx = i;
             Location loc = this.testSpawn.clone().add((double)((i - this.dummyCount / 2) * 3), 0.0, 5.0);
             spawnPoints.add(loc.clone());
-            Zombie z = (Zombie)this.testWorld.spawn(loc, Zombie.class, zombie -> {
-                AttributeInstance hp;
-                AttributeInstance atk;
-                zombie.setCustomName("\u00a7e\u00a7l\u8a13\u7df4\u7528\u30c0\u30df\u30fc " + (idx + 1));
-                zombie.setCustomNameVisible(true);
-                zombie.setBaby(false);
-                zombie.setRemoveWhenFarAway(false);
-                zombie.setShouldBurnInDay(false);
-                zombie.setAI(true);
-                zombie.setSilent(false);
-                AttributeInstance speed = zombie.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
-                if (speed != null) {
-                    speed.setBaseValue(0.05);
-                }
-                if ((atk = zombie.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)) != null) {
-                    atk.setBaseValue(0.5);
-                }
-                if ((hp = zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH)) != null) {
-                    hp.setBaseValue(200.0);
-                }
-                zombie.setHealth(200.0);
-                zombie.getEquipment().clear();
-                zombie.setCanPickupItems(false);
-            });
+            Zombie z = (Zombie)this.testWorld.spawn(loc, Zombie.class, zombie -> this.applyDummySettings(zombie, idx));
             this.dummies.add(z);
         }
         this.dummyTask = new BukkitRunnable(){
@@ -260,36 +239,14 @@ public class TestFieldManager {
                     Location sp = (Location)spawnPoints.get(i);
                     if (!z.isValid() || z.isDead()) {
                         z.remove();
-                        Zombie newZ = (Zombie)TestFieldManager.this.testWorld.spawn(sp, Zombie.class, zombie -> {
-                            AttributeInstance hp;
-                            AttributeInstance atk;
-                            zombie.setCustomName("\u00a7e\u00a7l\u8a13\u7df4\u7528\u30c0\u30df\u30fc " + (idx2 + 1));
-                            zombie.setCustomNameVisible(true);
-                            zombie.setBaby(false);
-                            zombie.setRemoveWhenFarAway(false);
-                            zombie.setShouldBurnInDay(false);
-                            zombie.setAI(true);
-                            zombie.setSilent(false);
-                            AttributeInstance speed = zombie.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
-                            if (speed != null) {
-                                speed.setBaseValue(0.05);
-                            }
-                            if ((atk = zombie.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)) != null) {
-                                atk.setBaseValue(0.5);
-                            }
-                            if ((hp = zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH)) != null) {
-                                hp.setBaseValue(200.0);
-                            }
-                            zombie.setHealth(200.0);
-                            zombie.getEquipment().clear();
-                            zombie.setCanPickupItems(false);
-                        });
+                        Zombie newZ = (Zombie)TestFieldManager.this.testWorld.spawn(sp, Zombie.class, zombie -> TestFieldManager.this.applyDummySettings(zombie, idx2));
                         TestFieldManager.this.dummies.set(i, newZ);
                         continue;
                     }
                     if (z.getLocation().distance(sp) > 10.0) {
                         z.teleport(sp);
                     }
+                    noReinforcements(z);
                     if (z.getHealth() < 200.0) {
                         z.setHealth(Math.min(200.0, z.getHealth() + 2.0));
                     }
@@ -297,6 +254,43 @@ public class TestFieldManager {
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 20L, 20L);
+    }
+
+    private void applyDummySettings(Zombie zombie, int idx) {
+        zombie.setCustomName("\u00a7e\u00a7l\u8a13\u7df4\u7528\u30c0\u30df\u30fc " + (idx + 1));
+        zombie.setCustomNameVisible(true);
+        zombie.setBaby(false);
+        zombie.setRemoveWhenFarAway(false);
+        zombie.setShouldBurnInDay(false);
+        zombie.setAI(true);
+        zombie.setSilent(false);
+        AttributeInstance speed = zombie.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
+        if (speed != null) {
+            speed.setBaseValue(0.05);
+        }
+        AttributeInstance atk = zombie.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
+        if (atk != null) {
+            atk.setBaseValue(0.5);
+        }
+        AttributeInstance hp = zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (hp != null) {
+            hp.setBaseValue(200.0);
+        }
+        noReinforcements(zombie);
+        zombie.setHealth(200.0);
+        zombie.getEquipment().clear();
+        zombie.setCanPickupItems(false);
+    }
+
+    /*
+     * 難易度HARDではゾンビが殴られるたびに増援を呼び、ダミーが無限に増殖する。
+     * 増援確率を0に固定して止める(召喚処理が後から上書きする場合があるので毎tick再設定する)
+     */
+    private static void noReinforcements(Zombie zombie) {
+        AttributeInstance reinf = zombie.getAttribute(Attribute.ZOMBIE_SPAWN_REINFORCEMENTS);
+        if (reinf != null && reinf.getBaseValue() != 0.0) {
+            reinf.setBaseValue(0.0);
+        }
     }
 
     private void clearDummies() {
@@ -309,6 +303,33 @@ public class TestFieldManager {
             z.remove();
         }
         this.dummies.clear();
+        this.purgeLooseZombies();
+    }
+
+    private void purgeLooseZombies() {
+        if (this.testWorld == null) return;
+        boolean hasArea = this.testAreaMin != null && this.testAreaMax != null;
+        for (Zombie z : this.testWorld.getEntitiesByClass(Zombie.class)) {
+            if (this.dummies.contains(z)) continue;
+            String name = z.getCustomName();
+            boolean isDummy = name != null && name.contains("\u8a13\u7df4\u7528\u30c0\u30df\u30fc");
+            if (isDummy || hasArea && this.isInArea(z.getLocation()) || this.isNearTestSpawn(z.getLocation())) {
+                z.remove();
+            }
+        }
+    }
+
+    private boolean isNearTestSpawn(Location loc) {
+        if (this.testSpawn == null || loc.getWorld() != this.testSpawn.getWorld()) return false;
+        return loc.distanceSquared(this.testSpawn) <= 1024.0;
+    }
+
+    public void disable() {
+        this.clearDummies();
+        if (this.skillUpdateTask != null) {
+            this.skillUpdateTask.cancel();
+            this.skillUpdateTask = null;
+        }
     }
 
     public boolean isDummy(Entity e) {

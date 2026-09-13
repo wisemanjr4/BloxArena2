@@ -110,6 +110,12 @@ extends JavaPlugin {
         if (this.gameManager != null && this.gameManager.getState() != GameState.WAITING) {
             this.gameManager.returnAllToLobby();
         }
+        if (this.testFieldManager != null) {
+            this.testFieldManager.disable();
+        }
+        if (this.botManager != null) {
+            this.botManager.clearAll();
+        }
         this.getLogger().info("BAII WoNG \u7121\u52b9\u5316");
     }
 
