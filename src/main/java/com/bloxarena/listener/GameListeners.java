@@ -686,10 +686,6 @@ implements Listener {
         } else if (ultSource instanceof Projectile && ((Projectile)ultSource).getShooter() instanceof Player) {
             ultAttacker = (Player)((Projectile)ultSource).getShooter();
         }
-        if (ultAttacker != null && ultAttacker != victim && victimTeam != null && this.gm.getTeamOf(ultAttacker) != victimTeam) {
-            this.plugin.getUltimateManager().onDamageDealt(ultAttacker, e.getFinalDamage());
-            this.plugin.getUltimateManager().onDamageTaken(victim, e.getFinalDamage());
-        }
         if (ultAttacker != null && this.gm.getPlayerKitType(ultAttacker.getUniqueId()) == KitType.GLACIES) {
             this.plugin.getSkillManager().tryGlaciesImmobilize(ultAttacker, victim);
         }

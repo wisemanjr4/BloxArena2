@@ -1501,7 +1501,7 @@ gsm.setLore(gsl);
         return switch (kit) {
             case BLADE -> "CT10秒 / スニークで発動 周囲3mの敵を打ち上げ3ダメ+弱体化+スロウ+敵スキルCT+5秒";
             case BREAKER -> "CT10秒 / 前方に突進し接触4ダメ+弱体化";
-            case NINJA -> "CT18秒 / 8秒間透明化+耐性I+SpeedII+エンダーパール1個補充";
+            case NINJA -> "CT18秒 / 8秒間透明化+耐性I+SpeedII";
             case BERSERKER -> "CT14秒 / 前方に連続爆発 接触6ダメ+吹き飛ばし";
             case SNIPER -> "CT7秒 / 地上でしゃがみ照準7秒→マーク マーク中は次の一撃で即死";
             case COUNTER -> "CT10秒 / 盾構え+スニークでパリィ2秒 成功で相手を弱体化+スロウ";

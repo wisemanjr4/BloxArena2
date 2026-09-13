@@ -51,6 +51,8 @@ public class UltimateManager {
     private final Map<UUID, Location> swapperMark = new HashMap<UUID, Location>();
     private final Map<UUID, Location> rewindMark = new HashMap<UUID, Location>();
     private final Map<UUID, Long> glaciesHitCooldown = new HashMap<UUID, Long>();
+    private final Map<UUID, Long> chargeLockUntil = new HashMap<UUID, Long>();
+    private long universalLockUntil = 0L;
 
     public UltimateManager(BloxArenaPlugin plugin) {
         this.plugin = plugin;
@@ -59,12 +61,17 @@ public class UltimateManager {
     }
 
     public void addCharge(UUID player, int amount) {
+        long now = System.currentTimeMillis();
+        if (now < this.universalLockUntil || now < this.chargeLockUntil.getOrDefault(player, 0L)) {
+            this.charge.put(player, 0);
+            return;
+        }
         if (amount <= 0) {
             return;
         }
         GameMode mode = this.gm.getCurrentGameMode();
         if (mode == GameMode.TEAM_DEATHMATCH || mode == GameMode.DOMINATION || mode == GameMode.CAPTURE_THE_FLAG) {
-            amount *= 2;
+            amount = (int)Math.round((double)amount * 1.5);
         } else if (mode == GameMode.BATTLE_ARENA) {
             amount = (int)Math.round((double)amount * 0.5);
         }
@@ -87,13 +94,13 @@ public class UltimateManager {
             return 100;
         }
         switch (kit) {
-            case NINJA: return 220;
+            case NINJA: return 150;
             case VAMPIRE: return 160;
             case BREAKER: return 150;
-            case BERSERKER: return 150;
-            case SNIPER: return 150;
+            case BERSERKER: return 140;
+            case SNIPER: return 140;
             case SUNDANCE: return 150;
-            case LANCER: return 130;
+            case LANCER: return 110;
             case ENGINEER: return 130;
             case GUARDIAN: return 130;
             case MARKSMAN: return 120;
@@ -116,13 +123,13 @@ public class UltimateManager {
             case TRAPPER: return 100;
             case GLACIES: return 100;
             case MEDIC: return 100;
-            case PYRO: return 90;
+            case PYRO: return 100;
             case JESTER: return 90;
             case RESTRICTIONER: return 90;
             case SUPERIOR_MISTRAL: return 90;
             case AEGIS: return 90;
             case COUNTER: return 80;
-            case KREUTZ: return 80;
+            case KREUTZ: return 90;
             case NILGIRITAR: return 80;
             case RELEASER: return 80;
             case BULWARK: return 80;
@@ -158,66 +165,8 @@ public class UltimateManager {
         this.swapperMark.clear();
         this.rewindMark.clear();
         this.glaciesHitCooldown.clear();
-    }
-
-    public void onDamageDealt(Player attacker, double dmg) {
-        if (!participant(attacker)) {
-            return;
-        }
-        KitType kit = this.gm.getPlayerKitType(attacker.getUniqueId());
-        if (kit == null) {
-            return;
-        }
-        int amount = 0;
-        if (kit.getRole() == KitRole.DUELIST) {
-            amount = (int)(dmg * 1.2);
-        } else if (kit.getRole() == KitRole.INITIATOR) {
-            amount = (int)(dmg * 0.6);
-        }
-        if (amount > 0) {
-            this.addCharge(attacker.getUniqueId(), amount);
-        }
-    }
-
-    public void onDamageTaken(Player victim, double dmg) {
-        if (!participant(victim)) {
-            return;
-        }
-        KitType kit = this.gm.getPlayerKitType(victim.getUniqueId());
-        if (kit == null) {
-            return;
-        }
-        int amount = 0;
-        if (kit.getRole() == KitRole.DUELIST) {
-            amount = (int)(dmg * 0.8);
-        } else if (kit.getRole() == KitRole.SENTINEL) {
-            amount = (int)(dmg * 1.5);
-        }
-        if (amount > 0) {
-            this.addCharge(victim.getUniqueId(), amount);
-        }
-    }
-
-    public void onSkillUsed(Player p) {
-        if (!participant(p)) {
-            return;
-        }
-        KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
-        if (kit == null) {
-            return;
-        }
-        if (kit.getRole() == KitRole.INITIATOR) {
-            this.addCharge(p.getUniqueId(), 12);
-        } else if (kit.getRole() == KitRole.CONTROLLER) {
-            this.addCharge(p.getUniqueId(), 4);
-        }
-    }
-
-    public void onKill(Player killer) {
-        if (!participant(killer)) {
-            return;
-        }
-        this.addCharge(killer.getUniqueId(), 6);
+        this.chargeLockUntil.clear();
+        this.universalLockUntil = System.currentTimeMillis() + 5000L;
     }
 
     public void tickCharge(Player p) {
@@ -259,8 +208,17 @@ public class UltimateManager {
             return;
         }
         this.charge.put(p.getUniqueId(), 0);
+        this.chargeLockUntil.put(p.getUniqueId(), System.currentTimeMillis() + 5000L);
         Bukkit.broadcastMessage((String)("\u00a7d\u26a1 \u00a7f" + p.getName() + " \u00a7d\u00a7l\u304c\u30a2\u30eb\u30c6\u30a3\u30e1\u30c3\u30c8\u300c" + this.ultimateName(kit) + "\u300d\u3092\u89e3\u653e\uff01"));
         this.playUltimateIntro(p, kit);
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (p.isOnline() && this.gm.isParticipant(p) && !this.gm.isSpectator(p)) {
+                this.applyUltimate(p, kit);
+            }
+        }, 15L);
+    }
+
+    private void applyUltimate(Player p, KitType kit) {
         switch (kit) {
             case BLADE: this.bladeUltimate(p); break;
             case BREAKER: this.breakerUltimate(p); break;
@@ -326,7 +284,7 @@ public class UltimateManager {
                 for (Entity e : this.cur.getWorld().getNearbyEntities(this.cur, 1.2, 1.5, 1.2)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player bladeVictim = (Player)e;
-                    bladeVictim.damage(20.0, (Entity)p);
+                    bladeVictim.damage(18.0, (Entity)p);
         UltimateManager.this.killEffect(bladeVictim);
                     bladeVictim.damage(0.5, (Entity)p);
                     UltimateManager.this.killEffect(bladeVictim);
@@ -370,6 +328,8 @@ public class UltimateManager {
 
     private void ninjaUltimate(Player p) {
         Location origin = p.getLocation().clone();
+        this.refillEnderPearls(p, 4);
+        p.sendMessage("\u00a77\u30a8\u30f3\u30c0\u30fc\u30d1\u30fc\u30eb\u3092\u88dc\u5145\u3057\u305f\uff01");
         this.skillManager.spawnDecoy(p, origin);
         this.skillManager.hideArmor(p);
         p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100, 0, false, false));
@@ -399,6 +359,18 @@ public class UltimateManager {
                 p.removePotionEffect(PotionEffectType.INVISIBILITY);
             }
         }, 100L);
+    }
+
+    private void refillEnderPearls(Player p, int amount) {
+        int have = 0;
+        for (ItemStack is : p.getInventory().getContents()) {
+            if (is != null && is.getType() == Material.ENDER_PEARL) {
+                have += is.getAmount();
+            }
+        }
+        if (have < amount) {
+            p.getInventory().addItem(new ItemStack(Material.ENDER_PEARL, amount - have));
+        }
     }
 
     private Player findAimer(Player self, double range) {
@@ -444,11 +416,7 @@ public class UltimateManager {
                 this.cur.add(dir.clone().multiply(0.3));
                 w.createExplosion(this.cur, 0.0f, false, false, (Entity)p);
                 w.spawnParticle(Particle.FLAME, this.cur, 10, 0.6, 0.6, 0.6, 0.03);
-                for (Entity e : w.getNearbyEntities(this.cur, 3.0, 2.0, 3.0)) {
-                    if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
-                    Player bersVictim = (Player)e;
-                    double dist = this.cur.distance(bersVictim.getLocation());
-                    bersVictim.damage(dist <= 2.1 ? 20.0 : 10.0, (Entity)p);
+                for (Player bersVictim : UltimateManager.this.areaExplosion(p, this.cur, 3.5, 3.5, 20.0, 1.8, 0.5, false)) {
                     UltimateManager.this.killEffect(bersVictim);
                 }
             }
@@ -478,7 +446,7 @@ public class UltimateManager {
                     this.cancel();
                     return;
                 }
-                this.cur.add(dir.clone().multiply(0.6));
+                this.cur.add(dir.clone().multiply(0.9));
                 World w = this.cur.getWorld();
                 for (int dx = -2; dx <= 2; ++dx) {
                     for (int dy = -2; dy <= 2; ++dy) {
@@ -523,7 +491,7 @@ public class UltimateManager {
             final Player owner = p;
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
                 World w = loc.getWorld();
-                UltimateManager.this.areaExplosion(owner, loc, 5.0, 3.0, 12.0, 1.0);
+                UltimateManager.this.areaExplosion(owner, loc, 6.0, 6.0, 20.0, 1.0, 0.75, false);
                 w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 12, 2.0, 2.0, 2.0, 0.1);
                 w.spawnParticle(Particle.LAVA, loc, 15, 1.5, 1.5, 1.5, 0.0);
             }, 200L);
@@ -596,6 +564,8 @@ public class UltimateManager {
 
     private void whirlwindUltimate(final Player p) {
         final Vector dir = p.getLocation().getDirection().normalize();
+        final Vector fwd = p.getLocation().getDirection().setY(0).normalize();
+        final Vector lift = new Vector(fwd.getX() * 0.4, 0.6, fwd.getZ() * 0.4);
         final Location start = p.getLocation().clone().add(dir.clone().multiply(2.0));
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.0f, 0.5f);
         new BukkitRunnable(){
@@ -612,7 +582,7 @@ public class UltimateManager {
                 for (Entity e : w.getNearbyEntities(this.cur, 3.0, 3.0, 3.0)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player t2 = (Player)e;
-                    t2.setVelocity(t2.getVelocity().add(new Vector(0.0, 0.5, 0.0)));
+                    t2.setVelocity(t2.getVelocity().add(lift));
                     t2.damage(2.0, (Entity)p);
                 }
             }
@@ -712,7 +682,7 @@ public class UltimateManager {
             World w = target.getWorld();
             w.spawnParticle(Particle.EXPLOSION_HUGE, target, 10, 3.0, 3.0, 3.0, 0.1);
             w.spawnParticle(Particle.LAVA, target, 20, 2.0, 2.0, 2.0, 0.0);
-            UltimateManager.this.areaExplosion(owner, target, 6.0, 4.0, 12.0, 2.0);
+            UltimateManager.this.areaExplosion(owner, target, 10.0, 10.0, 26.0, 2.0, 0.30, true);
         }, 200L);
     }
 
@@ -898,7 +868,7 @@ public class UltimateManager {
         World w = p.getWorld();
         w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 12, 4.0, 3.0, 4.0, 0.1);
         w.spawnParticle(Particle.LAVA, loc, 20, 3.0, 2.0, 3.0, 0.0);
-        this.areaExplosion(p, loc, 8.0, 4.0, 10.0, 2.5);
+        this.areaExplosion(p, loc, 9.0, 9.0, 14.0, 2.5, 0.50, false);
         p.sendMessage("\u00a76\u00a7l\u2726 \u30ab\u30bf\u30b9\u30c8\u30ed\u30d5\uff01");
     }
 
@@ -943,19 +913,50 @@ public class UltimateManager {
     }
 
     public void areaExplosion(Player owner, Location center, double rx, double ry, double dmg, double kb) {
+        this.areaExplosion(owner, center, rx, ry, dmg, kb, 1.0, true);
+    }
+
+    /*
+     * edgeFalloff = 爆発判定の末端でのダメージ倍率(例:0.5なら末端は半分)。高いほど減衰しない
+     * pierceTerrain = false の場合、中心との間に遮蔽ブロックがある相手には当たらない
+     */
+    public List<Player> areaExplosion(Player owner, Location center, double rx, double ry, double dmg, double kb, double edgeFalloff, boolean pierceTerrain) {
+        ArrayList<Player> hit = new ArrayList<Player>();
         World w = center.getWorld();
         if (w == null) {
-            return;
+            return hit;
         }
         w.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.5f);
         for (Entity e : w.getNearbyEntities(center, rx, ry, rx)) {
             if (!(e instanceof Player) || !this.isEnemy(owner, (Player)e)) continue;
             Player t = (Player)e;
-            t.damage(dmg, (Entity)owner);
+            if (!pierceTerrain && !this.explosionReaches(center, t)) continue;
+            double ratio = Math.min(1.0, center.distance(t.getLocation()) / rx);
+            double scaled = dmg * (edgeFalloff + (1.0 - edgeFalloff) * (1.0 - ratio));
+            t.damage(scaled, (Entity)owner);
             if (kb > 0.0) {
                 t.setVelocity(t.getLocation().toVector().subtract(center.toVector()).normalize().multiply(kb).setY(0.5));
             }
+            hit.add(t);
         }
+        return hit;
+    }
+
+    private boolean explosionReaches(Location center, Player t) {
+        Location from = center.clone().add(0.0, 0.5, 0.0);
+        Location to = t.getLocation().clone().add(0.0, 1.0, 0.0);
+        Vector dir = to.toVector().subtract(from.toVector());
+        double dist = dir.length();
+        if (dist < 2.0) {
+            return true;
+        }
+        dir.normalize();
+        for (double d = 1.0; d <= dist - 1.0; d += 0.5) {
+            if (from.clone().add(dir.clone().multiply(d)).getBlock().getType().isOccluding()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void playUltimateIntro(Player p, KitType kit) {

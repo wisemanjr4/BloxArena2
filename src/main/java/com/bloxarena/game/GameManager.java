@@ -1330,7 +1330,6 @@ public class GameManager {
         String killerColor = "\u00a7f";
         if (killer != null) {
             this.kills.merge(killer.getUniqueId(), 1, Integer::sum);
-            this.plugin.getUltimateManager().onKill(killer);
             this.matchStats.addKill(killer.getUniqueId());
             this.plugin.getStatsManager().addKill(killer.getUniqueId());
             TeamColor kt = this.getTeamOf(killer);

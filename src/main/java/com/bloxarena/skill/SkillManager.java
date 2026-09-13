@@ -1373,7 +1373,7 @@ public class SkillManager {
         }
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (!this.gm.isParticipant(p) || this.gm.isSpectator(p) || !this.plugin.getUltimateManager().canUltimate(p.getUniqueId())) continue;
-            p.getWorld().spawnParticle(Particle.END_ROD, p.getLocation().add(0.0, 1.0, 0.0), 2, 0.3, 0.6, 0.3, 0.02);
+            p.getWorld().spawnParticle(Particle.CRIT_MAGIC, p.getLocation().add(0.0, 0.5, 0.0), 1, 0.3, 0.6, 0.3, 0.02);
         }
     }
 
@@ -1743,7 +1743,6 @@ public class SkillManager {
             }
         }
         this.plugin.getTutorialManager().checkSkillUsed(p);
-        this.plugin.getUltimateManager().onSkillUsed(p);
     }
 
     public void clearSniperMarkOnShoot(Player p) {
@@ -1891,9 +1890,6 @@ public class SkillManager {
     }
 
     private void ninjaSkill(Player p) {
-        if (!p.getInventory().contains(Material.ENDER_PEARL)) {
-            p.getInventory().addItem(new ItemStack[]{new ItemStack(Material.ENDER_PEARL)});
-        }
         this.setCooldown(p.getUniqueId(), 18000L);
         p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 160, 0, false, false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 160, 0, false, false));
