@@ -28,8 +28,11 @@ import com.bloxarena.BloxArenaPlugin;
 import com.bloxarena.game.TeamColor;
 import com.bloxarena.kit.KitType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
@@ -52,7 +55,7 @@ import org.bukkit.potion.PotionType;
 
 public class KitBuilder {
     public static final Material BURST_MATERIAL = Material.HEART_OF_THE_SEA;
-    private static boolean supporterRotationB = false;
+    private static final Map<UUID, Boolean> supporterRotationB = new HashMap<UUID, Boolean>();
 
     public static List<ItemStack> getDefaultItems(KitType kit, TeamColor team) {
         ArrayList<ItemStack> list = new ArrayList<ItemStack>();
@@ -1400,7 +1403,7 @@ gsm.setLore(gsl);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.setDisplayName("\u00a7c\u00a7l\ud83d\udca5 \u30d0\u30fc\u30b9\u30c8 \u00a77(\u53f3\u30af\u30ea\u30c3\u30af)");
-            meta.setLore(List.of("\u00a77\u5468\u56f2\u306e\u6575\u3092\u5439\u304d\u98db\u3070\u3057\uff0b\u30c0\u30e1\u30fc\u30b8", "\u00a77\u81ea\u8eab\u3068\u6575\u306b\u77ed\u6642\u9593\u5f31\u4f53\u5316\u4ed8\u4e0e", "\u00a7c\u00a7l1\u30e9\u30a6\u30f3\u30c91\u56de\u9650\u308a \u00a77\u4f7f\u7528\u5f8c\u6d88\u6ec5"));
+            meta.setLore(List.of("\u00a77\u5468\u56f2\u306e\u6575\u3092\u5439\u304d\u98db\u3070\u3057\uff0b\u30c0\u30e1\u30fc\u30b8", "\u00a77\u81ea\u8eab\u306e\u72b6\u614b\u7570\u5e38\u3092\u89e3\u9664\uff0b\u77ed\u6642\u9593\u5f31\u4f53\u5316\u4ed8\u4e0e", "\u00a7c\u00a7l1\u30e9\u30a6\u30f3\u30c91\u56de\u9650\u308a \u00a77\u4f7f\u7528\u5f8c\u6d88\u6ec5"));
             meta.getPersistentDataContainer().set(new NamespacedKey((Plugin)plugin, "burst_skill"), PersistentDataType.BYTE, (byte)1);
             item.setItemMeta(meta);
         }
@@ -1469,7 +1472,8 @@ gsm.setLore(gsl);
             if (item == null || item.getType() != Material.SPLASH_POTION) continue;
             p.getInventory().setItem(i, null);
         }
-        if (supporterRotationB) {
+        boolean useB = supporterRotationB.getOrDefault(p.getUniqueId(), false);
+        if (useB) {
             p.sendMessage("\u00a72\u00a7l\u518d\u88dc\u7d66 [B] \u00a77\u30b9\u30d4\u30fc\u30c9+\u885d\u6483\u5438\u53ce");
             p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.SPEED, 1, 600, Color.fromRGB((int)124, (int)175, (int)198), "\u00a7b\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u30b9\u30d4\u30fc\u30c9")});
             p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.ABSORPTION, 3, 500, Color.fromRGB((int)75, (int)75, (int)75), "\u00a77\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u5438\u53ce")});
@@ -1479,7 +1483,7 @@ gsm.setLore(gsl);
             p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.REGENERATION, 0, 200, Color.fromRGB((int)255, (int)153, (int)204), "\u00a7d\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u518d\u751f")});
             p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSplash(PotionType.INSTANT_HEAL)});
         }
-        supporterRotationB = !supporterRotationB;
+        supporterRotationB.put(p.getUniqueId(), !useB);
     }
 
     private static ItemStack makeKitGuide(KitType kit) {
@@ -1487,7 +1491,7 @@ gsm.setLore(gsl);
         ItemMeta meta = book.getItemMeta();
         if (meta != null) {
             meta.setDisplayName("\u00a7e\u00a7l\ud83d\udcd6 " + kit.getName() + " \u89e3\u8aac");
-            meta.setLore(List.of("\u00a77" + kit.getDescription(), "", "\u00a76\u30b9\u30ad\u30eb: \u00a7f" + KitBuilder.getSkillInfo(kit), "\u00a7a\u88c5\u5099: \u00a7f" + KitBuilder.getGearSummary(kit), "", "\u00a7c\ud83d\udca5 \u30d0\u30fc\u30b9\u30c8: \u00a7f\u5468\u56f2\u7206\u767a+\u6575\u5439\u98db+\u5f31\u4f53\u5316", "\u00a77  \u00a7o\u53f3\u30af\u30ea\u30c3\u30af / 1\u30e9\u30a6\u30f3\u30c91\u56de", "\u00a77  \u00a7o\u4f7f\u7528\u5f8c\u6d88\u6ec5", "", "\u00a77\u5de6\u30af\u30ea\u30c3\u30af\u3067\u8a73\u7d30\u3092\u898b\u308b"));
+            meta.setLore(List.of("\u00a77" + kit.getDescription(), "", "\u00a76\u30b9\u30ad\u30eb: \u00a7f" + KitBuilder.getSkillInfo(kit), "\u00a7a\u88c5\u5099: \u00a7f" + KitBuilder.getGearSummary(kit), "", "\u00a7c\ud83d\udca5 \u30d0\u30fc\u30b9\u30c8: \u00a7f\u5468\u56f2\u7206\u767a+\u6575\u5439\u98db+\u72b6\u614b\u7570\u5e38\u89e3\u9664", "\u00a77  \u00a7o\u53f3\u30af\u30ea\u30c3\u30af / 1\u30e9\u30a6\u30f3\u30c91\u56de", "\u00a77  \u00a7o\u4f7f\u7528\u5f8c\u6d88\u6ec5", "", "\u00a77\u5de6\u30af\u30ea\u30c3\u30af\u3067\u8a73\u7d30\u3092\u898b\u308b"));
             book.setItemMeta(meta);
         }
         return book;

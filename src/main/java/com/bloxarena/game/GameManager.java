@@ -266,6 +266,7 @@ public class GameManager {
     public void onKitSelectDone() {
         this.state = GameState.IN_GAME;
         this.inGameStartTime = System.currentTimeMillis();
+        this.plugin.getUltimateManager().resetAll();
         this.ctfRedTeamSize = this.redTeam.size();
         this.ctfBlueTeamSize = this.blueTeam.size();
         this.applyUnderdogBonus();

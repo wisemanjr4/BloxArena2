@@ -154,6 +154,8 @@ public class SkillManager {
     private final Set<UUID> kreutzFullOrder = new HashSet<UUID>();
     private final Map<UUID, Double> kreutzMana = new HashMap<UUID, Double>();
     private final Map<UUID, Long> kreutzManaPerkCooldown = new HashMap<UUID, Long>();
+    private final Map<UUID, Integer> kreutzFreeStock = new HashMap<UUID, Integer>();
+    private final Map<UUID, Long> kreutzManaDelay = new HashMap<UUID, Long>();
     private final Set<UUID> piercingRecently = new HashSet<UUID>();
     private final Map<UUID, Integer> marksmanBoltCount = new HashMap<UUID, Integer>();
     private final Map<UUID, Long> grangBurstCooldown = new HashMap<UUID, Long>();
@@ -167,7 +169,8 @@ public class SkillManager {
     private final Set<UUID> counterUltimate = new HashSet<UUID>();
     private final Set<UUID> sniperUltimate = new HashSet<UUID>();
     private final Set<UUID> marksmanUltimate = new HashSet<UUID>();
-    private final Set<UUID> trapperUltimate = new HashSet<UUID>();
+    private final Map<UUID, Long> trapperUltimate = new HashMap<UUID, Long>();
+    private final Map<UUID, Long> necroUltimateUntil = new HashMap<UUID, Long>();
     private final Map<UUID, Long> lancerUltimate = new HashMap<UUID, Long>();
     private final Set<UUID> cookUltimate = new HashSet<UUID>();
     private final Set<UUID> vampireUltimate = new HashSet<UUID>();
@@ -175,7 +178,7 @@ public class SkillManager {
     private final Map<UUID, Long> sundanceUltimate = new HashMap<UUID, Long>();
     private final Map<UUID, Location> swapperMark = new HashMap<UUID, Location>();
     private final Set<UUID> transporterUltimate = new HashSet<UUID>();
-    private final Set<UUID> bulwarkUltimate = new HashSet<UUID>();
+    private final Map<UUID, Long> bulwarkUltimate = new HashMap<UUID, Long>();
     private final Map<UUID, Long> glaciesUltimate = new HashMap<UUID, Long>();
     private final Set<UUID> superiorMistralUltimate = new HashSet<UUID>();
     private final Map<UUID, Long> glaciesUltimateCooldown = new HashMap<UUID, Long>();
@@ -344,6 +347,9 @@ public class SkillManager {
         this.kreutzManaPerkCooldown.clear();
         this.kreutzHand.clear();
         this.kreutzFullOrder.clear();
+        this.kreutzFreeStock.clear();
+        this.kreutzManaDelay.clear();
+        this.necroUltimateUntil.clear();
         for (UUID uid : this.kreutzMana.keySet()) {
             this.kreutzMana.put(uid, 50.0);
         }
@@ -413,7 +419,14 @@ public class SkillManager {
     }
 
     public void onClick(Player p, ItemStack held, boolean isLeft) {
-        if (!isLeft || held == null || held.getItemMeta() == null) {
+        if (!isLeft) {
+            return;
+        }
+        if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.KREUTZ && !p.isSneaking()) {
+            this.kreutzManaCharge(p);
+            return;
+        }
+        if (held == null || held.getItemMeta() == null) {
             return;
         }
         ItemMeta meta = held.getItemMeta();
@@ -530,7 +543,7 @@ public class SkillManager {
 
     public boolean onSniperHit(Player shooter, Player victim) {
         if (this.sniperUltimate.remove(shooter.getUniqueId()) && this.gm.getPlayerKitType(shooter.getUniqueId()) == KitType.SNIPER) {
-            victim.damage(26.0, (Entity)shooter);
+            victim.damage(20.0, (Entity)shooter);
             shooter.getWorld().playSound(shooter.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 2.0f);
             shooter.sendMessage("\u00a7c\u00a7l\u30a2\u30a4\u30fb\u30aa\u30d6\u30fb\u30db\u30eb\u30b9\uff01");
             return true;
@@ -1144,7 +1157,7 @@ public class SkillManager {
             }
         }
         for (TrapData trapData : this.activeTraps) {
-            if (trapData.loc.getWorld() == null || this.tickCounter % 3 != 0 || this.trapperUltimate.contains(trapData.owner)) continue;
+            if (trapData.loc.getWorld() == null || this.tickCounter % 3 != 0) continue;
             trapData.loc.getWorld().spawnParticle(Particle.ENCHANTMENT_TABLE, trapData.loc.clone().add(0.0, 0.15, 0.0), 1, 0.05, 0.02, 0.05, 0.0);
         }
         for (MineData mineData : this.activeMines) {
@@ -1206,7 +1219,12 @@ public class SkillManager {
         }
         for (Player pl : Bukkit.getOnlinePlayers()) {
             if (!this.gm.isParticipant(pl) || this.gm.isSpectator(pl) || this.gm.getPlayerKitType(pl.getUniqueId()) != KitType.KREUTZ) continue;
-            this.addKreutzMana(pl.getUniqueId(), 1.0);
+            Long delayUntil = this.kreutzManaDelay.get(pl.getUniqueId());
+            if (delayUntil != null) {
+                if (System.currentTimeMillis() < delayUntil) continue;
+                this.kreutzManaDelay.remove(pl.getUniqueId());
+            }
+            this.addKreutzMana(pl.getUniqueId(), 2.0);
         }
         long now = System.currentTimeMillis();
         new ArrayList<Map.Entry<UUID, Long>>(this.comboLastHit.entrySet()).forEach(e2 -> {
@@ -1334,8 +1352,9 @@ public class SkillManager {
         block0: for (TrapData t : this.activeTraps) {
             if (System.currentTimeMillis() - t.placeTime < 1000L) continue;
             TeamColor ownerTeam = this.gm.getTeam(t.owner);
+            double triggerRange = this.hasTrapperUltimate(t.owner) ? 4.2 : 3.0;
             for (Player p : t.loc.getWorld().getPlayers()) {
-                if (!(p.getLocation().distance(t.loc) <= 3.0) || !this.gm.isParticipant(p) || this.gm.getTeamOf(p) == ownerTeam || t.triggered) continue;
+                if (!(p.getLocation().distance(t.loc) <= triggerRange) || !this.gm.isParticipant(p) || this.gm.getTeamOf(p) == ownerTeam || t.triggered) continue;
                 this.triggerTrap(t, p);
                 continue block0;
             }
@@ -1763,6 +1782,9 @@ public class SkillManager {
             return;
         }
         p.setInvulnerable(true);
+        for (PotionEffectType bad : new PotionEffectType[]{PotionEffectType.SLOW, PotionEffectType.WEAKNESS, PotionEffectType.POISON, PotionEffectType.WITHER, PotionEffectType.HUNGER, PotionEffectType.BLINDNESS, PotionEffectType.CONFUSION, PotionEffectType.SLOW_DIGGING, PotionEffectType.UNLUCK, PotionEffectType.DARKNESS}) {
+            p.removePotionEffect(bad);
+        }
         p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 10, 1, false, true));
         w.playSound(loc, Sound.BLOCK_BEACON_DEACTIVATE, 2.0f, 2.0f);
         p.sendMessage("\u00a7c\u00a7l\u26a1 \u30d0\u30fc\u30b9\u30c8\u767a\u52d5\uff01");
@@ -2030,7 +2052,7 @@ public class SkillManager {
             }
             this.setCooldown(p.getUniqueId(), 1000L);
             this.addKreutzMana(p.getUniqueId(), -5.0);
-            int cap = this.kreutzFullOrder.contains(p.getUniqueId()) ? 4 : 1;
+            int cap = this.kreutzFreeStock.getOrDefault(p.getUniqueId(), 0) > 0 ? 4 : 1;
             List<String> hand = this.kreutzHand.getOrDefault(p.getUniqueId(), new ArrayList<String>());
             if (hand.size() >= cap) {
                 p.sendMessage("\u00a7c\u26a0 \u624b\u672d\u6700\u5927" + cap + "\u679a \u00a78\u00bb \u00a77\u30ab\u30fc\u30c9\u3092\u7a7a\u3051\u3066\u5f15\u3051");
@@ -2046,7 +2068,7 @@ public class SkillManager {
         List<String> castHand = this.kreutzHand.get(p.getUniqueId());
         String card = castHand != null && !castHand.isEmpty() ? castHand.get(0) : null;
         if (card == null) {
-            this.kreutzManaCharge(p);
+            p.sendMessage("\u00a75\u00a7l\u2726 \u30de\u30ca\u30c1\u30e3\u30fc\u30b8\u306f\u5de6\u30af\u30ea\u30c3\u30af\uff01\u00a77\u30ab\u30fc\u30c9\u306f\u3057\u3083\u304c\u307f+\u53f3\u30af\u30ea\u30c3\u30af\u3067\u30c9\u30ed\u30fc");
             return;
         }
         Player target = this.getTargetInSight(p, 20);
@@ -2069,12 +2091,19 @@ public class SkillManager {
             p.sendMessage("\u00a7c\ud83c\udfaf \u5bfe\u8c61\u306a\u3057 \u00a78\u00bb \u00a77\u30ab\u30fc\u30c9\u306f\u6d88\u8cbb\u3055\u308c\u306a\u3044");
             return;
         }
-        if (this.getKreutzMana(p.getUniqueId()) < 30.0) {
-            p.sendMessage("\u00a7c\u26a0 \u30de\u30ca\u4e0d\u8db3");
-            return;
+        int stock = this.kreutzFreeStock.getOrDefault(p.getUniqueId(), 0);
+        if (stock > 0) {
+            this.kreutzFreeStock.put(p.getUniqueId(), stock - 1);
+            p.sendMessage("\u00a7d\u7121\u6599\u767a\u52d5\u30b9\u30c8\u30c3\u30af \u00a78\u00bb \u00a7f\u6b8b\u308a" + (stock - 1) + "\u56de");
+        } else {
+            if (this.getKreutzMana(p.getUniqueId()) < 20.0) {
+                p.sendMessage("\u00a7c\u26a0 \u30de\u30ca\u4e0d\u8db3");
+                return;
+            }
+            this.addKreutzMana(p.getUniqueId(), -20.0);
         }
         castHand.remove(0);
-        this.addKreutzMana(p.getUniqueId(), -30.0);
+        this.kreutzManaDelay.put(p.getUniqueId(), System.currentTimeMillis() + 3000L);
         int remaining = castHand.size();
         p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5531\u3048\u305f\uff01" + (remaining > 0 ? " \u00a78| \u00a7f\u624b\u672d: " + String.join(", ", castHand) : " \u00a78| \u00a77\u624b\u672d\u7a76\u5c3d"));
         switch (card) {
@@ -2377,14 +2406,14 @@ public class SkillManager {
             p.sendMessage("\u00a7c\u26a0 \u30ea\u30dc\u30eb\u30d3\u30f3\u30b0CT \u00a78\u00bb \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
             return;
         }
-        this.sundanceRevolver.put(p.getUniqueId(), 5);
+        this.sundanceRevolver.put(p.getUniqueId(), 6);
         Long currentCd = this.skillCooldowns.get(p.getUniqueId());
         long newCd = (currentCd != null && currentCd > System.currentTimeMillis() ? currentCd : System.currentTimeMillis()) + 7000L;
         this.skillCooldowns.put(p.getUniqueId(), newCd);
         ItemStack xbow = p.getInventory().getItemInMainHand();
         if (xbow != null && xbow.getType() == Material.CROSSBOW) {
             ItemMeta m = xbow.getItemMeta();
-            m.setDisplayName("\u00a7b\u00a7l\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u30fb\u30af\u30ed\u30b9\u30dc\u30a6 [5/5]");
+            m.setDisplayName("\u00a7b\u00a7l\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u30fb\u30af\u30ed\u30b9\u30dc\u30a6 [6/6]");
             xbow.setItemMeta(m);
             ItemMeta fresh = xbow.getItemMeta();
             if (fresh instanceof CrossbowMeta) {
@@ -2394,7 +2423,7 @@ public class SkillManager {
                 xbow.setItemMeta((ItemMeta)cm);
             }
         }
-        p.sendMessage("\u00a7b\u00a7l\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u8d77\u52d5 \u00a78\u00bb \u00a7f5\u767a\u81ea\u52d5\u88c5\u586b");
+        p.sendMessage("\u00a7b\u00a7l\u30ea\u30dc\u30eb\u30d3\u30f3\u30b0\u8d77\u52d5 \u00a78\u00bb \u00a7f6\u767a\u81ea\u52d5\u88c5\u586b");
     }
 
     private void rocketerSkill(Player p) {
@@ -2549,13 +2578,13 @@ public class SkillManager {
     private void trapperSkill(Player p) {
         TrapData oldest;
         this.setCooldown(p.getUniqueId(), 8000L);
-        int maxTraps = this.trapperUltimate.contains(p.getUniqueId()) ? 4 : 2;
+        int maxTraps = 2;
         if (this.activeTraps.stream().filter(t -> t.owner.equals(p.getUniqueId())).count() >= (long)maxTraps && (oldest = (TrapData)this.activeTraps.stream().filter(t -> t.owner.equals(p.getUniqueId())).findFirst().orElse(null)) != null) {
             this.activeTraps.remove(oldest);
         }
         Location loc = p.getLocation().clone();
         this.activeTraps.add(new TrapData(p.getUniqueId(), loc));
-        p.sendMessage("\u00a73\u00a7l\u7f60\u8a2d\u7f6e \u00a78\u00bb \u00a7f\u6700\u5927" + maxTraps + "\u500b" + (this.trapperUltimate.contains(p.getUniqueId()) ? "\uff08\u4e0d\u53ef\u8996\uff09" : ""));
+        p.sendMessage("\u00a73\u00a7l\u7f60\u8a2d\u7f6e \u00a78\u00bb \u00a7f\u6700\u5927" + maxTraps + "\u500b");
     }
 
     private void triggerTrap(TrapData t, Player victim) {
@@ -2577,11 +2606,14 @@ public class SkillManager {
             t.loc.getWorld().playSound(t.loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
             t.loc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, t.loc, 2, 0.5, 0.5, 0.5, 0.1);
             Player trapOwner = Bukkit.getPlayer((UUID)t.owner);
-            for (Entity e : t.loc.getWorld().getNearbyEntities(t.loc, 3.0, 2.0, 3.0)) {
+            boolean boomUp = this.hasTrapperUltimate(t.owner);
+            double bx = boomUp ? 6.0 : 3.0;
+            double by = boomUp ? 4.0 : 2.0;
+            for (Entity e : t.loc.getWorld().getNearbyEntities(t.loc, bx, by, bx)) {
                 Player tgt;
                 if (!(e instanceof Player) || !this.gm.isParticipant(tgt = (Player)e) || this.gm.getTeamOf(tgt) == this.gm.getTeamOf(trapOwner)) continue;
                 double dist = t.loc.distance(tgt.getLocation());
-                double dmg = 12.0 * Math.max(0.75, 1.0 - dist / 3.0);
+                double dmg = 12.0 * Math.max(0.75, 1.0 - dist / bx);
                 tgt.damage(dmg, (Entity)trapOwner);
             }
             if (victim != null && victim.isOnline()) {
@@ -3277,19 +3309,23 @@ public class SkillManager {
         return this.marksmanUltimate.remove(uid);
     }
 
+    public boolean isSundanceRevolving(UUID uid) {
+        return this.sundanceRevolver.containsKey(uid);
+    }
+
     public void setTrapperUltimate(Player p) {
-        this.trapperUltimate.add(p.getUniqueId());
-        p.sendMessage("\u00a73\u00a7l\u7f60\u306e\u7f6e\u304d\u6570\u5897\u52a0\u30fb\u4e0d\u53ef\u8996\u5316\uff01");
+        this.trapperUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 40000L);
+        p.sendMessage("\u00a73\u00a7l\u5b8c\u5168\u72af\u7f6a \u00a78\u00bb \u00a7f40\u79d2\u9593 \u7f60\u306e\u53cd\u5fdc\u7bc4\u56f2+40%\u30fb\u7206\u767a\u7bc4\u56f2+100%\uff01");
     }
 
     public boolean hasTrapperUltimate(UUID uid) {
-        return this.trapperUltimate.contains(uid);
+        return this.isTimedUltimate(this.trapperUltimate, uid);
     }
 
     public void setLancerUltimate(Player p) {
-        this.lancerUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
-        p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 1200, 0, false, true));
-        p.sendMessage("\u00a7b\u00a7l\u30c0\u30a4\u30ca\u30e2\u30e9\u30f3\u30b9 \u00a78\u00bb \u00a7f1\u5206\u9593 \u69cd\u30ea\u30fc\u30c110m\uff01");
+        this.lancerUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 40000L);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 800, 0, false, true));
+        p.sendMessage("\u00a7b\u00a7l\u30c0\u30a4\u30ca\u30e2\u30e9\u30f3\u30b9 \u00a78\u00bb \u00a7f40\u79d2\u9593 \u69cd\u30ea\u30fc\u30c110m\uff01");
     }
 
     public void setVampireUltimate(Player p) {
@@ -3302,15 +3338,30 @@ public class SkillManager {
     }
 
     public void setGrangUltimate(Player p) {
-        this.grangUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
-        p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 1200, 1, false, true));
-        p.sendMessage("\u00a77\u00a7l\u6a5f\u52d5\u8981\u585e \u00a78\u00bb \u00a7f1\u5206\u9593 \u30c1\u30e3\u30fc\u30b8\u9ad8\u901f\u30fb\u8010\u6027II\uff01");
+        this.grangUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 40000L);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 800, 1, false, true));
+        p.sendMessage("\u00a77\u00a7l\u6a5f\u52d5\u8981\u585e \u00a78\u00bb \u00a7f40\u79d2\u9593 \u30c1\u30e3\u30fc\u30b8\u9ad8\u901f\u30fb\u8010\u6027II\uff01");
     }
 
     public void setSundanceUltimate(Player p) {
         this.sundanceUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
-        this.sundanceRevolver.put(p.getUniqueId(), 12);
-        p.sendMessage("\u00a7b\u00a7l\u30ec\u30f4\u30a9\u30ea\u30e5\u30fc\u30b7\u30e7\u30f3 \u00a78\u00bb \u00a7f1\u5206\u9593\u88c5\u586b12\u767a\u30fbCT\u77ed\u7e2e\uff01");
+        this.sundanceRevolver.put(p.getUniqueId(), 8);
+        ItemStack xbow = p.getInventory().getItemInMainHand();
+        if (xbow != null && xbow.getType() == Material.CROSSBOW) {
+            ItemMeta m = xbow.getItemMeta();
+            if (m != null) {
+                m.setDisplayName("\u00a7b\u00a7l\u30ec\u30f4\u30a9\u30ea\u30e5\u30fc\u30b7\u30e7\u30f3\u30fb\u30af\u30ed\u30b9\u30dc\u30a6 [8/8]");
+                xbow.setItemMeta(m);
+                ItemMeta fresh = xbow.getItemMeta();
+                if (fresh instanceof CrossbowMeta) {
+                    CrossbowMeta cm = (CrossbowMeta)fresh;
+                    cm.setChargedProjectiles(null);
+                    cm.addChargedProjectile(new ItemStack(Material.ARROW));
+                    xbow.setItemMeta((ItemMeta)cm);
+                }
+            }
+        }
+        p.sendMessage("\u00a7b\u00a7l\u30ec\u30f4\u30a9\u30ea\u30e5\u30fc\u30b7\u30e7\u30f3 \u00a78\u00bb \u00a7f1\u5206\u9593\u88c5\u586b8\u767a\u30fbCT\u77ed\u7e2e\uff01");
     }
 
     public void setSwapperMark(Player p, Location mark) {
@@ -3323,13 +3374,13 @@ public class SkillManager {
     }
 
     public void setBulwarkUltimate(Player p) {
-        this.bulwarkUltimate.add(p.getUniqueId());
-        p.sendMessage("\u00a7f\u00a7l\u2605 \u8d85\u30fb\u7121\u6575\u8981\u585e \u00a78\u00bb \u00a77\u58c1CT\u77ed\u7e2e\uff01");
+        this.bulwarkUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 30000L);
+        p.sendMessage("\u00a7f\u00a7l\u2605 \u8d85\u30fb\u7121\u6575\u8981\u585e \u00a78\u00bb \u00a7f30\u79d2\u9593\u58c1CT\u77ed\u7e2e\uff01");
     }
 
     public void setGlaciesUltimate(Player p) {
-        this.glaciesUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 60000L);
-        p.sendMessage("\u00a7b\u00a7l\u30af\u30e9\u30a4\u30aa\u30ad\u30cd\u30b7\u30b9 \u00a78\u00bb \u00a7f1\u5206\u9593\u30d2\u30c3\u30c8\u3067\u51cd\u7d50\uff01");
+        this.glaciesUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 40000L);
+        p.sendMessage("\u00a7b\u00a7l\u30af\u30e9\u30a4\u30aa\u30ad\u30cd\u30b7\u30b9 \u00a78\u00bb \u00a7f40\u79d2\u9593\u30d2\u30c3\u30c8\u3067\u51cd\u7d50\uff01");
     }
 
     public boolean hasGlaciesUltimate(UUID uid) {
@@ -3372,9 +3423,9 @@ public class SkillManager {
         if (victim == null || !victim.isOnline()) {
             return;
         }
-        victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 200, 254, false, false));
-        victim.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 200, 127, false, false));
-        victim.sendMessage("\u00a7e\u00a7l\u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af \u00a78\u00bb \u00a7f10\u79d2\u9593\u79fb\u52d5\u4e0d\u80fd\uff01");
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 120, 254, false, false));
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 120, 251, false, false));
+        victim.sendMessage("\u00a7e\u00a7l\u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af \u00a78\u00bb \u00a7f6\u79d2\u9593\u79fb\u52d5\u4e0d\u80fd\uff01");
         victim.getWorld().spawnParticle(Particle.CRIT_MAGIC, victim.getLocation().add(0.0, 1.0, 0.0), 20, 0.3, 0.5, 0.3, 0.1);
     }
 
@@ -3396,6 +3447,7 @@ public class SkillManager {
     }
 
     public void expandNecroArmy(final Player p, int target) {
+        this.necroUltimateUntil.put(p.getUniqueId(), System.currentTimeMillis() + 40000L);
         List<Skeleton> army = this.necroArmy.computeIfAbsent(p.getUniqueId(), k -> new ArrayList<Skeleton>());
         TeamColor enemyTeam = this.gm.getTeamOf(p) == TeamColor.RED ? TeamColor.BLUE : TeamColor.RED;
         while (army.size() < target) {
@@ -3430,7 +3482,7 @@ public class SkillManager {
             }
             team.addEntry(skel.getUniqueId().toString());
         }
-        p.sendMessage("\u00a78\u00a7l\ud83d\udc80 \u30bd\u30f3\u30b0\u30aa\u30d6\u30b6\u30c7\u30c3\u30c9 \u00a78\u00bb \u00a77\u8ecd\u56e3\u309210\u4f53\u306b\u5897\u52a0\uff01");
+        p.sendMessage("\u00a78\u00a7l\ud83d\udc80 \u30bd\u30f3\u30b0\u30aa\u30d6\u30b6\u30c7\u30c3\u30c9 \u00a78\u00bb \u00a7f40\u79d2\u9593\u3001\u8fd1\u63a5\u5175\u306e\u4e0a\u9650\u304c6\u4f53\u306b\uff01");
     }
 
     public void kreutzFullOrder(Player p) {
@@ -3441,8 +3493,8 @@ public class SkillManager {
             p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f\uff01");
         }
         this.kreutzHand.put(p.getUniqueId(), hand);
-        this.kreutzFullOrder.add(p.getUniqueId());
-        p.sendMessage("\u00a75\u00a7l\u2605 \u30d5\u30eb\u30aa\u30fc\u30c0\u30fc \u00a78\u00bb \u00a7f\u30b9\u30ed\u30c3\u30c84\u679a \u00a78| \u00a7f\u624b\u672d: " + String.join(", ", hand));
+        this.kreutzFreeStock.put(p.getUniqueId(), 4);
+        p.sendMessage("\u00a75\u00a7l\u2605 \u30d5\u30eb\u30aa\u30fc\u30c0\u30fc \u00a78\u00bb \u00a7f\u30b9\u30ed\u30c3\u30c84\u679a\u30014\u767a\u307e\u3067\u30de\u30ca\u6d88\u8cbb0 \u00a78| \u00a7f\u624b\u672d: " + String.join(", ", hand));
     }
 
     public void resetKreutzMana(Player p) {
@@ -3488,7 +3540,7 @@ public class SkillManager {
     }
 
     public void bulwarkUltimate(final Player p) {
-        this.bulwarkUltimate.add(p.getUniqueId());
+        this.bulwarkUltimate.put(p.getUniqueId(), System.currentTimeMillis() + 30000L);
         UUID uid = p.getUniqueId();
         World w = p.getWorld();
         if (w == null) {
@@ -3547,6 +3599,9 @@ public class SkillManager {
         this.cookUltimate.clear();
         this.kreutzHand.clear();
         this.kreutzFullOrder.clear();
+        this.kreutzFreeStock.clear();
+        this.kreutzManaDelay.clear();
+        this.necroUltimateUntil.clear();
     }
 
     private boolean isSword(ItemStack item) {
@@ -3862,7 +3917,8 @@ public class SkillManager {
                     if (current.get(i).isValid()) continue;
                     current.remove(i);
                 }
-                while (current.size() < 3) {
+                int cap = SkillManager.this.isTimedUltimate(SkillManager.this.necroUltimateUntil, p.getUniqueId()) ? 6 : 3;
+                while (current.size() < cap) {
                     Location spawnLoc = p.getLocation().clone().add(Math.random() * 4.0 - 2.0, 0.0, Math.random() * 4.0 - 2.0);
                     boolean hasBow = current.stream().anyMatch(s -> s.isValid() && s.getEquipment().getItemInMainHand().getType() == Material.BOW);
                     boolean needBow = !hasBow;
@@ -3918,7 +3974,7 @@ public class SkillManager {
             p.sendMessage("\u00a77[\u30d6\u30eb\u30ef\u30fc\u30af] \u58c1\u3092\u89e3\u9664\u3057\u307e\u3057\u305f");
             return;
         }
-        this.setCooldown(uid, this.bulwarkUltimate.contains(uid) ? 5000L : 20000L);
+        this.setCooldown(uid, this.isTimedUltimate(this.bulwarkUltimate, uid) ? 5000L : 20000L);
         World w = p.getWorld();
         if (w == null) {
             return;
@@ -3932,7 +3988,7 @@ public class SkillManager {
         Location base = p.getLocation().getBlock().getLocation().clone().add(0.5, 0.0, 0.5).add(dir.clone().multiply(2.0));
         Vector side = dir.clone().crossProduct(new Vector(0.0, 1.0, 0.0)).normalize();
         List<Location> placed = new ArrayList<Location>();
-        if (p.isSneaking() || this.bulwarkUltimate.contains(uid)) {
+        if (p.isSneaking() || this.isTimedUltimate(this.bulwarkUltimate, uid)) {
             for (int dx = -2; dx <= 2; ++dx) {
                 for (int dz = -2; dz <= 2; ++dz) {
                     Location loc = base.clone().add(side.clone().multiply(dx)).add(dir.clone().multiply(dz));

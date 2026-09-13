@@ -813,7 +813,8 @@ implements Listener {
         }
         if (this.plugin.getSkillManager().consumeMarksmanUltimate(shooter.getUniqueId())) {
             Location hitLoc = e.getHitEntity() != null ? e.getHitEntity().getLocation() : (e.getHitBlock() != null ? e.getHitBlock().getLocation().add(0.5, 0.5, 0.5) : shooter.getLocation());
-            hitLoc.getWorld().createExplosion(hitLoc, 3.0f, false, false, (Entity)shooter);
+            hitLoc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, hitLoc, 8, 2.0, 2.0, 2.0, 0.1);
+            this.plugin.getUltimateManager().areaExplosion(shooter, hitLoc, 4.0, 3.0, 12.0, 1.0);
         }
     }
 
@@ -1083,6 +1084,9 @@ implements Listener {
             if (this.plugin.getSkillManager().isDeadlocked(p.getUniqueId())) {
                 e.setCancelled(true);
                 p.sendMessage("\u00a7c\u30c7\u30c3\u30c9\u30ed\u30c3\u30af\u4e2d\u306f\u6b66\u5668\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
+            }
+            if (e.getProjectile() instanceof org.bukkit.entity.Arrow && this.plugin.getSkillManager().isSundanceRevolving(p.getUniqueId())) {
+                ((org.bukkit.entity.Arrow)e.getProjectile()).setCritical(false);
             }
         }
     }
