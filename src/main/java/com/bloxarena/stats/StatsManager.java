@@ -168,6 +168,24 @@ public class StatsManager {
         return total.entrySet().stream().sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue())).limit(limit).collect(Collectors.toList());
     }
 
+    public Map<String, Integer> getAllKitTotals() {
+        HashMap<String, Integer> total = new HashMap<>();
+        for (PlayerStats s : this.cache.values()) {
+            for (Map.Entry<String, Integer> e : s.kitCounts.entrySet()) {
+                total.merge(e.getKey(), e.getValue(), Integer::sum);
+            }
+        }
+        return total;
+    }
+
+    public List<Map.Entry<String, Integer>> getKitTopSorted(int limit, boolean ascending) {
+        Map<String, Integer> total = getAllKitTotals();
+        Comparator<Map.Entry<String, Integer>> cmp = ascending
+            ? Comparator.comparingInt(Map.Entry::getValue)
+            : (e1, e2) -> Integer.compare(e2.getValue(), e1.getValue());
+        return total.entrySet().stream().sorted(cmp).limit(limit).collect(Collectors.toList());
+    }
+
     public int getKitMasteryLevel(UUID player, String kitName) {
         int uses = this.get(player).kitCounts.getOrDefault(kitName, 0);
         int level = 0;

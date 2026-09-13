@@ -508,16 +508,20 @@ TabCompleter {
                 String field;
                 String string = field = args.length >= 2 ? args[1].toLowerCase() : "kills";
                 if (!List.of("kills", "wins", "kd", "damage", "kits").contains(field)) {
-                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba top [kills|wins|kd|damage|kits]");
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba top [kills|wins|kd|damage|kits asc|desc]");
                     return true;
                 }
                 StatsManager sm = this.plugin.getStatsManager();
                 if ("kits".equals(field)) {
-                    List<Map.Entry<String, Integer>> kitTop = sm.getKitTop(15);
-                    sender.sendMessage("\u00a76\u00a7l\u2605 \u30ad\u30c3\u30c8\u4f7f\u7528\u7387 Top 15");
+                    boolean ascending = args.length >= 3 && "asc".equalsIgnoreCase(args[2]);
+                    List<Map.Entry<String, Integer>> kitTop = sm.getKitTopSorted(Integer.MAX_VALUE, ascending);
+                    int totalPicks = kitTop.stream().mapToInt(Map.Entry::getValue).sum();
+                    String arrow = ascending ? "↑" : "↓";
+                    sender.sendMessage("\u00a76\u00a7l\u2605 \u30ad\u30c3\u30c8\u4f7f\u7528\u7387 " + arrow + " \u5168\u30ad\u30c3\u30c8");
                     int rank = 1;
                     for (Map.Entry<String, Integer> e2 : kitTop) {
-                        sender.sendMessage("\u00a77#" + rank++ + " \u00a7e" + e2.getKey() + " \u00a7f" + String.valueOf(e2.getValue()) + "\u56de");
+                        double pct = totalPicks > 0 ? (double) e2.getValue() / totalPicks * 100.0 : 0.0;
+                        sender.sendMessage("\u00a77#" + rank++ + " \u00a7e" + e2.getKey() + " \u00a7f" + e2.getValue() + "\u56de \u00a77" + String.format("%.1f%%", pct));
                     }
                     Map<String, List<Map.Entry<UUID, Integer>>> kitPlayers = sm.getKitUsageWithTopPlayers();
                     if (!kitPlayers.isEmpty()) {
@@ -1176,7 +1180,7 @@ TabCompleter {
         s.sendMessage("\u00a78\u00bb \u00a7e/ba stats [player] \u00a77- \u7d71\u8a08\u3092\u8868\u793a");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba mastery [player] \u00a77- \u30de\u30b9\u30bf\u30ea\u30fc\u6982\u8981\u3092\u8868\u793a");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba title \u00a77- \u79f0\u53f7\u3092\u8868\u793a/\u5207\u308a\u66ff\u3048");
-        s.sendMessage("\u00a78\u00bb \u00a7e/ba top [kills|wins|kd|damage|kits] \u00a77- \u30e9\u30f3\u30ad\u30f3\u30b0\u8868\u793a");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba top [kills|wins|kd|damage|kits asc|desc] \u00a77- \u30e9\u30f3\u30ad\u30f3\u30b0\u8868\u793a");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba continuous <on|off> \u00a77- \u9023\u7d9a\u8a66\u5408\u30e2\u30fc\u30c9\u5207\u308a\u66ff\u3048");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba setmapname <mapId> <\u540d\u524d> \u00a77- \u30de\u30c3\u30d7\u306e\u8868\u793a\u540d\u3092\u8a2d\u5b9a");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba upgrade <mapId> \u00a77- \u65e2\u5b58\u30de\u30c3\u30d7\u3092\u65b0\u30e2\u30fc\u30c9\u5bfe\u5fdc\u306b\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9");
@@ -1221,6 +1225,11 @@ TabCompleter {
                 }
                 default -> Collections.emptyList();
             };
+        }
+        if (args.length == 3) {
+            if ("top".equalsIgnoreCase(args[0]) && "kits".equalsIgnoreCase(args[1])) {
+                return Arrays.asList("asc", "desc");
+            }
         }
         return Collections.emptyList();
     }
