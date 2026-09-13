@@ -92,7 +92,7 @@ public class KitBuilder {
             }
             case BERSERKER: {
                 ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
-                axe.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+                axe.addEnchantment(Enchantment.DAMAGE_ALL, 2);
                 list.add(axe);
                 list.add(new ItemStack(Material.NETHER_STAR));
                 break;
@@ -136,9 +136,10 @@ public class KitBuilder {
                 break;
             }
             case JESTER: {
-                ItemStack axe = new ItemStack(Material.STONE_AXE);
+                ItemStack axe = new ItemStack(Material.GOLDEN_AXE);
                 axe.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
-                axe.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+                axe.addEnchantment(Enchantment.DAMAGE_ALL, 2);
+                axe.addEnchantment(Enchantment.DURABILITY, 5);
                 list.add(axe);
                 list.add(new ItemStack(Material.ENDER_PEARL, 3));
                 list.add(new ItemStack(Material.NETHER_STAR));
@@ -653,7 +654,7 @@ public class KitBuilder {
 
     private static void giveBerserker(Player player, BloxArenaPlugin plugin) {
         ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
-        axe.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+        axe.addEnchantment(Enchantment.DAMAGE_ALL, 2);
         ItemMeta bm = axe.getItemMeta();
         if (bm != null) {
             bm.setLore(List.of("\u00a77\u00a7o\u53f3\u30af\u30ea\u30c3\u30af: \u6012\u6d9b\u7206\u7815 - \u524d\u65b9\u9023\u7d9a\u7206\u767a"));
@@ -740,9 +741,10 @@ sm.setLore(sl);
     }
 
     private static void giveJester(Player player, BloxArenaPlugin plugin) {
-        ItemStack axe = new ItemStack(Material.STONE_AXE);
+        ItemStack axe = new ItemStack(Material.GOLDEN_AXE);
         axe.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
-        axe.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+        axe.addEnchantment(Enchantment.DAMAGE_ALL, 2);
+        axe.addEnchantment(Enchantment.DURABILITY, 5);
         player.getInventory().setItem(0, axe);
         player.getInventory().setItem(2, new ItemStack(Material.ENDER_PEARL, 3));
         if (plugin != null) {
@@ -1507,14 +1509,14 @@ gsm.setLore(gsl);
             case COUNTER -> "CT10秒 / 盾構え+スニークでパリィ2秒 成功で相手を弱体化+スロウ";
             case PYRO -> "CT15秒 / 周囲5m 燃焼中の敵に12ダメ 未燃焼は着火";
             case LANCER -> "CT2秒 / 前方5m突き刺し 直撃9ダメ/盾越し5ダメ+盾破壊 命中でCT-1秒";
-            case JESTER -> "CT10秒 / 10秒間SpeedII+採掘速度上昇";
+            case JESTER -> "CT12秒 / 7秒間SpeedII+採掘速度上昇";
             case VAMPIRE -> "吸血ゲージで変身 / 吸収弾(CT7秒)+破壊光線(ゲージ5)";
             case BOMBER -> "地雷設置+任意起爆 / 範囲5m最大20ダメ(距離減衰) 起爆CT7秒";
             case COOK -> "剣右クリックで食材生成 / 料理で自分にバフ 投擲で敵にデバフ";
             case SCOUT -> "リコン(30秒索敵+範囲ダメ)/パルスボルト(30秒範囲ダメ)";
             case WHIRLWIND -> "CT6秒 / 気流砲(前方押し出し)+左クリックで旋風弾(追尾打上,CT5秒)";
-            case NILGIRITAR -> "CT15秒 / 周囲6mの敵を感知し風穴マーク マーク中は盾貫通+追加ダメ";
-            case MISTRAL -> "CT15秒 / 前方に烈風砲 敵を大きく吹き飛ばす";
+            case NILGIRITAR -> "CT15秒 / 周囲9mの敵を感知し風穴マーク マーク中は盾貫通+追加ダメ";
+            case MISTRAL -> "CT12秒 / 前方に烈風砲 敵を大きく吹き飛ばす";
             case SUPERIOR_MISTRAL -> "CT5秒 / 前方に超強力な風砲 4ダメ+弱体化+スロウ+吹き飛ばし";
             case FLASHER -> "CT10秒 / 閃光弾を投擲 着弾半径6mで盲目+鈍足+発光";
             case MARKSMAN -> "CT12秒 / ヘヴィーボルト 命中で敵のHP上限-3(最大-12)";

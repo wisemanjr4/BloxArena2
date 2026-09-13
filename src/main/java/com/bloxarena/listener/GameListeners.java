@@ -82,6 +82,7 @@ import com.bloxarena.lobby.LobbyManager;
 import com.bloxarena.map.MapConfig;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -117,6 +118,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -156,6 +158,7 @@ implements Listener {
     private KitSelectGUI activeGUI;
     private final Map<UUID, Long> disconnectedAt = new HashMap<UUID, Long>();
     private static final long RECONNECT_WINDOW_MS = 180000L;
+    private static final Set<PotionEffectType> NEGATIVE_EFFECTS = Set.of(PotionEffectType.SLOW, PotionEffectType.WEAKNESS, PotionEffectType.POISON, PotionEffectType.WITHER, PotionEffectType.HUNGER, PotionEffectType.BLINDNESS, PotionEffectType.CONFUSION, PotionEffectType.SLOW_DIGGING, PotionEffectType.UNLUCK, PotionEffectType.DARKNESS, PotionEffectType.LEVITATION, PotionEffectType.JUMP, PotionEffectType.GLOWING);
     private final Map<UUID, UUID> lastDamager = new HashMap<UUID, UUID>();
 
     public GameListeners(BloxArenaPlugin plugin) {
@@ -640,10 +643,13 @@ implements Listener {
                 this.plugin.getSkillManager().onDecoyHit((Entity)skeleton, damager2);
             }
         }
-        if (this.gm.isUnderdog(victim.getUniqueId()) && this.gm.isUnderdogCooldownReady(victim.getUniqueId())) {
-            this.gm.startUnderdogCooldown(victim.getUniqueId());
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 200, 2, false, false));
-            victim.sendMessage("\u00a7e\u00a7l\u7d66\u4e0e\u30dc\u30fc\u30ca\u30b9\uff01\u518d\u751fIII\u304c\u767a\u52d5\uff01");
+        if (this.gm.hasNightBuff(victim) && this.gm.isNightBuffReady(victim.getUniqueId())) {
+            this.gm.startNightBuffCooldown(victim.getUniqueId());
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 60, 0, false, false));
+            org.bukkit.attribute.AttributeInstance maxHpAttr = victim.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+            double maxHp = maxHpAttr != null ? maxHpAttr.getValue() : 20.0;
+            victim.setHealth(Math.min(maxHp, victim.getHealth() + 1.0));
+            victim.sendMessage("\u00a7e\u00a7l\u2605 \u30ca\u30a4\u30c8\u30d0\u30d5\uff01\u653b\u6483\u529b\u4e0a\u6607I\uff0b\u5373\u6642\u56de\u5fa9");
             victim.getWorld().spawnParticle(Particle.HEART, victim.getLocation().add(0.0, 1.5, 0.0), 10, 0.3, 0.5, 0.3, 0.0);
         }
         Location loc = victim.getLocation().add(0.0, 1.0, 0.0);
@@ -666,6 +672,9 @@ implements Listener {
         }
         if ((entity2 = e.getDamager()) instanceof Arrow && (arrow = (Arrow)entity2).getShooter() instanceof Player) {
             Player shooter = (Player)arrow.getShooter();
+            if (this.plugin.getSkillManager().isSundanceRevolving(shooter.getUniqueId()) && !this.plugin.getSkillManager().hasSundanceUltimate(shooter.getUniqueId())) {
+                e.setDamage(e.getDamage() * 0.75);
+            }
             if (this.plugin.getSkillManager().onSniperHit(shooter, victim)) {
                 this.lastDamager.put(victim.getUniqueId(), shooter.getUniqueId());
                 e.setCancelled(true);
@@ -866,6 +875,28 @@ implements Listener {
                 this.plugin.getSkillManager().onJesterBindHit((Player)e.getHitEntity());
             }
             e.getEntity().remove();
+        } else if (ball.getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "engineer_bullet"), PersistentDataType.BYTE)) {
+            if (e.getHitEntity() instanceof Player) {
+                Player hit = (Player)e.getHitEntity();
+                if (this.gm.isParticipant(hit) && this.gm.getTeamOf(hit) != this.gm.getTeamOf(shooter)) {
+                    hit.damage(4.0, (Entity)shooter);
+                    hit.getWorld().spawnParticle(Particle.CRIT, hit.getLocation().add(0.0, 1.0, 0.0), 4, 0.2, 0.3, 0.2, 0.1);
+                }
+            }
+            e.getEntity().remove();
+        }
+    }
+
+    @EventHandler
+    public void onPotionEffect(EntityPotionEffectEvent e) {
+        PotionEffectType type;
+        PotionEffect newEffect;
+        if (!(e.getEntity() instanceof Player) || (e.getAction() != EntityPotionEffectEvent.Action.ADDED && e.getAction() != EntityPotionEffectEvent.Action.CHANGED) || (newEffect = e.getNewEffect()) == null || (type = newEffect.getType()) == null) {
+            return;
+        }
+        Player p = (Player)e.getEntity();
+        if (p.isInvulnerable() && NEGATIVE_EFFECTS.contains(type)) {
+            e.setCancelled(true);
         }
     }
 

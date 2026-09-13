@@ -426,15 +426,37 @@ public class GameManager {
             this.underdogPlayers.add(uid);
             Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null) continue;
-            p.sendMessage("\u00a7e\u00a7l\u2605 \u7d66\u4e0e\u30dc\u30fc\u30ca\u30b9 \u00a78\u00bb \u00a77\u4eba\u6570\u4e0d\u5229\u306e\u305f\u3081\u3001\u53d7\u5275\u6642\u306b\u518d\u751fIII\u309210\u79d2\u9593\u7372\u5f97\uff08\u72ec\u81eaCT22\u79d2\uff09");
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 160, 0, false, true));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 160, 0, false, true));
+            p.sendMessage("\u00a7e\u00a7l\u2605 \u4eba\u6570\u5dee\u88dc\u6b63 \u00a78\u00bb \u00a77\u4eba\u6570\u4e0d\u5229\u306e\u305f\u3081\u3001\u79fb\u52d5\u901f\u5ea6\u4e0a\u6607I\u3068\u518d\u751fI\u30928\u79d2\u9593\u7372\u5f97");
         }
     }
 
-    public boolean isUnderdog(UUID uid) {
-        return this.underdogPlayers.contains(uid);
+    public boolean hasNightBuff(Player p) {
+        if (!this.underdogPlayers.contains(p.getUniqueId())) {
+            return false;
+        }
+        if (this.isRespawnMode()) {
+            return true;
+        }
+        TeamColor own = this.getTeamOf(p);
+        if (own == null) {
+            return false;
+        }
+        int ownAlive = 0;
+        int enemyAlive = 0;
+        for (Player other : Bukkit.getOnlinePlayers()) {
+            if (!this.isParticipant(other) || this.isSpectator(other) || this.deadPlayers.contains(other.getUniqueId())) continue;
+            if (this.getTeamOf(other) == own) {
+                ++ownAlive;
+            } else {
+                ++enemyAlive;
+            }
+        }
+        return ownAlive < enemyAlive;
     }
 
-    public boolean isUnderdogCooldownReady(UUID uid) {
+    public boolean isNightBuffReady(UUID uid) {
         Long end = this.underdogCooldown.get(uid);
         if (end == null) {
             return true;
@@ -446,8 +468,12 @@ public class GameManager {
         return false;
     }
 
-    public void startUnderdogCooldown(UUID uid) {
-        this.underdogCooldown.put(uid, System.currentTimeMillis() + 22000L);
+    public void startNightBuffCooldown(UUID uid) {
+        this.underdogCooldown.put(uid, System.currentTimeMillis() + 8000L);
+    }
+
+    private boolean isRespawnMode() {
+        return this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG;
     }
 
     private void gameTickUpdate() {
@@ -462,17 +488,20 @@ public class GameManager {
     }
 
     public boolean isInCentralZone(Player p) {
-        if (this.state != GameState.IN_GAME || this.currentMap == null || this.currentMap.getCenter() == null) {
+        if (this.state != GameState.IN_GAME || this.currentMap == null) {
             return false;
         }
         GameMode m = this.currentGameMode;
-        if (m != GameMode.BATTLE_ARENA && m != GameMode.TEAM_DEATHMATCH) {
+        if (m != GameMode.BATTLE_ARENA && m != GameMode.TEAM_DEATHMATCH && m != GameMode.BOMB_MISSION) {
             return false;
         }
         if (!this.isParticipant(p) || this.isSpectator(p)) {
             return false;
         }
-        Location c = this.currentMap.getCenter();
+        Location c = m == GameMode.BOMB_MISSION ? this.currentMap.getBombSite() : this.currentMap.getCenter();
+        if (c == null) {
+            return false;
+        }
         Location l = p.getLocation();
         int cx = c.getBlockX();
         int cy = c.getBlockY();
@@ -1462,7 +1491,14 @@ public class GameManager {
                         this.teleportToSpawnZonePublic(finalV, this.currentMap, vTeam);
                     }
                     this.plugin.getSkillManager().refreshBurst(finalV);
-                    finalV.sendMessage("\u00a7a\u26a1 \u30ea\u30b9\u30dd\u30fc\u30f3\uff01");
+                    finalV.setInvulnerable(true);
+                    finalV.setNoDamageTicks(60);
+                    Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+                        if (finalV.isOnline()) {
+                            finalV.setInvulnerable(false);
+                        }
+                    }, 60L);
+                    finalV.sendMessage("\u00a7a\u26a1 \u30ea\u30b9\u30dd\u30fc\u30f3\uff01\u00a77\uff08\u00a7f3\u79d2\u9593\u7121\u6575\u00a77\uff09");
                 }
             }, respawnDelay);
         } else {
@@ -1698,10 +1734,6 @@ public class GameManager {
             }
             return;
         }
-        if (p.getInventory().getItemInOffHand().getType() == Material.SHIELD) {
-            p.sendMessage("\u00a7c\ud83d\udee1 \u76fe\u6301\u3061\u4e0d\u53ef \u00a78\u00bb \u00a77\u76fe\u3092\u5916\u3057\u3066\u89e3\u9664\u305b\u3088");
-            return;
-        }
         final int defuseTime = this.plugin.getConfig().getInt("bomb_mission.defuse_time_seconds", 7);
         this.bombDefusing = true;
         this.bombDefuser = p;
@@ -1713,7 +1745,7 @@ public class GameManager {
             }
 
             public void run() {
-                if (!p.isOnline() || GameManager.this.state != GameState.IN_GAME || p.getLocation().distance(GameManager.this.bombLoc) > 3.0 || p.getInventory().getItemInOffHand().getType() == Material.SHIELD) {
+                if (!p.isOnline() || GameManager.this.state != GameState.IN_GAME || p.getLocation().distance(GameManager.this.bombLoc) > 3.0) {
                     p.sendMessage("\u00a7c\u26a0 \u89e3\u9664\u4f5c\u696d\u304c\u4e2d\u65ad\u3055\u308c\u305f\uff01");
                     GameManager.this.bombDefusing = false;
                     GameManager.this.bombDefuser = null;

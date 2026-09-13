@@ -85,6 +85,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Snowball;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CrossbowMeta;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -422,11 +423,11 @@ public class SkillManager {
         if (!isLeft) {
             return;
         }
-        if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.KREUTZ && !p.isSneaking()) {
-            this.kreutzManaCharge(p);
+        if (held == null || held.getItemMeta() == null) {
             return;
         }
-        if (held == null || held.getItemMeta() == null) {
+        if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.KREUTZ && !p.isSneaking() && this.isKreutzStar(held)) {
+            this.kreutzManaCharge(p);
             return;
         }
         ItemMeta meta = held.getItemMeta();
@@ -456,6 +457,11 @@ public class SkillManager {
         if (meta.getPersistentDataContainer().has(this.KEY_VAMPIRE_SKILL, PersistentDataType.STRING) && this.gm.getPlayerKitType(p.getUniqueId()) == KitType.VAMPIRE && p.isSneaking()) {
             this.theosPadaAction(p, false);
         }
+    }
+
+    private boolean isKreutzStar(ItemStack held) {
+        Object kit = held.getItemMeta().getPersistentDataContainer().get(this.KEY_SKILL, PersistentDataType.STRING);
+        return "KREUTZ".equals(kit);
     }
 
     private boolean isUltimateActivatable(KitType kit, ItemStack held) {
@@ -530,10 +536,10 @@ public class SkillManager {
             return;
         }
         int ticks = this.sniperAimTick.merge(p.getUniqueId(), 1, Integer::sum);
-        if (ticks >= 7) {
+        if (ticks >= 4) {
             this.markedForDeath.add(target.getUniqueId());
-            this.setCooldown(p.getUniqueId(), 7000L);
-            p.sendMessage("\u00a7c\u00a7l\ud83c\udfaf \u6b7b\u5370\u5b8c\u6210 \u00a78\u00bb \u00a7f" + target.getName() + " \u00a7c\u00a7l\u3092\u30de\u30fc\u30af\uff01\u6b21\u306e\u4e00\u6483\u3067\u5373\u6b7b\uff01");
+            this.setCooldown(p.getUniqueId(), 4000L);
+            p.sendMessage("\u00a7c\u00a7l\ud83c\udfaf \u6b7b\u5370\u5b8c\u6210 \u00a78\u00bb \u00a7f" + target.getName() + " \u00a7c\u00a7l\u3092\u30de\u30fc\u30af\uff01\u6b21\u306e\u4e00\u6483\u3067\u7591\u4f3c\u5373\u6b7b\uff01");
             target.sendMessage("\u00a7c\u00a7l\u26a0 \u72d9\u6483\u773c\u306b\u9396\u5b9a\u3055\u308c\u305f\uff01");
             target.getWorld().playSound(target.getLocation(), Sound.BLOCK_BELL_USE, 1.0f, 0.5f);
             this.sniperAimTick.remove(p.getUniqueId());
@@ -542,19 +548,27 @@ public class SkillManager {
     }
 
     public boolean onSniperHit(Player shooter, Player victim) {
-        if (this.sniperUltimate.remove(shooter.getUniqueId()) && this.gm.getPlayerKitType(shooter.getUniqueId()) == KitType.SNIPER) {
-            victim.damage(20.0, (Entity)shooter);
-            shooter.getWorld().playSound(shooter.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 2.0f);
+        if (this.gm.getPlayerKitType(shooter.getUniqueId()) != KitType.SNIPER) {
+            return false;
+        }
+        boolean ult = this.sniperUltimate.remove(shooter.getUniqueId());
+        if (!ult && !this.markedForDeath.contains(victim.getUniqueId())) {
+            return false;
+        }
+        this.markedForDeath.remove(victim.getUniqueId());
+        org.bukkit.attribute.AttributeInstance maxHpAttr = victim.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        double maxHp = maxHpAttr != null ? maxHpAttr.getValue() : 20.0;
+        victim.damage(Math.ceil(maxHp * 0.9), (Entity)shooter);
+        victim.setNoDamageTicks(0);
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, ult ? 160 : 80, 2, false, true));
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 80, 2, false, true));
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 80, 252, false, true));
+        shooter.getWorld().playSound(shooter.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 2.0f);
+        victim.sendMessage("\u00a7c\u00a7l\u2600 \u63cf\u6e96\u6483 \u00a78\u00bb \u00a77\u7591\u4f3c\u5373\u6b7b\uff01\u8105\u5f31III\u30fb\u920d\u8db3III");
+        if (ult) {
             shooter.sendMessage("\u00a7c\u00a7l\u30a2\u30a4\u30fb\u30aa\u30d6\u30fb\u30db\u30eb\u30b9\uff01");
-            return true;
         }
-        if (this.markedForDeath.contains(victim.getUniqueId()) && this.gm.getPlayerKitType(shooter.getUniqueId()) == KitType.SNIPER) {
-            victim.damage(20.0, (Entity)shooter);
-            this.markedForDeath.remove(victim.getUniqueId());
-            shooter.getWorld().playSound(shooter.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 2.0f);
-            return true;
-        }
-        return false;
+        return true;
     }
 
     public void onParryAttempt(final Player p) {
@@ -593,7 +607,7 @@ public class SkillManager {
         victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0.0, 1.0, 0.0), 10, 0.3, 0.5, 0.3, 0.1);
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.guardBroken.remove(victim.getUniqueId()), 60L);
         victim.getWorld().playSound(victim.getLocation(), Sound.ITEM_SHIELD_BREAK, 1.0f, 0.8f);
-        victim.sendMessage("\u00a7c\u00a7l\ud83d\udee1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af \u00a78\u00bb \u00a77\u6e9c\u3081\u653b\u6483\u30673\u79d2\u9593\u9632\u5177\u7121\u52b9\uff01");
+        victim.sendMessage("\u00a7c\u00a7l\ud83d\udee1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af \u00a78\u00bb \u00a77\u6e9c\u3081\u653b\u6483\u30673\u79d2\u9593\u76fe\u7121\u52b9\uff01");
         attacker.sendMessage("\u00a7e\u00a7l\u26a1 \u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\u6210\u529f\uff01");
         attacker.getWorld().playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.5f);
         this.plugin.getTutorialManager().checkGuardBreakUsed(attacker);
@@ -1057,6 +1071,29 @@ public class SkillManager {
         }
     }
 
+    private void enforceSummonGear(final Skeleton s, final ItemStack main, final ItemStack helmet) {
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            EntityEquipment eq;
+            if (!s.isValid() || (eq = s.getEquipment()) == null) {
+                return;
+            }
+            eq.setHelmet(helmet);
+            eq.setChestplate(null);
+            eq.setLeggings(null);
+            eq.setBoots(null);
+            eq.setItemInMainHand(main);
+            eq.setItemInOffHand(null);
+            eq.setHelmetDropChance(0.0f);
+            eq.setChestplateDropChance(0.0f);
+            eq.setLeggingsDropChance(0.0f);
+            eq.setBootsDropChance(0.0f);
+            eq.setItemInMainHandDropChance(0.0f);
+            eq.setItemInOffHandDropChance(0.0f);
+            s.setCanPickupItems(false);
+            s.setShouldBurnInDay(false);
+        }, 1L);
+    }
+
     public void updateTurrets() {
         for (TurretData t : new ArrayList<TurretData>(this.activeTurrets)) {
             if (!t.entity.isValid()) {
@@ -1210,8 +1247,9 @@ public class SkillManager {
                 continue;
             }
             Integer prev = this.sneakChargeTicks.remove(player.getUniqueId());
-            if (prev == null || prev >= 3) continue;
-            this.universalCharged.remove(player.getUniqueId());
+            if (prev != null) {
+                this.universalCharged.remove(player.getUniqueId());
+            }
         }
         for (Player pl : Bukkit.getOnlinePlayers()) {
             if (!this.gm.isParticipant(pl) || this.gm.isSpectator(pl)) continue;
@@ -1398,7 +1436,7 @@ public class SkillManager {
                         String targetName = target != null ? target.getName() : "???";
                         int pct = Math.min(100, ticks * 20);
                         String bar = "\u00a7a" + "\u2588".repeat(pct / 10) + "\u00a77" + "\u2588".repeat(10 - pct / 10);
-                        int remaining = Math.max(0, 7 - ticks);
+                        int remaining = Math.max(0, 4 - ticks);
                         p.sendActionBar(this.ctAppend(p, (Component)Component.text((String)("\u00a7c\ud83c\udfaf \u72d9\u6483\u4e2d: " + targetName + " \u00a78[" + bar + "\u00a78] \u00a7e" + remaining + "s"))));
                         break;
                     }
@@ -1990,9 +2028,9 @@ public class SkillManager {
     }
 
     private void jesterSkill(Player p) {
-        this.setCooldown(p.getUniqueId(), 10000L);
-        p.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, 200, 2, false, false));
-        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 200, 1, false, false));
+        this.setCooldown(p.getUniqueId(), 12000L);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, 140, 2, false, false));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 140, 1, false, false));
         p.sendMessage("\u00a7e\u00a7l\u9053\u5316\u306e\u75be\u8d70\uff01");
     }
 
@@ -2029,10 +2067,10 @@ public class SkillManager {
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 2.0f);
         p.getWorld().spawnParticle(Particle.SWEEP_ATTACK, p.getLocation().add(0.0, 1.0, 0.0), 8, 2.0, 0.5, 2.0, 0.0);
         Location loc = p.getLocation();
-        for (Entity e : loc.getWorld().getNearbyEntities(loc, 6.0, 4.0, 6.0)) {
+        for (Entity e : loc.getWorld().getNearbyEntities(loc, 9.0, 6.0, 9.0)) {
             Player t;
             if (!(e instanceof Player) || !this.gm.isParticipant(t = (Player)e) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p)) continue;
-            t.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, false, true));
+            this.markWithWindHole(t);
         }
     }
 
@@ -2050,13 +2088,13 @@ public class SkillManager {
             this.addKreutzMana(p.getUniqueId(), -5.0);
             int cap = this.kreutzFreeStock.getOrDefault(p.getUniqueId(), 0) > 0 ? 4 : 1;
             List<String> hand = this.kreutzHand.getOrDefault(p.getUniqueId(), new ArrayList<String>());
-            if (hand.size() >= cap) {
-                p.sendMessage("\u00a7c\u26a0 \u624b\u672d\u6700\u5927" + cap + "\u679a \u00a78\u00bb \u00a77\u30ab\u30fc\u30c9\u3092\u7a7a\u3051\u3066\u5f15\u3051");
-                this.addKreutzMana(p.getUniqueId(), 5.0);
-                return;
-            }
             String card = this.KREUTZ_CARDS[new Random().nextInt(this.KREUTZ_CARDS.length)];
-            hand.add(card);
+            if (hand.size() >= cap) {
+                hand.set(0, card);
+                p.sendMessage("\u00a76\u26a0 \u624b\u672d\u304c\u4e0a\u9650\u306e\u305f\u3081\u3001\u4e00\u756a\u4e0a\u306e\u30ab\u30fc\u30c9\u3092\u4e0a\u66f8\u304d\u3057\u305f");
+            } else {
+                hand.add(card);
+            }
             this.kreutzHand.put(p.getUniqueId(), hand);
             p.sendMessage("\u00a75\u00a7l\ud83c\udccf " + card + " \u00a77\u3092\u5f15\u3044\u305f \u00a78| \u00a7f\u624b\u672d: " + String.join(", ", hand));
             return;
@@ -2555,11 +2593,14 @@ public class SkillManager {
             s.setAI(false);
             s.setRemoveWhenFarAway(false);
             s.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
-            s.getEquipment().setHelmet(new ItemStack(Material.LEATHER_HELMET));
-            s.getEquipment().setHelmetDropChance(0.0f);
             s.setCustomName("\u00a76[\u30bf\u30ec\u30c3\u30c8]");
             s.setCustomNameVisible(true);
+            org.bukkit.attribute.AttributeInstance speed = s.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
+            if (speed != null) {
+                speed.setBaseValue(speed.getBaseValue() * 0.35);
+            }
         });
+        this.enforceSummonGear(skel, new ItemStack(Material.BOW), new ItemStack(Material.LEATHER_HELMET));
         skel.setAI(true);
         this.activeTurrets.add(new TurretData(skel, p.getUniqueId(), this.gm.getTeamOf(p)));
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
@@ -3029,7 +3070,7 @@ public class SkillManager {
             p.sendMessage("\u00a7c\ud83c\udff4 \u65d7\u6240\u6301\u4e2d\u306f\u70c8\u98a8\u7832\u4e0d\u53ef\uff01");
             return;
         }
-        this.setCooldown(p.getUniqueId(), 15000L);
+        this.setCooldown(p.getUniqueId(), 12000L);
         final Vector dir = p.getLocation().getDirection().normalize();
         final Location start = p.getEyeLocation().add(dir.clone().multiply(1.5));
         final World w = start.getWorld();
@@ -3296,7 +3337,7 @@ public class SkillManager {
 
     public void setSniperUltimate(Player p) {
         this.sniperUltimate.add(p.getUniqueId());
-        p.sendMessage("\u00a7c\u00a7l\u6b21\u306e\u77e2\u304c\u30d2\u30c3\u30c8\u30b9\u30ad\u30e3\u30f3\u5373\u6b7b\uff01");
+        p.sendMessage("\u00a7c\u00a7l\u6b21\u306e\u77e2\u306f\u30de\u30fc\u30af\u4e0d\u8981\u3067\u7591\u4f3c\u5373\u6b7b\uff01\u8105\u5f31\u306f8\u79d2\u9593");
     }
 
     public void setMarksmanUltimate(Player p) {
@@ -3310,6 +3351,10 @@ public class SkillManager {
 
     public boolean isSundanceRevolving(UUID uid) {
         return this.sundanceRevolver.containsKey(uid);
+    }
+
+    public boolean hasSundanceUltimate(UUID uid) {
+        return this.isTimedUltimate(this.sundanceUltimate, uid);
     }
 
     public void setTrapperUltimate(Player p) {
@@ -3867,17 +3912,10 @@ public class SkillManager {
             Skeleton finalSkel = skel = (Skeleton)p.getWorld().spawn(spawnLoc, Skeleton.class, s -> {
                 s.setAI(false);
                 s.setRemoveWhenFarAway(false);
-                if (idx == 0) {
-                    s.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
-                } else {
-                    s.getEquipment().setItemInMainHand(new ItemStack(Material.STONE_SWORD));
-                }
-                s.getEquipment().setHelmet(new ItemStack(Material.LEATHER_HELMET));
-                s.getEquipment().setHelmetDropChance(0.0f);
-                s.getEquipment().setItemInMainHandDropChance(0.0f);
                 s.setCustomName("\u00a78[" + p.getName() + "\u306e\u5175]");
                 s.setCustomNameVisible(true);
             });
+            this.enforceSummonGear(skel, new ItemStack(idx == 0 ? Material.BOW : Material.STONE_SWORD), new ItemStack(Material.LEATHER_HELMET));
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
                 if (!finalSkel.isValid()) {
                     return;

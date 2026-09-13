@@ -301,13 +301,14 @@ public class UltimateManager {
         Location dest = from.clone();
         boolean blocked = false;
         for (double d = 1.0; d <= 15.0; d += 0.5) {
-            Location check = from.clone().add(dir.clone().multiply(d));
-            if (check.getBlock().getType().isSolid()) {
-                dest = check.clone().add(dir.clone().multiply(-1.0));
+            Location check = from.clone().add(dir.clone().multiply(d)).add(0.0, 1.0, 0.0);
+            Material type = check.getBlock().getType();
+            if (type.isSolid()) {
+                dest = check.clone().add(dir.clone().multiply(-1.0)).add(0.0, -1.0, 0.0);
                 blocked = true;
                 break;
             }
-            dest = check;
+            dest = check.clone().add(0.0, -1.0, 0.0);
         }
         if (blocked) {
             dest = from.clone().add(dir.clone().multiply(Math.max(0.0, from.distance(dest) - 1.0)));
@@ -716,10 +717,13 @@ public class UltimateManager {
                     this.cancel();
                     return;
                 }
-                Player target = UltimateManager.this.skillManager.getTargetInSight(owner, 45);
-                if (target == null) return;
-                target.damage(4.0, (Entity)owner);
-                target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0.0, 1.0, 0.0), 4, 0.2, 0.3, 0.2, 0.1);
+                Vector dir = owner.getLocation().getDirection().normalize();
+                dir.add(new Vector((Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.3));
+                Snowball bullet = (Snowball)owner.launchProjectile(Snowball.class);
+                bullet.setVelocity(dir.normalize().multiply(2.5));
+                bullet.setGravity(false);
+                bullet.setCustomName("engineerBullet");
+                bullet.getPersistentDataContainer().set(new NamespacedKey((Plugin)UltimateManager.this.plugin, "engineer_bullet"), PersistentDataType.BYTE, (byte)1);
                 owner.getWorld().playSound(owner.getLocation(), Sound.ENTITY_ARROW_SHOOT, 0.6f, 1.5f);
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 2L);
