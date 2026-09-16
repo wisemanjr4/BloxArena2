@@ -327,7 +327,6 @@ public class SetupWizard {
             p.sendMessage("\u00a77  \u30de\u30c3\u30d7\u78ba\u8a8d:      \u00a7f/ba info " + s.mapId);
         }
         p.sendMessage("\u00a77  CTF\u65d7\u306e\u8a2d\u7f6e:     \u00a7f/ba setredflag " + (s.mapId != null ? s.mapId : "<mapId>"));
-        p.sendMessage("\u00a77  \u7206\u7834\u5730\u70b9\u306e\u8a2d\u5b9a:  \u00a7f/ba setbombplant " + (s.mapId != null ? s.mapId : "<mapId>"));
         p.sendMessage("\u00a77  \u8a66\u5408\u3092\u59cb\u3081\u308b:    \u00a7f/ba start");
         p.sendMessage("\u00a77  \u30de\u30c3\u30d7\u3092\u8ffd\u52a0:    \u00a7f/ba admin imigration");
         p.sendMessage("\u00a77  \u30b3\u30de\u30f3\u30c9\u4e00\u89a7:    \u00a7f/ba help");

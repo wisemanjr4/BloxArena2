@@ -190,6 +190,7 @@ public class TestFieldManager {
         }
         this.testKits.put(p.getUniqueId(), kit);
         this.plugin.getGameManager().setPlayerKit(p.getUniqueId(), kit.name());
+        this.plugin.getTutorialManager().checkKitSelected(p);
         KitBuilder.giveKit(p, kit, TeamColor.RED, this.plugin);
         p.sendMessage("\u00a7a" + kit.getDisplayName() + " \u00a7a\u3092\u88c5\u5099\u3057\u307e\u3057\u305f\uff01");
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);

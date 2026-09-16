@@ -303,7 +303,7 @@ public class LobbyManager {
         boolean teamModes = playerCount % 2 == 0 && playerCount > 3;
         ArrayList<GameMode> modes = new ArrayList<GameMode>();
         for (GameMode mode : GameMode.values()) {
-            if (!teamModes && (mode == GameMode.DOMINATION || mode == GameMode.CAPTURE_THE_FLAG)) continue;
+            if (!teamModes && mode == GameMode.CAPTURE_THE_FLAG) continue;
             modes.add(mode);
         }
         Collections.shuffle(modes);

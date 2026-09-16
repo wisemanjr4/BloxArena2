@@ -32,9 +32,6 @@ public class MapConfig {
     private Location oobMin;
     private Location oobMax;
     private final List<GameMode> supportedModes = new ArrayList<GameMode>(List.of(GameMode.BATTLE_ARENA));
-    private Location bombSite;
-    private Location defusePoint;
-    private final List<DomPoint> dominationPoints = new ArrayList<DomPoint>();
     private Location redFlagLocation;
     private Location blueFlagLocation;
     private Location redReturnLocation;
@@ -60,18 +57,6 @@ public class MapConfig {
         return switch (mode) {
             case BATTLE_ARENA -> true;
             case TEAM_DEATHMATCH -> true;
-            case BOMB_MISSION -> {
-                if (this.bombSite != null && this.defusePoint != null) {
-                    yield true;
-                }
-                yield false;
-            }
-            case DOMINATION -> {
-                if (!this.dominationPoints.isEmpty()) {
-                    yield true;
-                }
-                yield false;
-            }
             case CAPTURE_THE_FLAG -> this.redFlagLocation != null && this.blueFlagLocation != null && this.redReturnLocation != null && this.blueReturnLocation != null;
             default -> throw new IncompatibleClassChangeError();
         };
@@ -244,34 +229,6 @@ public class MapConfig {
         }
     }
 
-    public Location getBombSite() {
-        return this.bombSite;
-    }
-
-    public void setBombSite(Location l) {
-        this.bombSite = l.clone();
-    }
-
-    public Location getDefusePoint() {
-        return this.defusePoint;
-    }
-
-    public void setDefusePoint(Location l) {
-        this.defusePoint = l.clone();
-    }
-
-    public List<DomPoint> getDominationPoints() {
-        return Collections.unmodifiableList(this.dominationPoints);
-    }
-
-    public void addDomPoint(DomPoint dp) {
-        this.dominationPoints.add(dp);
-    }
-
-    public void clearDomPoints() {
-        this.dominationPoints.clear();
-    }
-
     public Location getRedFlagLocation() {
         return this.redFlagLocation;
     }
@@ -302,24 +259,6 @@ public class MapConfig {
 
     public void setBlueReturnLocation(Location l) {
         this.blueReturnLocation = l.clone();
-    }
-
-    public static class DomPoint {
-        private final Location center;
-        private final double radius;
-
-        public DomPoint(Location center, double radius) {
-            this.center = center.clone();
-            this.radius = radius;
-        }
-
-        public Location getCenter() {
-            return this.center;
-        }
-
-        public double getRadius() {
-            return this.radius;
-        }
     }
 }
 

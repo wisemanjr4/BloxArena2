@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -46,6 +47,8 @@ public class UltimateManager {
     private final GameManager gm;
     private final SkillManager skillManager;
     private final Map<UUID, Integer> charge = new HashMap<UUID, Integer>();
+    private final Map<UUID, String> roundCarryKit = new HashMap<UUID, String>();
+    private final Map<UUID, Integer> roundCarryCharge = new HashMap<UUID, Integer>();
     private final Map<UUID, Long> lastTickTime = new HashMap<UUID, Long>();
     private final Map<UUID, Double> chargeFraction = new HashMap<UUID, Double>();
     private final Map<UUID, Location> swapperMark = new HashMap<UUID, Location>();
@@ -63,14 +66,13 @@ public class UltimateManager {
     public void addCharge(UUID player, int amount) {
         long now = System.currentTimeMillis();
         if (now < this.universalLockUntil || now < this.chargeLockUntil.getOrDefault(player, 0L)) {
-            this.charge.put(player, 0);
             return;
         }
         if (amount <= 0) {
             return;
         }
         GameMode mode = this.gm.getCurrentGameMode();
-        if (mode == GameMode.TEAM_DEATHMATCH || mode == GameMode.DOMINATION || mode == GameMode.CAPTURE_THE_FLAG) {
+        if (mode == GameMode.TEAM_DEATHMATCH || mode == GameMode.CAPTURE_THE_FLAG) {
             amount = (int)Math.round((double)amount * 1.5);
         } else if (mode == GameMode.BATTLE_ARENA) {
             amount = (int)Math.round((double)amount * 0.5);
@@ -106,19 +108,19 @@ public class UltimateManager {
             case MARKSMAN: return 120;
             case SWAPPER: return 120;
             case TRANSPORTER: return 120;
-            case NECRO: return 120;
+            case NECRO: return 130;
             case HEXER: return 120;
             case SUPPORTER: return 120;
             case PHANTOM: return 130;
             case BOMBER: return 110;
             case SCOUT: return 110;
-            case BLADE: return 100;
+            case BLADE: return 90;
             case COOK: return 100;
             case FLASHER: return 100;
             case STICKER: return 100;
             case DECOY: return 100;
             case ROCKETER: return 100;
-            case ALCHEMIST: return 100;
+            case ALCHEMIST: return 140;
             case ANCHOR: return 100;
             case TRAPPER: return 100;
             case GLACIES: return 100;
@@ -126,16 +128,17 @@ public class UltimateManager {
             case PYRO: return 100;
             case JESTER: return 90;
             case RESTRICTIONER: return 90;
+            case TRINGID: return 150;
             case SUPERIOR_MISTRAL: return 90;
             case AEGIS: return 90;
-            case COUNTER: return 80;
-            case KREUTZ: return 90;
+            case COUNTER: return 110;
+            case KREUTZ: return 110;
             case NILGIRITAR: return 80;
             case RELEASER: return 80;
             case BULWARK: return 80;
             case GRANG: return 70;
-            case WHIRLWIND: return 70;
-            case MISTRAL: return 70;
+            case WHIRLWIND: return 80;
+            case MISTRAL: return 60;
             case TIMEKEEPER: return 60;
             case REFLECTOR: return 60;
             default: return 100;
@@ -167,6 +170,48 @@ public class UltimateManager {
         this.glaciesHitCooldown.clear();
         this.chargeLockUntil.clear();
         this.universalLockUntil = System.currentTimeMillis() + 5000L;
+        for (Map.Entry<UUID, String> e : this.roundCarryKit.entrySet()) {
+            if (e.getValue().equals(this.gm.getPlayerKit(e.getKey()))) {
+                Integer carried = this.roundCarryCharge.get(e.getKey());
+                if (carried != null && carried > 0) {
+                    this.charge.put(e.getKey(), carried);
+                }
+            }
+        }
+        this.roundCarryKit.clear();
+        this.roundCarryCharge.clear();
+    }
+
+    public void captureRoundCarry(Map<UUID, String> kits) {
+        this.roundCarryKit.clear();
+        this.roundCarryCharge.clear();
+        for (Map.Entry<UUID, String> e : kits.entrySet()) {
+            this.roundCarryKit.put(e.getKey(), e.getValue());
+            this.roundCarryCharge.put(e.getKey(), this.charge.getOrDefault(e.getKey(), 0));
+        }
+    }
+
+    public void clearRoundCarry() {
+        this.roundCarryKit.clear();
+        this.roundCarryCharge.clear();
+    }
+
+    public void addDamageCharge(Player p, double damage) {
+        if (!participant(p) || damage <= 0.0) {
+            return;
+        }
+        KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
+        if (kit == null) {
+            return;
+        }
+        double pts = damage * 0.3;
+        GameMode mode = this.gm.getCurrentGameMode();
+        if (mode == GameMode.TEAM_DEATHMATCH || mode == GameMode.CAPTURE_THE_FLAG) {
+            pts *= 1.5;
+        }
+        int cur = this.charge.getOrDefault(p.getUniqueId(), 0);
+        int max = this.requiredCharge(kit);
+        this.charge.put(p.getUniqueId(), Math.min(max, cur + (int)pts));
     }
 
     public void tickCharge(Player p) {
@@ -243,6 +288,7 @@ public class UltimateManager {
             case WHIRLWIND: this.whirlwindUltimate(p); break;
             case NILGIRITAR: this.nilgiritarUltimate(p); break;
             case MISTRAL: this.mistralUltimate(p); break;
+            case TRINGID: this.skillManager.setTringidUltimate(p); break;
             case SUPERIOR_MISTRAL: this.skillManager.setSuperiorMistralUltimate(p); break;
             case ROCKETER: this.rocketerUltimate(p); break;
             case ALCHEMIST: this.alchemistUltimate(p); break;
@@ -270,29 +316,63 @@ public class UltimateManager {
     private void bladeUltimate(final Player p) {
         final Vector dir = p.getLocation().getDirection().normalize();
         final Location start = p.getLocation().clone().add(0.0, 0.5, 0.0);
-        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 0.5f);
+        final double maxRange = 39.0;
+        p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.2f, 0.6f);
+        p.sendMessage("\u00a7c\u00a7l\u30c7\u30a3\u30e1\u30f3\u30b7\u30e7\u30f3\u30fb\u30d6\u30ec\u30a4\u30af \u8d77\u52d5\u2026 \u00a77(\u767a\u5c04\u307e\u30671\u79d2)");
         new BukkitRunnable(){
             int t = 0;
-            Location cur = start.clone();
+
             public void run() {
-                if (this.t++ > 60) {
+                if (this.t++ >= 20) {
                     this.cancel();
+                    UltimateManager.this.bladeUltimateFire(p, start, dir, maxRange);
                     return;
                 }
-                this.cur.add(dir.clone().multiply(0.65));
-                this.cur.getWorld().spawnParticle(Particle.SWEEP_ATTACK, this.cur, 3, 0.4, 0.2, 0.4, 0.0);
-                for (Entity e : this.cur.getWorld().getNearbyEntities(this.cur, 1.2, 1.5, 1.2)) {
-                    if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
-                    Player bladeVictim = (Player)e;
-                    bladeVictim.damage(18.0, (Entity)p);
-        UltimateManager.this.killEffect(bladeVictim);
-                    bladeVictim.damage(0.5, (Entity)p);
-                    UltimateManager.this.killEffect(bladeVictim);
-                    this.cancel();
-                    return;
+                for (double d = 1.0; d <= maxRange; d += 1.0) {
+                    Location wp = start.clone().add(dir.clone().multiply(d));
+                    wp.getWorld().spawnParticle(Particle.REDSTONE, wp, 2, 0.15, 0.15, 0.15, 0.0, new Particle.DustOptions(Color.RED, 1.8f));
+                }
+                if (this.t % 4 == 0) {
+                    for (Player en : start.getWorld().getPlayers()) {
+                        if (!UltimateManager.this.isEnemy(p, en)) continue;
+                        if (UltimateManager.this.distanceToSegment(en.getLocation().clone().add(0.0, 1.0, 0.0), start, dir, maxRange) <= 3.0) {
+                            en.playSound(en.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 1.9f);
+                        }
+                    }
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
+    }
+
+    private void bladeUltimateFire(Player p, Location start, Vector dir, double maxRange) {
+        for (double d = 0.5; d <= maxRange; d += 0.5) {
+            Location check = start.clone().add(dir.clone().multiply(d));
+            check.getWorld().spawnParticle(Particle.SWEEP_ATTACK, check, 2, 0.3, 0.2, 0.3, 0.0);
+        }
+        p.getWorld().playSound(start, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 0.5f);
+        for (double d = 0.0; d <= maxRange; d += 0.5) {
+            Location check = start.clone().add(dir.clone().multiply(d));
+            for (Entity e : check.getWorld().getNearbyEntities(check, 1.2, 1.5, 1.2)) {
+                if (!(e instanceof Player) || !this.isEnemy(p, (Player)e)) continue;
+                Player bladeVictim = (Player)e;
+                bladeVictim.damage(15.0, (Entity)p);
+                this.killEffect(bladeVictim);
+                bladeVictim.damage(0.5, (Entity)p);
+                this.killEffect(bladeVictim);
+                return;
+            }
+        }
+    }
+
+    private double distanceToSegment(Location point, Location origin, Vector dir, double maxRange) {
+        Vector toPoint = point.toVector().subtract(origin.toVector());
+        double proj = toPoint.dot(dir);
+        if (proj < 0.0 || proj > maxRange) {
+            Vector endVec = origin.clone().add(dir.clone().multiply(maxRange)).toVector();
+            return Math.min(point.toVector().distance(origin.toVector()), point.toVector().distance(endVec));
+        }
+        Vector closest = origin.toVector().add(dir.clone().multiply(proj));
+        return point.toVector().distance(closest);
     }
 
     private void breakerUltimate(final Player p) {
@@ -487,15 +567,29 @@ public class UltimateManager {
             Player ally = Bukkit.getPlayer(uid);
             if (ally == null || !participant(ally)) continue;
             if (team != null && this.gm.getTeamOf(ally) != team) continue;
-            ally.sendMessage("\u00a7c\u00a7l\u26a0 \u3042\u306a\u305f\u306f\u7206\u5f3e \u00a78\u00bb \u00a7710\u79d2\u5f8c\u306b\u7206\u767a\uff01");
-            final Location loc = ally.getLocation().clone();
+            ally.sendMessage("\u00a7c\u00a7l\u26a0 \u3042\u306a\u305f\u306f\u7206\u5f3e \u00a78\u00bb \u00a775\u79d2\u5f8c\u306b\u7206\u767a\uff01");
             final Player owner = p;
-            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
-                World w = loc.getWorld();
-                UltimateManager.this.areaExplosion(owner, loc, 6.0, 6.0, 20.0, 1.0, 0.75, false);
-                w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 12, 2.0, 2.0, 2.0, 0.1);
-                w.spawnParticle(Particle.LAVA, loc, 15, 1.5, 1.5, 1.5, 0.0);
-            }, 200L);
+            new BukkitRunnable(){
+                int t = 5;
+
+                public void run() {
+                    if (this.t <= 0) {
+                        this.cancel();
+                        Location now = ally.getLocation().clone();
+                        World w = now.getWorld();
+                        UltimateManager.this.areaExplosion(owner, now, 7.0, 7.0, 20.0, 1.0, 0.75, false);
+                        w.spawnParticle(Particle.EXPLOSION_HUGE, now, 12, 2.0, 2.0, 2.0, 0.1);
+                        w.spawnParticle(Particle.LAVA, now, 15, 1.5, 1.5, 1.5, 0.0);
+                        return;
+                    }
+                    if (ally.isOnline()) {
+                        ally.sendActionBar(net.kyori.adventure.text.Component.text(("\u00a7c\u00a7l\ud83d\udca3 \u7206\u767a\u307e\u3067 " + this.t + "\u79d2")));
+                        ally.playSound(ally.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.8f, 1.0f + (float)(5 - this.t) * 0.15f);
+                    }
+                    ally.getLocation().getWorld().spawnParticle(Particle.FLAME, ally.getLocation().add(0.0, 0.5, 0.0), 5, 0.3, 0.3, 0.3, 0.01);
+                    --this.t;
+                }
+            }.runTaskTimer((Plugin)this.plugin, 20L, 20L);
         }
     }
 
@@ -565,26 +659,35 @@ public class UltimateManager {
 
     private void whirlwindUltimate(final Player p) {
         final Vector dir = p.getLocation().getDirection().normalize();
-        final Vector fwd = p.getLocation().getDirection().setY(0).normalize();
-        final Vector lift = new Vector(fwd.getX() * 0.4, 0.6, fwd.getZ() * 0.4);
+        final Vector lift = new Vector(0.0, 0.6, 0.0);
         final Location start = p.getLocation().clone().add(dir.clone().multiply(2.0));
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1.0f, 0.5f);
         new BukkitRunnable(){
             int t = 0;
+            int hits = 0;
             Location cur = start.clone();
             public void run() {
                 if (this.t++ > 100) {
                     this.cancel();
                     return;
                 }
-                this.cur.add(dir.clone().multiply(0.15));
+                this.cur.add(dir.clone().multiply(0.15 * Math.pow(1.25, (double)this.hits)));
                 World w = this.cur.getWorld();
                 w.spawnParticle(Particle.SWEEP_ATTACK, this.cur, 8, 2.0, 2.0, 2.0, 0.05);
+                if (this.t % 20 == 0) {
+                    for (Entity ally : w.getNearbyEntities(this.cur, 3.0, 3.0, 3.0)) {
+                        if (!(ally instanceof Player)) continue;
+                        Player ap = (Player)ally;
+                        if (!UltimateManager.this.gm.isParticipant(ap) || UltimateManager.this.gm.isSpectator(ap) || UltimateManager.this.isEnemy(p, ap)) continue;
+                        ap.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 0, false, true));
+                    }
+                }
                 for (Entity e : w.getNearbyEntities(this.cur, 3.0, 3.0, 3.0)) {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player t2 = (Player)e;
-                    t2.setVelocity(t2.getVelocity().add(lift));
+                    t2.setVelocity(new Vector(t2.getVelocity().getX(), 0.6, t2.getVelocity().getZ()));
                     t2.damage(2.0, (Entity)p);
+                    ++this.hits;
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 2L);
@@ -640,7 +743,8 @@ public class UltimateManager {
                 }
                 victim.setVelocity(new Vector(0, 0, 0));
                 victim.setNoDamageTicks(0);
-                victim.damage(1.0, (Entity)owner);
+                victim.damage(0.01, (Entity)owner);
+                victim.setHealth(Math.max(0.001, victim.getHealth() - 0.75));
                 victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0.0, 1.0, 0.0), 6, 0.3, 0.4, 0.3, 0.15);
                 victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.7f, 1.2f + (float)this.hit * 0.03f);
             }
@@ -666,7 +770,7 @@ public class UltimateManager {
                     if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
                     Player t2 = (Player)e;
                     t2.setVelocity(t2.getLocation().toVector().subtract(this.cur.toVector()).normalize().multiply(2.0).setY(0.5));
-                    t2.damage(3.0, (Entity)p);
+                    t2.damage(4.0, (Entity)p);
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 1L);
@@ -800,20 +904,20 @@ public class UltimateManager {
     }
 
     private void medicUltimate(final Player p) {
-        p.sendMessage("\u00a75\u00a7l\u30ea\u30a2\u30af\u30c6\u30a3\u30d6\u30d2\u30fc\u30eb \u00a78\u00bb \u00a7730\u79d2\u9593\u5473\u65b9\u518d\u751f\uff01");
+        p.sendMessage("\u00a75\u00a7l\u30ea\u30a2\u30af\u30c6\u30a3\u30d6\u30d2\u30fc\u30eb \u00a78\u00bb \u00a7716\u79d2\u9593\u5473\u65b9\u518d\u751f\uff01");
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.6f);
         p.getWorld().spawnParticle(Particle.HEART, p.getLocation().add(0.0, 1.5, 0.0), 10, 0.4, 0.6, 0.4, 0.0);
         final TeamColor team = this.gm.getTeamOf(p);
         new BukkitRunnable(){
             int t = 0;
             public void run() {
-                if (this.t++ > 30 || !participant(p)) {
+                if (this.t++ > 16 || !participant(p)) {
                     this.cancel();
                     return;
                 }
                 for (Player ally : Bukkit.getOnlinePlayers()) {
-                    if (!participant(ally) || (team != null && UltimateManager.this.gm.getTeamOf(ally) != team)) continue;
-                    ally.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20, 4, false, true));
+                    if (!participant(ally) || team == null || UltimateManager.this.gm.getTeamOf(ally) != team) continue;
+                    ally.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 20, 2, false, true));
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
@@ -872,7 +976,7 @@ public class UltimateManager {
         World w = p.getWorld();
         w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 12, 4.0, 3.0, 4.0, 0.1);
         w.spawnParticle(Particle.LAVA, loc, 20, 3.0, 2.0, 3.0, 0.0);
-        this.areaExplosion(p, loc, 9.0, 9.0, 14.0, 2.5, 0.50, false);
+        this.areaExplosion(p, loc, 9.0, 9.0, 20.0, 2.5, 0.50, false);
         p.sendMessage("\u00a76\u00a7l\u2726 \u30ab\u30bf\u30b9\u30c8\u30ed\u30d5\uff01");
     }
 
@@ -992,7 +1096,7 @@ public class UltimateManager {
     }
 
     private boolean isEnemy(Player self, Player other) {
-        if (other == null || self == null || other == self || !this.gm.isParticipant(other)) {
+        if (other == null || self == null || other == self || !this.gm.isParticipant(other) || this.gm.isSpectator(other)) {
             return false;
         }
         TeamColor my = this.gm.getTeamOf(self);
@@ -1007,7 +1111,7 @@ public class UltimateManager {
             case NINJA: return "\u5f71\u6e21\u308a";
             case BERSERKER: return "\u30c7\u30c3\u30c9\u30ea\u30fc\u30ec\u30a4\u30f4";
             case SNIPER: return "\u30a2\u30a4\u30fb\u30aa\u30d6\u30fb\u30db\u30eb\u30b9";
-            case COUNTER: return "\u81f4\u547d\u306e\u4e00\u6483";
+            case COUNTER: return "\u30aa\u30fc\u30d0\u30fc\u30a2\u30af\u30bb\u30e9\u30ec\u30fc\u30b7\u30e7\u30f3";
             case PYRO: return "\u30a4\u30b0\u30ca\u30a4\u30c8\u30fb\u30de\u30ad\u30b7\u30de";
             case LANCER: return "\u30c0\u30a4\u30ca\u30e2\u30e9\u30f3\u30b9";
             case JESTER: return "\u30d0\u30a4\u30f3\u30c9\u30c8\u30ea\u30c3\u30af";
@@ -1025,6 +1129,7 @@ public class UltimateManager {
             case WHIRLWIND: return "\u30b5\u30a4\u30af\u30ed\u30f3";
             case NILGIRITAR: return "\u30d1\u30a4\u30eb\u30c9\u30e9\u30a4\u30d0\u30fc";
             case MISTRAL: return "A Stranger I Remain";
+            case TRINGID: return "\u30ea\u30f3\u30ab\u30fc\u30cd\u30a4\u30b7\u30e7\u30f3\u30dd\u30fc\u30eb";
             case SUPERIOR_MISTRAL: return "\u30d5\u30e9\u30f3\u30b9\u306e\u51b7\u305f\u3044\u7a81\u98a8";
             case ROCKETER: return "\u30e1\u30ac\u30df\u30b5\u30a4\u30eb";
             case ALCHEMIST: return "\u88fd\u85ac\u30d5\u30a3\u30fc\u30d0\u30fc";

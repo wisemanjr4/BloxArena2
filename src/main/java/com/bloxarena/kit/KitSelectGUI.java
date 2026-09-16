@@ -93,7 +93,7 @@ public class KitSelectGUI {
                 if (this.confirmed.contains(uid) || (p = Bukkit.getPlayer((UUID)uid)) == null) continue;
                 KitType heldKit = this.getHeldKit(p);
                 String title = heldKit != null ? "\u00a7e" + heldKit.getName() : "\u00a7e\u30ad\u30c3\u30c8\u3092\u9078\u629e";
-                p.sendTitle(title, "\u00a7e\u6b8b\u308a \u00a7c" + remaining[0] + "\u00a7e \u79d2", 0, 20, 0);
+                p.sendTitle(title, "\u00a7e\u6b8b\u308a \u00a7c" + remaining[0] + "\u00a7e \u79d2", 5, 40, 5);
                 if (heldKit != null) {
                     p.sendActionBar((Component)Component.text((String)("\u00a77" + heldKit.getDescription() + " \u00a7f" + heldKit.getLore())));
                 } else {
@@ -101,7 +101,7 @@ public class KitSelectGUI {
                 }
             }
             remaining[0] = remaining[0] - 1;
-        }, 0L, 20L);
+        }, 40L, 20L);
         this.timeoutTask = Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             for (UUID uid : this.allPlayers) {
                 Player p;
@@ -160,10 +160,13 @@ public class KitSelectGUI {
         if (kit == null) {
             return;
         }
-        if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
-            p.sendMessage("\u00a7c\u305d\u306e\u30ad\u30c3\u30c8\u306f\u9078\u629e\u3067\u304d\u307e\u305b\u3093\u3002");
+        if (kit == KitType.TRINGID) {
+            p.sendMessage("\u00a7c\u305d\u306e\u30ad\u30c3\u30c8\u306f\u73fe\u5728\u5229\u7528\u3067\u304d\u307e\u305b\u3093\u3002");
             return;
         }
+        if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
+            p.sendMessage("\u00a7c\u305d\u306e\u30ad\u30c3\u30c8\u306f\u9078\u629e\u3067\u304d\u307e\u305b\u3093\u3002");
+            return;        }
         if (this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) {
             p.sendMessage("\u00a7c\u305d\u306e\u30ad\u30c3\u30c8\u306f\u30c1\u30fc\u30e0\u30e1\u30f3\u30d0\u30fc\u304c\u9078\u629e\u6e08\u307f\u3067\u3059\u3002");
             return;
@@ -276,6 +279,7 @@ public class KitSelectGUI {
         }
         for (KitType kit : KitType.values()) {
             if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) continue;
+            if (kit == KitType.TRINGID) continue;
             if (this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) continue;
             this.gm.setPlayerKit(p.getUniqueId(), kit.name());
             this.confirmed.add(p.getUniqueId());
@@ -291,7 +295,7 @@ public class KitSelectGUI {
     }
 
     private ItemStack kitItem(Player p, KitType kit) {
-        if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
+        if (kit == KitType.TRINGID || kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
             return null;
         }
         boolean taken = this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name());
@@ -370,6 +374,7 @@ public class KitSelectGUI {
             case HEXER -> Material.BREWING_STAND;
             case REFLECTOR -> Material.STONE;
             case GLACIES -> Material.PACKED_ICE;
+            case TRINGID -> Material.END_ROD;
             case SUPERIOR_MISTRAL -> Material.NETHER_STAR;
             default -> throw new IncompatibleClassChangeError();
         };

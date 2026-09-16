@@ -146,6 +146,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.projectiles.ProjectileSource;
@@ -158,7 +159,7 @@ implements Listener {
     private KitSelectGUI activeGUI;
     private final Map<UUID, Long> disconnectedAt = new HashMap<UUID, Long>();
     private static final long RECONNECT_WINDOW_MS = 180000L;
-    private static final Set<PotionEffectType> NEGATIVE_EFFECTS = Set.of(PotionEffectType.SLOW, PotionEffectType.WEAKNESS, PotionEffectType.POISON, PotionEffectType.WITHER, PotionEffectType.HUNGER, PotionEffectType.BLINDNESS, PotionEffectType.CONFUSION, PotionEffectType.SLOW_DIGGING, PotionEffectType.UNLUCK, PotionEffectType.DARKNESS, PotionEffectType.LEVITATION, PotionEffectType.JUMP, PotionEffectType.GLOWING);
+    private static final Set<PotionEffectType> NEGATIVE_EFFECTS = Set.of(PotionEffectType.SLOW, PotionEffectType.WEAKNESS, PotionEffectType.POISON, PotionEffectType.WITHER, PotionEffectType.HUNGER, PotionEffectType.BLINDNESS, PotionEffectType.CONFUSION, PotionEffectType.SLOW_DIGGING, PotionEffectType.UNLUCK, PotionEffectType.DARKNESS, PotionEffectType.JUMP, PotionEffectType.GLOWING);
     private final Map<UUID, UUID> lastDamager = new HashMap<UUID, UUID>();
 
     public GameListeners(BloxArenaPlugin plugin) {
@@ -211,7 +212,7 @@ implements Listener {
             boolean respawnMode;
             p.sendMessage("\u00a7c\u26a0 area outside! eliminated.");
             GameMode mode = this.gm.getCurrentGameMode();
-            boolean bl = respawnMode = mode == GameMode.TEAM_DEATHMATCH || mode == GameMode.DOMINATION || mode == GameMode.CAPTURE_THE_FLAG;
+            boolean bl = respawnMode = mode == GameMode.TEAM_DEATHMATCH || mode == GameMode.CAPTURE_THE_FLAG;
             Location safe = respawnMode ? from : (map.getLobby() != null ? map.getLobby() : from);
             p.teleport(safe);
             this.gm.onPlayerDied(p, null, null);
@@ -294,6 +295,54 @@ implements Listener {
         if (e.getCause() == EntityDamageEvent.DamageCause.FALL && this.gm.hasNoFallDamage(p)) {
             e.setCancelled(true);
             p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.3f, 0.8f);
+        } else if (e.getCause() == EntityDamageEvent.DamageCause.FALL && this.plugin.isLabEnabled("fall_damage") && p.getFallDistance() >= 7.0f) {
+            e.setCancelled(true);
+            double dmg = Math.min(p.getFallDistance() - 5.0, Math.max(0.0, p.getHealth() - 1.0));
+            if (dmg > 0.0) {
+                p.setHealth(Math.max(1.0, p.getHealth() - dmg));
+            }
+            if (p.getFallDistance() >= 10.0f) {
+                p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, false, true));
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 40, 0, false, true));
+                p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 40, 253, false, true));
+            }
+            p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 0.7f);
+        }
+        if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.COUNTER) {
+            Player parryAttacker = null;
+            if (e instanceof EntityDamageByEntityEvent) {
+                Entity d = ((EntityDamageByEntityEvent)e).getDamager();
+                if (d instanceof Player) {
+                    parryAttacker = (Player)d;
+                }
+            }
+            this.plugin.getSkillManager().onCounterDamaged(p, e.getFinalDamage(), parryAttacker != null, parryAttacker);
+        }
+        if (this.plugin.getSkillManager().isDeadlocked(p.getUniqueId())) {
+            this.plugin.getSkillManager().scheduleDeadlockRelease(p);
+        }
+        if (e.getEntity() instanceof org.bukkit.entity.ArmorStand) {
+            this.plugin.getSkillManager().damageTringidPole((org.bukkit.entity.ArmorStand)e.getEntity(), e.getFinalDamage());
+        }
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onTringidResurrect(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player)) {
+            return;
+        }
+        Player p = (Player)e.getEntity();
+        if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.TRINGID) {
+            return;
+        }
+        if (this.gm.getState() != GameState.IN_GAME) {
+            return;
+        }
+        if (e.getFinalDamage() < p.getHealth()) {
+            return;
+        }
+        if (this.plugin.getSkillManager().tryTringidResurrect(p)) {
+            e.setCancelled(true);
         }
     }
 
@@ -396,12 +445,7 @@ implements Listener {
 
     @EventHandler
     public void onDropItem(PlayerDropItemEvent e) {
-        if ((this.gm.getState() == GameState.KIT_SELECT || this.gm.getState() == GameState.IN_GAME) && this.gm.isParticipant(e.getPlayer())) {
-            e.setCancelled(true);
-        }
-        if (this.gm.getState() == GameState.WAITING && this.lm.isVoteItem(e.getItemDrop().getItemStack())) {
-            e.setCancelled(true);
-        }
+        e.setCancelled(true);
     }
 
     @EventHandler
@@ -501,10 +545,6 @@ implements Listener {
                 this.gm.tryPickupFlag(p);
                 this.gm.tryPickupDroppedFlag(p);
             }
-            if (this.gm.getCurrentGameMode() == GameMode.BOMB_MISSION && (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR)) {
-                this.gm.tryPlantBomb(p);
-                this.gm.tryDefuseBomb(p);
-            }
         }
     }
 
@@ -544,6 +584,7 @@ implements Listener {
                 if (entity5 instanceof Player) {
                     p = (Player)entity5;
                     p.sendActionBar((Component)Component.text((String)("\u00a7e\u30c0\u30df\u30fc\u6b8bHP: \u00a7c" + String.format("%.0f", z.getHealth() - e.getFinalDamage()) + "/100")));
+                    this.plugin.getSkillManager().tryTutorialGuardBreak((Player)p);
                 }
                 return;
             }
@@ -583,7 +624,7 @@ implements Listener {
         if ((botTeam = e.getDamager()) instanceof Player) {
             attacker2 = (Player)botTeam;
             if (victimTeam != null && this.gm.getTeamOf(attacker2) != victimTeam) {
-                this.plugin.getSkillManager().onComboHit(attacker2, victim);
+                this.plugin.getSkillManager().onComboHit(attacker2, victim, e.getFinalDamage());
             }
         }
         if ((botTeam = e.getDamager()) instanceof Player) {
@@ -596,13 +637,6 @@ implements Listener {
         }
         if (killerUuid != null) {
             this.lastDamager.put(victim.getUniqueId(), killerUuid);
-        }
-        if ((botTeam = e.getDamager()) instanceof Player) {
-            attacker2 = (Player)botTeam;
-            if (victimTeam != null && this.plugin.getSkillManager().tryParryCounter(attacker2, victim)) {
-                e.setCancelled(true);
-                return;
-            }
         }
         if (this.plugin.getSkillManager().isGuardBroken(victim.getUniqueId())) {
             victim.setCooldown(Material.SHIELD, 60);
@@ -662,6 +696,10 @@ implements Listener {
             this.plugin.getSkillManager().onVampireAttack(damager);
         }
         this.plugin.getSkillManager().onVampireDamaged(victim, e.getFinalDamage());
+        this.plugin.getUltimateManager().addDamageCharge(victim, e.getFinalDamage());
+        if (e.getDamager() instanceof Player) {
+            this.plugin.getUltimateManager().addDamageCharge((Player)e.getDamager(), e.getFinalDamage());
+        }
         entity3 = e.getDamager();
         if (entity3 instanceof Player && this.gm.getPlayerKitType((damager = (Player)entity3).getUniqueId()) == KitType.VAMPIRE) {
             boolean inBlood = this.plugin.getSkillManager().isVampireBloodMode(damager.getUniqueId());
@@ -846,6 +884,10 @@ implements Listener {
             Player victim = (Player)object;
             this.plugin.getSkillManager().onGrappleHit(ball, victim, shooter);
         }
+        if (ball.getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "swapper_ball"), PersistentDataType.BYTE) && e.getHitEntity() instanceof Player) {
+            this.plugin.getSkillManager().onSwapperBallHit(ball, (Player)e.getHitEntity(), shooter);
+            e.getEntity().remove();
+        }
         if (ball.getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "mega_rocket"), PersistentDataType.BYTE)) {
             this.plugin.getSkillManager().onMegaRocketHit(e.getEntity().getLocation(), shooter, ball);
             e.getEntity().remove();
@@ -888,6 +930,25 @@ implements Listener {
     }
 
     @EventHandler
+    public void onPotionSplash(PotionSplashEvent e) {
+        if (!(e.getEntity().getShooter() instanceof Player)) {
+            return;
+        }
+        Player shooter = (Player)e.getEntity().getShooter();
+        if (!this.gm.isParticipant(shooter)) {
+            return;
+        }
+        for (PotionEffect eff : e.getPotion().getEffects()) {
+            if (!NEGATIVE_EFFECTS.contains(eff.getType()) && eff.getType() != PotionEffectType.HARM) continue;
+            return;
+        }
+        for (LivingEntity le : e.getAffectedEntities()) {
+            if (!(le instanceof Player) || !this.gm.isParticipant((Player)le) || this.gm.getTeamOf((Player)le) == this.gm.getTeamOf(shooter)) continue;
+            e.setIntensity(le, 0.0);
+        }
+    }
+
+    @EventHandler
     public void onPotionEffect(EntityPotionEffectEvent e) {
         PotionEffectType type;
         PotionEffect newEffect;
@@ -908,9 +969,6 @@ implements Listener {
         }
         if (this.gm.getState() != GameState.IN_GAME) {
             return;
-        }
-        if (e.isSneaking()) {
-            this.plugin.getSkillManager().onParryAttempt(p);
         }
         this.plugin.getSkillManager().onGrangSneak(p, e.isSneaking());
     }
@@ -988,6 +1046,12 @@ implements Listener {
         }
         if (this.lm != null) {
             this.lm.onPlayerQuit(p);
+        }
+        if (this.plugin.getTutorialManager().isInTutorial(p.getUniqueId())) {
+            this.plugin.getTutorialManager().handleQuit(p.getUniqueId());
+        }
+        if (this.plugin.getTestFieldManager().isTester(p)) {
+            this.plugin.getTestFieldManager().quit(p);
         }
     }
 

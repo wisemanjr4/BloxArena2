@@ -50,7 +50,7 @@ import com.bloxarena.kit.KitBuilder;
 import com.bloxarena.kit.KitSelectGUI;
 import com.bloxarena.kit.KitType;
 import com.bloxarena.map.MapConfig;
-import com.bloxarena.song.NbsPlayer;
+import com.bloxarena.scoreboard.ScoreboardManager;
 import com.bloxarena.stats.MatchStats;
 import com.bloxarena.stats.StatsManager;
 import com.bloxarena.util.AnimatedText;
@@ -92,6 +92,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.SpectralArrow;
 import org.bukkit.entity.ThrownPotion;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
@@ -133,22 +134,7 @@ public class GameManager {
     private int tdmKillsBlue = 0;
     private long tdmStartTime = 0L;
     private BukkitTask tdmTimerTask = null;
-    private boolean bombPlanted = false;
-    private Location bombLoc = null;
-    private BukkitTask bombTimerTask = null;
-    private int bombSecondsRemaining = 0;
-    private boolean bombDefusing = false;
-    private Player bombDefuser = null;
-    private int defuseProgress = 0;
-    private boolean bombRoundAttackerRed = true;
-    private BukkitTask bombRoundTimerTask = null;
-    private final Map<Integer, Float> domCapProgress = new HashMap<Integer, Float>();
-    private final Map<Integer, TeamColor> domCapOwner = new HashMap<Integer, TeamColor>();
-    private int domPointsRed = 0;
-    private int domPointsBlue = 0;
-    private BukkitTask domTimerTask = null;
     private BukkitTask gameTickTask = null;
-    private NbsPlayer selectedBgm;
     private boolean redFlagTaken = false;
     private boolean blueFlagTaken = false;
     private UUID redFlagCarrier = null;
@@ -168,6 +154,7 @@ public class GameManager {
     private int ctfBlueTeamSize = 0;
     private final Set<UUID> underdogPlayers = new HashSet<UUID>();
     private final Map<UUID, Long> underdogCooldown = new HashMap<UUID, Long>();
+    private final Map<UUID, ItemStack[]> inventoryMemory = new HashMap<UUID, ItemStack[]>();
 
     public int getCtfRedTeamSize() {
         return this.ctfRedTeamSize;
@@ -184,9 +171,6 @@ public class GameManager {
     public void startGame(MapConfig map, GameMode mode, List<UUID> participants) {
         this.currentMap = map;
         this.currentGameMode = mode;
-        if (this.currentGameMode == GameMode.BOMB_MISSION) {
-            this.bombRoundAttackerRed = true;
-        }
         Bukkit.broadcastMessage((String)("\u00a78\u00bb \u00a7d\u26a1 " + this.currentGameMode.getDisplayName() + " \u00a78\u00bb \u00a77" + this.currentGameMode.getDescription()));
         for (Player pl2 : Bukkit.getOnlinePlayers()) {
             pl2.playSound(pl2.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.8f, 2.0f);
@@ -200,8 +184,6 @@ public class GameManager {
             String rules = switch (this.currentGameMode) {
                 case BATTLE_ARENA -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u6575\u3092\u6bb2\u6ec5\u3059\u308b\u304b\u3001\u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8(25\u679a)\u3092\u81ea\u8272\u3067\u57cb\u3081\u306615\u79d2\u30db\u30fc\u30eb\u30c9\u305b\u3088\uff01BO3\u5148\u53d6\u5236\u3002";
                 case TEAM_DEATHMATCH -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u5236\u9650\u6642\u9593\u5185\u306b\u3088\u308a\u591a\u304f\u306e\u6575\u3092\u5012\u305b\uff01\u6b7b\u4ea1\u3057\u3066\u30823\u79d2\u3067\u30ea\u30b9\u30dd\u30fc\u30f3\u3002\u76ee\u6a1930\u30ad\u30eb\u5148\u53d6\u3067\u3082\u52dd\u5229\u3002";
-                case BOMB_MISSION -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u653b\u6483\u5074\u306f\u7206\u5f3e\u3092\u8a2d\u7f6e(5\u79d2)\u2192\u7206\u767a45\u79d2\u3002\u5b88\u5099\u5074\u306f\u89e3\u9664(7\u79d2)\u305b\u3088\uff01\u30e9\u30a6\u30f3\u30c9\u6bce\u306b\u653b\u5b88\u4ea4\u4ee3\u3002";
-                case DOMINATION -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u62e0\u70b9\u306b\u7acb\u3061\u7d9a\u3051\u3066\u5360\u9818\u305b\u3088\uff01\u5360\u9818\u62e0\u70b9\u304b\u3089\u6bce\u79d2\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\u3002\u5148\u306b\u76ee\u6a19\u30dd\u30a4\u30f3\u30c8\u5230\u9054\u3067\u52dd\u5229\u3002";
                 case CAPTURE_THE_FLAG -> "\u00a76\u00a7l\u2605 \u30eb\u30fc\u30eb \u00a78\u00bb \u00a7f\u6575\u9663\u306e\u65d7\u3092\u596a\u3044\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01\u5148\u306b3\u56de\u596a\u53d6\u3067\u52dd\u5229\u3002\u6b7b\u4ea1\u6642\u306f\u65d7\u3092\u843d\u3068\u3059\u3002";
                 default -> throw new IncompatibleClassChangeError();
             };
@@ -219,7 +201,9 @@ public class GameManager {
         this.playerKit.clear();
         this.noFallDamage.clear();
         this.deadPlayers.clear();
+        this.inventoryMemory.clear();
         this.underdogPlayers.clear();
+        this.plugin.getUltimateManager().clearRoundCarry();
         this.underdogCooldown.clear();
         this.assignTeams(participants);
         for (UUID uid : participants) {
@@ -272,15 +256,6 @@ public class GameManager {
         this.applyUnderdogBonus();
         this.plugin.getScoreboardManager().start(this);
         this.gameTickTask = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, this::gameTickUpdate, 0L, 2L);
-        if (this.selectedBgm != null) {
-            Collection<Player> players = new ArrayList<>();
-            for (UUID uid : this.getAllParticipants()) {
-                Player p = Bukkit.getPlayer(uid);
-                if (p == null) continue;
-                players.add(p);
-            }
-            this.selectedBgm.play(players);
-        }
         for (UUID uUID : this.redTeam) {
             Player p = Bukkit.getPlayer((UUID)uUID);
             if (p == null) continue;
@@ -290,36 +265,6 @@ public class GameManager {
             Player p = Bukkit.getPlayer((UUID)uUID);
             if (p == null) continue;
             this.plugin.getSkillManager().refreshBurst(p);
-        }
-        if (this.currentGameMode == GameMode.DOMINATION) {
-            this.domPointsRed = 0;
-            this.domPointsBlue = 0;
-            this.domCapProgress.clear();
-            this.domCapOwner.clear();
-            if (this.currentMap != null) {
-                int idx = 0;
-                for (MapConfig.DomPoint dp : this.currentMap.getDominationPoints()) {
-                    this.domCapProgress.put(idx, Float.valueOf(0.0f));
-                    this.domCapOwner.put(idx, null);
-                    Location cloc = dp.getCenter();
-                    if (cloc.getWorld() != null) {
-                        cloc.getBlock().setType(Material.BEACON);
-                    }
-                    ++idx;
-                }
-            }
-            int timeLimit = this.plugin.getConfig().getInt("domination.time_limit_seconds", 120);
-            final int n = this.plugin.getConfig().getInt("domination.target_points", 100);
-            this.domTimerTask = new BukkitRunnable(){
-
-                public void run() {
-                    if (GameManager.this.state != GameState.IN_GAME) {
-                        this.cancel();
-                        return;
-                    }
-                    GameManager.this.updateDomination(GameManager.this.currentMap, n);
-                }
-            }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
         }
         this.startCountdownBeforeBarrierRemoval();
         if (this.currentGameMode == GameMode.TEAM_DEATHMATCH) {
@@ -343,31 +288,6 @@ public class GameManager {
                     }
                 }
             }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
-        }
-        if (this.currentGameMode == GameMode.BOMB_MISSION) {
-            TeamColor attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-            for (UUID uid : attacker == TeamColor.RED ? this.redTeam : this.blueTeam) {
-                Player pl = Bukkit.getPlayer((UUID)uid);
-                if (pl == null) continue;
-                ItemStack bomb = new ItemStack(Material.TNT);
-                ItemMeta m = bomb.getItemMeta();
-                if (m != null) {
-                    m.setDisplayName("\u00a7c\u00a7l\ud83d\udca3 \u7206\u5f3e \u00a78\u00bb \u00a77\u8a2d\u7f6e\u5730\u70b9\u3067\u53f3\u30af\u30ea\u30c3\u30af");
-                    bomb.setItemMeta(m);
-                }
-                pl.getInventory().addItem(new ItemStack[]{bomb});
-            }
-            this.broadcastBombRoundInfo();
-            this.bombRoundTimerTask = Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
-                if (this.state != GameState.IN_GAME) {
-                    return;
-                }
-                if (!this.bombPlanted) {
-                    TeamColor defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-                    Bukkit.broadcastMessage((String)("\u00a7e\u23f0 \u6642\u9593\u5207\u308c \u00a78\u00bb " + defender.getColorCode() + "\u00a7l" + defender.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01"));
-                    this.endGame(defender, WinCondition.OBJECTIVE);
-                }
-            }, (long)this.plugin.getConfig().getInt("bomb_mission.time_limit_seconds", 180) * 20L);
         }
         if (this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
             this.ctfRedCaptures = 0;
@@ -433,27 +353,7 @@ public class GameManager {
     }
 
     public boolean hasNightBuff(Player p) {
-        if (!this.underdogPlayers.contains(p.getUniqueId())) {
-            return false;
-        }
-        if (this.isRespawnMode()) {
-            return true;
-        }
-        TeamColor own = this.getTeamOf(p);
-        if (own == null) {
-            return false;
-        }
-        int ownAlive = 0;
-        int enemyAlive = 0;
-        for (Player other : Bukkit.getOnlinePlayers()) {
-            if (!this.isParticipant(other) || this.isSpectator(other) || this.deadPlayers.contains(other.getUniqueId())) continue;
-            if (this.getTeamOf(other) == own) {
-                ++ownAlive;
-            } else {
-                ++enemyAlive;
-            }
-        }
-        return ownAlive < enemyAlive;
+        return this.underdogPlayers.contains(p.getUniqueId());
     }
 
     public boolean isNightBuffReady(UUID uid) {
@@ -469,11 +369,11 @@ public class GameManager {
     }
 
     public void startNightBuffCooldown(UUID uid) {
-        this.underdogCooldown.put(uid, System.currentTimeMillis() + 8000L);
+        this.underdogCooldown.put(uid, System.currentTimeMillis() + 10000L);
     }
 
     private boolean isRespawnMode() {
-        return this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG;
+        return this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.CAPTURE_THE_FLAG;
     }
 
     private void gameTickUpdate() {
@@ -492,13 +392,13 @@ public class GameManager {
             return false;
         }
         GameMode m = this.currentGameMode;
-        if (m != GameMode.BATTLE_ARENA && m != GameMode.TEAM_DEATHMATCH && m != GameMode.BOMB_MISSION) {
+        if (m != GameMode.BATTLE_ARENA && m != GameMode.TEAM_DEATHMATCH) {
             return false;
         }
         if (!this.isParticipant(p) || this.isSpectator(p)) {
             return false;
         }
-        Location c = m == GameMode.BOMB_MISSION ? this.currentMap.getBombSite() : this.currentMap.getCenter();
+        Location c = this.currentMap.getCenter();
         if (c == null) {
             return false;
         }
@@ -535,83 +435,6 @@ public class GameManager {
             if (!this.plugin.getSkillManager().isGuardBroken(p.getUniqueId())) {
                 p.setShieldBlockingDelay(4);
             }
-        }
-    }
-
-    private void updateDomination(MapConfig map, int targetPoints) {
-        if (map == null) {
-            return;
-        }
-        int idx = 0;
-        int pointsPerSec = this.plugin.getConfig().getInt("domination.points_per_second", 2);
-        for (MapConfig.DomPoint dp : map.getDominationPoints()) {
-            TeamColor now;
-            Location center = dp.getCenter();
-            double radius = dp.getRadius();
-            World w = center.getWorld();
-            if (w == null) {
-                ++idx;
-                continue;
-            }
-            int redCount = 0;
-            int blueCount = 0;
-            for (Player pl : w.getPlayers()) {
-                if (!this.isParticipant(pl) || this.isSpectator(pl) || pl.getLocation().distance(center) > radius) continue;
-                if (this.redTeam.contains(pl.getUniqueId())) {
-                    ++redCount;
-                    continue;
-                }
-                if (!this.blueTeam.contains(pl.getUniqueId())) continue;
-                ++blueCount;
-            }
-            float progress = this.domCapProgress.getOrDefault(idx, Float.valueOf(0.0f)).floatValue();
-            if (redCount > 0 && blueCount == 0 && progress < 0.0f) {
-                progress = 0.0f;
-            }
-            if (blueCount > 0 && redCount == 0 && progress > 0.0f) {
-                progress = 0.0f;
-            }
-            if (redCount > blueCount) {
-                if (progress <= -0.8f) {
-                    progress = 0.0f;
-                } else {
-                    float ratio = this.ctfBlueTeamSize > 0 ? (float)this.ctfBlueTeamSize / (float)this.ctfRedTeamSize : 1.0f;
-                    progress = Math.min(1.0f, progress + 0.05f * (float)(redCount - blueCount) * ratio);
-                }
-            } else if (blueCount > redCount) {
-                if (progress >= 0.8f) {
-                    progress = 0.0f;
-                } else {
-                    float ratio = this.ctfRedTeamSize > 0 ? (float)this.ctfRedTeamSize / (float)this.ctfBlueTeamSize : 1.0f;
-                    progress = Math.max(-1.0f, progress - 0.05f * (float)(blueCount - redCount) * ratio);
-                }
-            }
-            this.domCapProgress.put(idx, Float.valueOf(progress));
-            TeamColor prev = this.domCapOwner.get(idx);
-            now = progress >= 0.8f ? TeamColor.RED : (progress <= -0.8f ? TeamColor.BLUE : null);
-            if (now != prev) {                this.domCapOwner.put(idx, now);
-                if (now != null) {
-                    Bukkit.broadcastMessage((String)(now.getColorCode() + "\u2605 \u62e0\u70b9" + (idx + 1) + " \u00a78\u00bb \u00a77\u5360\u9818\uff01"));
-                }
-            }
-            if (center.getBlock().getType() == Material.BEACON) {
-                Color c = Color.fromRGB((int)(progress > 0.0f ? (int)(255.0f * progress) : 0), (int)0, (int)(progress < 0.0f ? (int)(-255.0f * progress) : 0));
-                w.spawnParticle(Particle.REDSTONE, center.clone().add(0.0, 1.0, 0.0), 5, 1.0, 0.5, 1.0, (Object)new Particle.DustOptions(c, 1.5f));
-            }
-            if (now == TeamColor.RED) {
-                this.domPointsRed += pointsPerSec;
-            } else if (now == TeamColor.BLUE) {
-                this.domPointsBlue += pointsPerSec;
-            }
-            ++idx;
-        }
-        if (this.domPointsRed >= targetPoints) {
-            this.endGame(TeamColor.RED, WinCondition.OBJECTIVE);
-            return;
-        }
-        if (this.domPointsBlue >= targetPoints) {
-            this.endGame(TeamColor.BLUE, WinCondition.OBJECTIVE);
-            return;
         }
     }
 
@@ -811,6 +634,9 @@ public class GameManager {
     }
 
     private void initCenterBlocks(MapConfig map) {
+        if (this.currentGameMode != GameMode.BATTLE_ARENA) {
+            return;
+        }
         World world = Bukkit.getWorld((String)map.getWorld());
         if (world == null) {
             return;
@@ -829,6 +655,10 @@ public class GameManager {
 
     private void resetCenterBlocks() {
         if (this.currentMap == null) {
+            return;
+        }
+        if (this.currentGameMode != GameMode.BATTLE_ARENA) {
+            this.cancelHoldTimer();
             return;
         }
         World world = Bukkit.getWorld((String)this.currentMap.getWorld());
@@ -920,7 +750,7 @@ public class GameManager {
         if (this.state != GameState.IN_GAME) {
             return;
         }
-        if (this.currentGameMode != GameMode.BATTLE_ARENA && this.currentGameMode != GameMode.TEAM_DEATHMATCH) {
+        if (this.currentGameMode != GameMode.BATTLE_ARENA) {
             return;
         }
         if (this.currentMap == null) {
@@ -946,7 +776,7 @@ public class GameManager {
                 ++cyanCount;
             }
         }
-        Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2694 \u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u4e89\u593a\u4e2d \u00a78\u00bb \u00a7c\u8d64 " + redCount + "/25 \u00a78| \u00a79\u9752 " + cyanCount + "/25"));
+        Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2694 \u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u4e89\u597a\u4e2d \u00a78\u00bb \u00a7c\u8d64 " + redCount + "/25 \u00a78| \u00a79\u9752 " + cyanCount + "/25"));
         Material first = null;
         boolean allSame = true;
         block2: for (int dx = -2; dx <= 2; ++dx) {
@@ -1022,7 +852,7 @@ public class GameManager {
     }
 
     public void endGame(TeamColor winner, WinCondition condition) {
-        if (this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
+        if (this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
             this.endMatch(winner, condition);
         } else {
             this.endRound(winner, condition);
@@ -1073,10 +903,6 @@ public class GameManager {
     private void startNextRound() {
         Player p;
         ++this.currentRound;
-        if (this.currentGameMode == GameMode.BOMB_MISSION) {
-            this.bombRoundAttackerRed = !this.bombRoundAttackerRed;
-            this.bombCleanup();
-        }
         String scoreStr = "\u00a7c\u8d64 " + this.roundWinsRed + " \u00a77- \u00a79" + this.roundWinsBlue + " \u00a77\u9752";
         this.broadcastTitle("\u00a76\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound + " \u2605", scoreStr, 10, 60, 10);
         for (UUID uid : this.getAllParticipantsAndSpectators()) {
@@ -1090,7 +916,9 @@ public class GameManager {
         this.state = GameState.IN_GAME;
         this.noFallDamage.clear();
         this.deadPlayers.clear();
+        this.inventoryMemory.clear();
         this.centralZoneMembers.clear();
+        this.plugin.getUltimateManager().captureRoundCarry(this.playerKit);
         this.matchStats = new MatchStats();
         this.deaths.clear();
         this.roundKills.clear();
@@ -1118,7 +946,6 @@ public class GameManager {
         KitSelectGUI gui = new KitSelectGUI(this.plugin, this);
         this.plugin.getGameListeners().setActiveGUI(gui);
         gui.openForAll(this.redTeam, this.blueTeam, timeoutSeconds);
-        this.broadcastTitle("\u00a76\u00a7l\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound, scoreStr, 5, 40, 10);
     }
 
     private void roundRestorePlayer(Player p) {
@@ -1172,9 +999,6 @@ public class GameManager {
         sm.save();
         this.showMatchReport(winner);
         Effects.playVictoryEffect(winner, condition, this.getAllParticipantsAndSpectators(), this.redTeam, this.blueTeam, this.currentMap, this.kills, this.deaths, this.plugin, null);
-        if (this.selectedBgm != null) {
-            this.selectedBgm.stop();
-        }
         this.endingTask = new BukkitRunnable(){
 
             public void run() {
@@ -1218,18 +1042,11 @@ public class GameManager {
         this.resetCenterBlocks();
         if (this.currentMap != null && this.currentMap.getWorld() != null && (w = Bukkit.getWorld((String)this.currentMap.getWorld())) != null) {
             Material m;
-            for (MapConfig.DomPoint dp : this.currentMap.getDominationPoints()) {
-                if (dp.getCenter().getBlock().getType() != Material.BEACON) continue;
-                dp.getCenter().getBlock().setType(Material.AIR);
-            }
             if (this.currentMap.getRedFlagLocation() != null && this.currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
                 this.currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
             }
             if (this.currentMap.getBlueFlagLocation() != null && ((m = this.currentMap.getBlueFlagLocation().getBlock().getType()) == Material.CYAN_BANNER || m == Material.BLUE_BANNER)) {
                 this.currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
-            }
-            if (this.bombLoc != null && this.bombLoc.getBlock().getType() == Material.TNT) {
-                this.bombLoc.getBlock().setType(Material.AIR);
             }
         }
         Location lobbySpawn = this.plugin.getLobbyManager().getLobbySpawn();
@@ -1282,15 +1099,13 @@ public class GameManager {
         this.playerKit.clear();
         this.noFallDamage.clear();
         this.deadPlayers.clear();
+        this.inventoryMemory.clear();
         this.centralZoneMembers.clear();
         this.currentMap = null;
         this.matchStats = new MatchStats();
         this.currentRound = 0;
         this.roundWinsRed = 0;
         this.roundWinsBlue = 0;
-        if (this.selectedBgm != null) {
-            this.selectedBgm.stop();
-        }
         this.plugin.getBotManager().clearAll();
         if (this.endingTask != null) {
             this.endingTask.cancel();
@@ -1302,22 +1117,14 @@ public class GameManager {
         }
         this.tdmKillsRed = 0;
         this.tdmKillsBlue = 0;
-        if (this.domTimerTask != null) {
-            this.domTimerTask.cancel();
-            this.domTimerTask = null;
-        }
         if (this.gameTickTask != null) {
             this.gameTickTask.cancel();
             this.gameTickTask = null;
         }
-        this.domPointsRed = 0;
-        this.domPointsBlue = 0;
         this.redFlagTaken = false;
         this.blueFlagTaken = false;
         this.redFlagCarrier = null;
         this.blueFlagCarrier = null;
-        this.bombCleanup();
-        this.bombRoundAttackerRed = true;
         this.cancelHoldTimer();
     }
 
@@ -1338,6 +1145,52 @@ public class GameManager {
         this.endMatch(null, WinCondition.ELIMINATION);
     }
 
+    public void rememberInventory(Player p) {
+        if (!this.isRespawnMode()) {
+            return;
+        }
+        PlayerInventory inv = p.getInventory();
+        ItemStack[] slots = new ItemStack[41];
+        for (int i = 0; i < 41; ++i) {
+            ItemStack it = inv.getItem(i);
+            slots[i] = it != null && it.getType() != Material.AIR ? it.clone() : null;
+        }
+        this.inventoryMemory.put(p.getUniqueId(), slots);
+    }
+
+    public void applyRememberedInventory(Player p) {
+        ItemStack[] slots = this.inventoryMemory.remove(p.getUniqueId());
+        if (slots == null) {
+            return;
+        }
+        PlayerInventory inv = p.getInventory();
+        ArrayList<ItemStack> supply = new ArrayList<ItemStack>();
+        for (int i = 0; i < 41; ++i) {
+            ItemStack it = inv.getItem(i);
+            if (it != null && it.getType() != Material.AIR) {
+                supply.add(it.clone());
+            }
+        }
+        for (int i = 0; i < 41; ++i) {
+            inv.setItem(i, slots[i] != null ? slots[i].clone() : null);
+        }
+        for (ItemStack s : supply) {
+            int have = 0;
+            for (int i = 0; i < 41; ++i) {
+                ItemStack it = inv.getItem(i);
+                if (it != null && it.getType() == s.getType()) {
+                    have += it.getAmount();
+                }
+            }
+            int deficit = s.getAmount() - have;
+            if (deficit > 0) {
+                ItemStack add = s.clone();
+                add.setAmount(deficit);
+                inv.addItem(add);
+            }
+        }
+    }
+
     public void onPlayerDied(Player victim, Player killer) {
         this.onPlayerDied(victim, killer, killer != null ? killer.getUniqueId() : null);
     }
@@ -1350,6 +1203,7 @@ public class GameManager {
         if (this.deadPlayers.contains(victim.getUniqueId())) {
             return;
         }
+        this.rememberInventory(victim);
         this.deaths.merge(victim.getUniqueId(), 1, Integer::sum);
         this.plugin.getStatsManager().addDeath(victim.getUniqueId());
         this.roundKills.put(victim.getUniqueId(), 0);
@@ -1415,14 +1269,10 @@ public class GameManager {
                         watchers.add(pp);
                     }
                     this.spawnKillStreakFirework(killer, rk);
-                    AnimatedText.scroll(this.plugin, watchers, "\u2694 " + killer.getName() + " \u304c " + rk + " \u9023\u7d9a\u30ad\u30eb\u4e2d\uff01", 60);
                 }
             }
-            if (rk == 5) {
-                this.announceBigPlay(killer, rk);
-            }
         }
-        if (this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
+        if (this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
             this.plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
             if (this.currentGameMode == GameMode.TEAM_DEATHMATCH) {
                 TeamColor kt2;
@@ -1456,7 +1306,7 @@ public class GameManager {
             TeamColor vTeam = this.getTeamOf(finalV);
             this.addSpectator(finalV);
             long respawnDelay = 60L;
-            if (this.currentGameMode == GameMode.CAPTURE_THE_FLAG || this.currentGameMode == GameMode.DOMINATION) {
+            if (this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
                 long baseRespawn;
                 double ratio;
                 int enemySize;
@@ -1465,7 +1315,7 @@ public class GameManager {
                 if (enemySize == 0) {
                     enemySize = 1;
                 }
-                if ((respawnDelay = (long)((ratio = (double)ownSize / (double)enemySize) * (double)(baseRespawn = this.currentGameMode == GameMode.CAPTURE_THE_FLAG ? 100L : 80L))) > 200L) {
+                if ((respawnDelay = (long)((ratio = (double)ownSize / (double)enemySize) * (double)(baseRespawn = 100L))) > 200L) {
                     respawnDelay = 200L;
                 }
                 if (respawnDelay < 40L) {
@@ -1487,6 +1337,7 @@ public class GameManager {
                     if (kt2 != null && vTeam != null) {
                         KitBuilder.giveKit(finalV, kt2, vTeam, this.plugin);
                     }
+                    this.applyRememberedInventory(finalV);
                     if (vTeam != null && this.currentMap != null) {
                         this.teleportToSpawnZonePublic(finalV, this.currentMap, vTeam);
                     }
@@ -1503,7 +1354,7 @@ public class GameManager {
             }, respawnDelay);
         } else {
             this.deadPlayers.add(victim.getUniqueId());
-            if (this.currentGameMode == GameMode.BATTLE_ARENA || this.currentGameMode == GameMode.BOMB_MISSION) {
+            if (this.currentGameMode == GameMode.BATTLE_ARENA) {
                 this.plugin.getSkillManager().clearPlayerPlacements(victim.getUniqueId());
             }
             Player finalVictim = victim;
@@ -1516,12 +1367,7 @@ public class GameManager {
         if (this.currentGameMode == GameMode.CAPTURE_THE_FLAG) {
             this.dropFlag(victim.getUniqueId());
         }
-        if (this.currentGameMode == GameMode.BOMB_MISSION && this.bombDefusing && victim.equals((Object)this.bombDefuser)) {
-            this.bombDefusing = false;
-            this.bombDefuser = null;
-            Bukkit.broadcastMessage((String)"\u00a7c\u26a0 \u89e3\u9664\u4f5c\u696d\u4e2d\u65ad \u00a78\u00bb \u00a77\u89e3\u9664\u8005\u304c\u6b7b\u4ea1");
-        }
-        if (!(this.currentGameMode == GameMode.BOMB_MISSION && this.bombPlanted || this.currentGameMode == GameMode.DOMINATION || this.currentGameMode == GameMode.CAPTURE_THE_FLAG)) {
+        if (this.currentGameMode != GameMode.CAPTURE_THE_FLAG) {
             Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, this::checkEliminationWin, 1L);
         }
     }
@@ -1601,217 +1447,12 @@ public class GameManager {
         return this.playerKit.get(uid);
     }
 
-    private void broadcastBombRoundInfo() {
-        TeamColor attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-        for (UUID uid : this.getAllParticipantsAndSpectators()) {
-            Player pl = Bukkit.getPlayer((UUID)uid);
-            if (pl == null) continue;
-            String role = this.getTeamOf(pl) == attacker ? "\u00a7c\u2694 \u653b\u6483\u5074 \u00a78\u00bb \u00a7f\u7206\u5f3e\u3092\u8a2d\u7f6e\u305b\u3088\uff01" : "\u00a79\u2694 \u5b88\u5099\u5074 \u00a78\u00bb \u00a7f\u8a2d\u7f6e\u3092\u963b\u6b62\u305b\u3088\uff01";
-            AnimatedText.wave(this.plugin, List.of(pl), attacker.getColorCode() + "\u2605 \u30e9\u30a6\u30f3\u30c9 " + this.currentRound, role, 10);
-        }
-    }
-
-    public void tryPlantBomb(final Player p) {
-        TeamColor attacker;
-        if (this.currentGameMode != GameMode.BOMB_MISSION) {
-            return;
-        }
-        if (this.state != GameState.IN_GAME) {
-            return;
-        }
-        if (this.bombPlanted) {
-            return;
-        }
-        if (this.currentMap == null || this.currentMap.getBombSite() == null) {
-            return;
-        }
-        TeamColor teamColor = attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-        if (this.getTeamOf(p) != attacker) {
-            p.sendMessage("\u00a7c\u2694 \u3042\u306a\u305f\u306f\u653b\u6483\u5074\u3067\u306f\u306a\u3044");
-            return;
-        }
-        if (p.getLocation().distance(this.currentMap.getBombSite()) > 3.0) {
-            if (p.getLocation().distance(this.currentMap.getBombSite()) < 10.0) {
-                p.sendMessage("\u00a7c\ud83d\udca3 \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u306b\u8fd1\u3065\u3044\u3066\u304f\u3060\u3055\u3044");
-            }
-            return;
-        }
-        final int plantTime = this.plugin.getConfig().getInt("bomb_mission.plant_time_seconds", 5);
-        p.sendMessage("\u00a7c\u00a7l\u7206\u5f3e\u8a2d\u7f6e\u4e2d... \u00a7e" + plantTime + "\u79d2");
-        this.bombPlanted = true;
-        this.bombLoc = this.currentMap.getBombSite().clone();
-        new BukkitRunnable(){
-            int progress;
-            {
-                this.progress = plantTime;
-            }
-
-            public void run() {
-                if (!p.isOnline() || GameManager.this.state != GameState.IN_GAME || p.getLocation().distance(GameManager.this.bombLoc) > 3.0) {
-                    p.sendMessage("\u00a7c\u26a0 \u7206\u5f3e\u8a2d\u7f6e\u304c\u4e2d\u65ad\u3055\u308c\u305f\uff01");
-                    GameManager.this.bombPlanted = false;
-                    GameManager.this.bombLoc = null;
-                    this.cancel();
-                    return;
-                }
-                p.sendActionBar((Component)Component.text((String)("\u00a7c\u00a7l\u8a2d\u7f6e\u4e2d... \u00a7e" + this.progress + "\u79d2")));
-                p.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, p.getLocation().add(0.0, 1.5, 0.0), 3, 0.3, 0.3, 0.3, 0.0);
-                --this.progress;
-                if (this.progress <= 0) {
-                    this.cancel();
-                    GameManager.this.bombArmed(p);
-                }
-            }
-        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
-    }
-
-    private void bombArmed(Player planter) {
-        int fuse;
-        this.bombSecondsRemaining = fuse = this.plugin.getConfig().getInt("bomb_mission.bomb_fuse_seconds", 45);
-        Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca3 \u7206\u5f3e\u8a2d\u7f6e\u5b8c\u4e86 \u00a78\u00bb \u00a7e" + fuse + " \u79d2\u5f8c\u7206\u767a\uff01"));
-        for (Player pl : Bukkit.getOnlinePlayers()) {
-            pl.playSound(pl.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.5f, 0.6f);
-        }
-        if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
-            this.bombLoc.getBlock().setType(Material.TNT);
-        }
-        this.bombTimerTask = new BukkitRunnable(){
-
-            public void run() {
-                TeamColor defender;
-                if (GameManager.this.state != GameState.IN_GAME) {
-                    this.cancel();
-                    return;
-                }
-                TeamColor attacker = GameManager.this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-                TeamColor teamColor = defender = GameManager.this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-                if (GameManager.this.getAliveCount(defender) == 0) {
-                    this.cancel();
-                    GameManager.this.bombCleanup();
-                    Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\u2694 \u9632\u885b\u5074\u5168\u6ec5 \u00a78\u00bb " + attacker.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01"));
-                    GameManager.this.endGame(attacker, WinCondition.OBJECTIVE);
-                    return;
-                }
-                --GameManager.this.bombSecondsRemaining;
-                if (GameManager.this.bombSecondsRemaining <= 0) {
-                    this.cancel();
-                    GameManager.this.bombExplode();
-                }
-            }
-        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
-    }
-
-    private void bombExplode() {
-        if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
-            this.bombLoc.getWorld().createExplosion(this.bombLoc, 8.0f, false, true);
-            this.bombLoc.getBlock().setType(Material.AIR);
-        }
-        this.bombCleanup();
-        TeamColor attacker = this.bombRoundAttackerRed ? TeamColor.RED : TeamColor.BLUE;
-        Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udca5 \u7206\u767a \u00a78\u00bb " + attacker.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01"));
-        this.endGame(attacker, WinCondition.OBJECTIVE);
-    }
-
-    public void tryDefuseBomb(final Player p) {
-        TeamColor defender;
-        if (this.currentGameMode != GameMode.BOMB_MISSION) {
-            return;
-        }
-        if (this.state != GameState.IN_GAME) {
-            return;
-        }
-        if (!this.bombPlanted || this.bombLoc == null) {
-            return;
-        }
-        TeamColor teamColor = defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-        if (this.getTeamOf(p) != defender) {
-            p.sendMessage("\u00a7c\u2694 \u3042\u306a\u305f\u306f\u5b88\u5099\u5074\u3067\u306f\u306a\u3044");
-            return;
-        }
-        if (p.getLocation().distance(this.bombLoc) > 3.0) {
-            if (p.getLocation().distance(this.bombLoc) < 10.0) {
-                p.sendMessage("\u00a7c\ud83d\udca3 \u7206\u5f3e\u306b\u8fd1\u3065\u3044\u3066\u304f\u3060\u3055\u3044");
-            }
-            return;
-        }
-        final int defuseTime = this.plugin.getConfig().getInt("bomb_mission.defuse_time_seconds", 7);
-        this.bombDefusing = true;
-        this.bombDefuser = p;
-        p.sendMessage("\u00a7a\u00a7l\u89e3\u9664\u4e2d... \u00a7e" + defuseTime + "\u79d2");
-        new BukkitRunnable(){
-            int progress;
-            {
-                this.progress = defuseTime;
-            }
-
-            public void run() {
-                if (!p.isOnline() || GameManager.this.state != GameState.IN_GAME || p.getLocation().distance(GameManager.this.bombLoc) > 3.0) {
-                    p.sendMessage("\u00a7c\u26a0 \u89e3\u9664\u4f5c\u696d\u304c\u4e2d\u65ad\u3055\u308c\u305f\uff01");
-                    GameManager.this.bombDefusing = false;
-                    GameManager.this.bombDefuser = null;
-                    this.cancel();
-                    return;
-                }
-                p.sendActionBar((Component)Component.text((String)("\u00a7a\u00a7l\u89e3\u9664\u4e2d... \u00a7e" + this.progress + "\u79d2")));
-                --this.progress;
-                if (this.progress <= 0) {
-                    this.cancel();
-                    GameManager.this.bombDefused(p);
-                }
-            }
-        }.runTaskTimer((Plugin)this.plugin, 0L, 20L);
-    }
-
-    private void bombDefused(Player defuser) {
-        TeamColor defender = this.bombRoundAttackerRed ? TeamColor.BLUE : TeamColor.RED;
-        Bukkit.broadcastMessage((String)("\u00a7a\u00a7l\ud83d\udee1 \u89e3\u9664\u6210\u529f \u00a78\u00bb " + defender.getDisplayName() + " \u00a7f\u30c1\u30fc\u30e0\u52dd\u5229\uff01"));
-        if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
-            this.bombLoc.getBlock().setType(Material.AIR);
-        }
-        this.bombCleanup();
-        this.endGame(defender, WinCondition.OBJECTIVE);
-    }
-
-    private void bombCleanup() {
-        if (this.bombLoc != null && this.bombLoc.getWorld() != null) {
-            this.bombLoc.getBlock().setType(Material.AIR);
-        }
-        this.bombPlanted = false;
-        this.bombLoc = null;
-        this.bombDefusing = false;
-        this.bombDefuser = null;
-        if (this.bombTimerTask != null) {
-            this.bombTimerTask.cancel();
-            this.bombTimerTask = null;
-        }
-        if (this.bombRoundTimerTask != null) {
-            this.bombRoundTimerTask.cancel();
-            this.bombRoundTimerTask = null;
-        }
-    }
-
-    public boolean isBombPlanted() {
-        return this.bombPlanted;
-    }
-
     public long getInGameStartTime() {
         return this.inGameStartTime;
     }
 
-    public UUID getBombDefuserUuid() {
-        return this.bombDefuser != null ? this.bombDefuser.getUniqueId() : null;
-    }
-
-    public int getBombSecondsRemaining() {
-        return this.bombSecondsRemaining;
-    }
-
     public boolean isFlagCarrier(UUID uid) {
         return uid.equals(this.redFlagCarrier) || uid.equals(this.blueFlagCarrier);
-    }
-
-    public Location getBombLoc() {
-        return this.bombLoc;
     }
 
     public TeamColor getTeamOf(Player p) {
@@ -2253,36 +1894,12 @@ public class GameManager {
         return this.tdmStartTime;
     }
 
-    public int getDomPointsRed() {
-        return this.domPointsRed;
-    }
-
-    public int getDomPointsBlue() {
-        return this.domPointsBlue;
-    }
-
     public int getCtfRedCaptures() {
         return this.ctfRedCaptures;
     }
 
     public int getCtfBlueCaptures() {
         return this.ctfBlueCaptures;
-    }
-
-    public NbsPlayer getSelectedBgm() {
-        return this.selectedBgm;
-    }
-
-    public void setSelectedBgm(NbsPlayer bgm) {
-        this.selectedBgm = bgm;
-    }
-
-    public void setSelectedBgmByName(String name) {
-        for (NbsPlayer song : this.plugin.getSongs()) {
-            if (!song.getName().equalsIgnoreCase(name)) continue;
-            this.selectedBgm = song;
-            return;
-        }
     }
 
     public int getAliveCount(TeamColor team) {
@@ -2295,17 +1912,6 @@ public class GameManager {
             ++count;
         }
         return count += this.plugin.getBotManager().getAliveBotCount(team);
-    }
-
-    private void announceBigPlay(Player killer, int streak) {
-        if (streak == 5) {
-            Bukkit.broadcastMessage((String)("\u00a74\u00a7l\u2605 " + killer.getName() + " \u00a7c\u304c PENTA KILL \u3092\u9054\u6210\uff01 \u00a74\u2605"));
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                p.playSound(p.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.7f, 0.8f);
-            }
-        } else if (streak >= 3) {
-            Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2605 " + killer.getName() + " \u00a7e\u304c " + streak + "\u9023\u7d9a\u30ad\u30eb\u3092\u7dcc\u652c\uff01"));
-        }
     }
 
     public Map<UUID, KitType> getPlayerKits() {

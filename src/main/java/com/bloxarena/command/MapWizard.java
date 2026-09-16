@@ -58,7 +58,7 @@ public class MapWizard {
             p.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + mapId + "' \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002");
             return;
         }
-        if (mc.isReadyFor(GameMode.BOMB_MISSION) && mc.isReadyFor(GameMode.DOMINATION) && mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
+        if (mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
             p.sendMessage("\u00a7a\u3053\u306e\u30de\u30c3\u30d7\u306f\u65e2\u306b\u5168\u30e2\u30fc\u30c9\u306b\u5bfe\u5fdc\u3057\u3066\u3044\u307e\u3059\u3002");
             return;
         }
@@ -67,7 +67,7 @@ public class MapWizard {
         this.sessions.put(p.getUniqueId(), s);
         this.header(p);
         p.sendMessage("\u00a76\u00a7l\u30de\u30c3\u30d7 \u00a7e" + mapId + " \u00a76\u00a7l\u306e\u30a2\u30c3\u30d7\u30b0\u30ec\u30fc\u30c9");
-        p.sendMessage("\u00a77\u65b0\u30e2\u30fc\u30c9\uff08\u7206\u7834\u30fbCTF\u30fb\u5360\u9818\uff09\u306b\u5fc5\u8981\u306a\u8a2d\u5b9a\u3092\u9806\u306b\u6848\u5185\u3057\u307e\u3059\u3002");
+        p.sendMessage("\u00a77\u65b0\u30e2\u30fc\u30c9\uff08CTF\uff09\u306b\u5fc5\u8981\u306a\u8a2d\u5b9a\u3092\u9806\u306b\u6848\u5185\u3057\u307e\u3059\u3002");
         p.sendMessage("\u00a77  \u00a7f/ba admin next \u00a77= \u78ba\u5b9a\u3000\u00a7f/ba admin skip \u00a77= \u30b9\u30ad\u30c3\u30d7\u3000\u00a7f/ba admin cancel \u00a77= \u4e2d\u65ad");
         this.footer(p);
         this.showUpgradeStep(p, s);
@@ -118,24 +118,6 @@ public class MapWizard {
             this.cancel(p);
             return;
         }
-        if (!mc.isReadyFor(GameMode.BOMB_MISSION)) {
-            if (mc.getBombSite() == null) {
-                this.header(p);
-                p.sendMessage("\u00a76\u00a7l\u3010\u7206\u7834\u30e2\u30fc\u30c9\u3011\u00a7e \u5fc5\u9808 \u00a76- \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9");
-                p.sendMessage("\u00a77\u653b\u6483\u5074\u304c\u7206\u5f3e\u3092\u8a2d\u7f6e\u3059\u308b\u5834\u6240\u3067\u3059\u3002\u305d\u306e\u5730\u70b9\u306b\u7acb\u3063\u3066\u304f\u3060\u3055\u3044\u3002");
-                p.sendMessage("\u00a7f/ba admin next \u00a77= \u73fe\u5728\u5730\u3092\u8a2d\u5b9a\u3000\u00a7f/ba admin skip \u00a77= \u7206\u7834\u30e2\u30fc\u30c9\u3092\u98db\u3070\u3059");
-                this.footer(p);
-                return;
-            }
-            if (mc.getDefusePoint() == null) {
-                this.header(p);
-                p.sendMessage("\u00a76\u00a7l\u3010\u7206\u7834\u30e2\u30fc\u30c9\u3011\u00a7e \u5fc5\u9808 \u00a76- \u7206\u5f3e\u89e3\u9664\u5730\u70b9");
-                p.sendMessage("\u00a77\u5b88\u5099\u5074\u304c\u7206\u5f3e\u3092\u89e3\u9664\u3059\u308b\u5834\u6240\u3067\u3059\u3002\u305d\u306e\u5730\u70b9\u306b\u7acb\u3063\u3066\u304f\u3060\u3055\u3044\u3002");
-                p.sendMessage("\u00a7f/ba admin next \u00a77= \u73fe\u5728\u5730\u3092\u8a2d\u5b9a");
-                this.footer(p);
-                return;
-            }
-        }
         if (!mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
             if (mc.getRedFlagLocation() == null) {
                 this.header(p);
@@ -169,14 +151,6 @@ public class MapWizard {
                 this.footer(p);
                 return;
             }
-        }
-        if (!mc.isReadyFor(GameMode.DOMINATION)) {
-            this.header(p);
-            p.sendMessage("\u00a76\u00a7l\u3010\u5360\u9818\u6226\u3011\u00a77 \u4efb\u610f \u00a76- \u5360\u9818\u62e0\u70b9\u306e\u8ffd\u52a0");
-            p.sendMessage("\u00a77\u5360\u9818\u62e0\u70b9\u306e\u4e2d\u5fc3\u306b\u7acb\u3063\u3066\u304f\u3060\u3055\u3044\u3002\u534a\u5f845m\u3067\u8a2d\u5b9a\u3055\u308c\u307e\u3059\u3002");
-            p.sendMessage("\u00a7f/ba admin next \u00a77= \u62e0\u70b9\u3092\u8ffd\u52a0\uff08\u4f55\u500b\u3067\u3082OK\uff09\u3000\u00a7f/ba admin skip \u00a77= \u7d42\u4e86");
-            this.footer(p);
-            return;
         }
         this.finish(p, s);
         this.sessions.remove(p.getUniqueId());
@@ -268,20 +242,6 @@ public class MapWizard {
             return true;
         }
         if (s.isUpgrade) {
-            if (!mc.isReadyFor(GameMode.BOMB_MISSION)) {
-                if (mc.getBombSite() == null) {
-                    mc.setBombSite(p.getLocation());
-                    this.plugin.getMapManager().saveMap(mc);
-                    p.sendMessage("\u00a7a\u2714 \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f");
-                    return true;
-                }
-                if (mc.getDefusePoint() == null) {
-                    mc.setDefusePoint(p.getLocation());
-                    this.plugin.getMapManager().saveMap(mc);
-                    p.sendMessage("\u00a7a\u2714 \u7206\u5f3e\u89e3\u9664\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f");
-                    return true;
-                }
-            }
             if (!mc.isReadyFor(GameMode.CAPTURE_THE_FLAG)) {
                 if (mc.getRedFlagLocation() == null) {
                     mc.setRedFlagLocation(p.getLocation());
@@ -307,11 +267,6 @@ public class MapWizard {
                     p.sendMessage("\u00a7a\u2714 \u00a79\u9752\u00a7a\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f");
                     return true;
                 }
-            }
-            if (!mc.isReadyFor(GameMode.DOMINATION)) {
-                mc.addDomPoint(new MapConfig.DomPoint(p.getLocation(), 5.0));
-                this.plugin.getMapManager().saveMap(mc);
-                p.sendMessage("\u00a7a\u2714 \u5360\u9818\u62e0\u70b9\u3092\u8ffd\u52a0\u3057\u307e\u3057\u305f\uff08\u534a\u5f845m\uff09\u3002\u7d9a\u3051\u3066\u8ffd\u52a0\u3067\u304d\u307e\u3059\u3002");
             }
             return true;
         }
@@ -410,7 +365,6 @@ public class MapWizard {
         p.sendMessage("\u00a77  \u30de\u30c3\u30d7\u78ba\u8a8d:     \u00a7f/ba info " + s.mapId);
         p.sendMessage("\u00a77  \u4e0d\u8db3\u3092\u8ffd\u52a0:     \u00a7f/ba upgrade " + s.mapId);
         p.sendMessage("\u00a77  CTF\u65d7\u306e\u8a2d\u5b9a:   \u00a7f/ba setredflag " + s.mapId);
-        p.sendMessage("\u00a77  \u7206\u7834\u5730\u70b9\u306e\u8a2d\u5b9a: \u00a7f/ba setbombplant " + s.mapId);
         p.sendMessage("\u00a77  \u5225\u306e\u30de\u30c3\u30d7\u8ffd\u52a0: \u00a7f/ba admin addmap <id>");
         this.footer(p);
     }

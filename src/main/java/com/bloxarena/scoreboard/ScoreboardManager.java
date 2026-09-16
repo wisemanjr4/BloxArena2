@@ -177,25 +177,12 @@ public class ScoreboardManager {
             int timeLimit = this.plugin.getConfig().getInt("team_deathmatch.time_limit_seconds", 300);
             time = tdmElapsed + "/" + timeLimit + "s";
         }
-        if (gm.getCurrentGameMode() == GameMode.DOMINATION) {
-            redAlive = gm.getDomPointsRed();
-            blueAlive = gm.getDomPointsBlue();
-            time = String.format("%dpts", (System.currentTimeMillis() - this.startTime) / 1000L);
-        }
         if (gm.getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG) {
             redAlive = gm.getCtfRedCaptures();
             blueAlive = gm.getCtfBlueCaptures();
         }
-        if (gm.getCurrentGameMode() == GameMode.BOMB_MISSION) {
-            if (gm.isBombPlanted()) {
-                time = "\u00a7c\ud83d\udca3 " + gm.getBombSecondsRemaining() + "s";
-            } else {
-                int limit = this.plugin.getConfig().getInt("bomb_mission.time_limit_seconds", 180);
-                time = "\u23f1 " + (limit - (int)elapsed) + "/" + limit + "s";
-            }
-        }
         this.plugin.getSkillManager().updateKitActionBars();
-        this.applyOutnumberedBuff(gm, redAlive, blueAlive);
+        this.applyOutnumberedBuff(gm);
         for (Player p : Bukkit.getOnlinePlayers()) {
             KitType kit = kitMap.get(p.getUniqueId());
             TeamColor team = gm.getTeam(p.getUniqueId());
@@ -203,41 +190,27 @@ public class ScoreboardManager {
         }
     }
 
-    private void applyOutnumberedBuff(GameManager gm, int redAlive, int blueAlive) {
-        GameMode mode = gm.getCurrentGameMode();
-        if (mode == GameMode.BATTLE_ARENA || mode == GameMode.BOMB_MISSION) {
-            int diff = Math.abs(redAlive - blueAlive);
-            if (diff < 1) {
-                return;
-            }
-            TeamColor minTeam = redAlive < blueAlive ? TeamColor.RED : TeamColor.BLUE;
-            int amplifier = 0;
-            int duration = 600;
-            List<UUID> team = minTeam == TeamColor.RED ? gm.getRedTeam() : gm.getBlueTeam();
-            for (UUID uid : team) {
-                Player p = Bukkit.getPlayer((UUID)uid);
-                if (p == null || p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
-                p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, duration, amplifier, true, false));
-                p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, duration, 0, true, false));
-            }
+    private void applyOutnumberedBuff(GameManager gm) {
+        boolean respawnMode = gm.getCurrentGameMode() == GameMode.TEAM_DEATHMATCH || gm.getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG;
+        int red;
+        int blue;
+        if (respawnMode) {
+            red = gm.getCtfRedTeamSize();
+            blue = gm.getCtfBlueTeamSize();
+        } else {
+            red = gm.getAliveCount(TeamColor.RED);
+            blue = gm.getAliveCount(TeamColor.BLUE);
+        }
+        if (red <= 0 || blue <= 0 || red == blue) {
             return;
         }
-        int redStart = gm.getCtfRedTeamSize();
-        int blueStart = gm.getCtfBlueTeamSize();
-        if (redStart <= 0 || blueStart <= 0) {
-            return;
-        }
-        int diff = redStart - blueStart;
-        if (diff == 0) {
-            return;
-        }
-        TeamColor minTeam = diff > 0 ? TeamColor.BLUE : TeamColor.RED;
+        TeamColor minTeam = red < blue ? TeamColor.RED : TeamColor.BLUE;
         List<UUID> team = minTeam == TeamColor.RED ? gm.getRedTeam() : gm.getBlueTeam();
         for (UUID uid : team) {
             Player p = Bukkit.getPlayer((UUID)uid);
             if (p == null || p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0, true, false));
-            p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 0, true, false));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 160, 0, true, false));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 160, 0, true, false));
         }
     }
 
@@ -255,7 +228,6 @@ public class ScoreboardManager {
             p.setScoreboard(board);
         }
         boolean isTDM = gm.getCurrentGameMode() == GameMode.TEAM_DEATHMATCH;
-        boolean isDom = gm.getCurrentGameMode() == GameMode.DOMINATION;
         boolean isCTF = gm.getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG;
         ArrayList<String> lines = new ArrayList<String>();
         lines.add("\u00a76\u00a7l\u00a7m\u2501\u2501\u2501\u2501 BAII WoNG \u2501\u2501\u2501\u2501\u00a7r");
@@ -272,7 +244,7 @@ public class ScoreboardManager {
             lines.add("\u00a7c" + "\u25cf".repeat(winsRed) + "\u00a77" + "\u25cb".repeat(winsToWin - winsRed) + " \u00a77vs \u00a79" + "\u25cf".repeat(winsBlue) + "\u00a77" + "\u25cb".repeat(winsToWin - winsBlue));
         }
         lines.add("\u00a7r");
-        String unit = isTDM ? "\u30ad\u30eb" : (isDom ? "pts" : (isCTF ? "\u596a\u53d6" : "\u4eba"));
+        String unit = isTDM ? "\u30ad\u30eb" : (isCTF ? "\u596a\u53d6" : "\u4eba");
         lines.add("\u00a7c\u8d64: \u00a7f" + red + unit);
         lines.add("\u00a79\u9752: \u00a7f" + blue + unit);
         lines.add("\u00a7r");

@@ -81,12 +81,6 @@ public class MapManager {
                 mc.setOobMin(this.loadLoc(cfg, base + "oob.min.", world));
                 mc.setOobMax(this.loadLoc(cfg, base + "oob.max.", world));
             }
-            if (cfg.contains(base + "bomb_site.x")) {
-                mc.setBombSite(this.loadLoc(cfg, base + "bomb_site.", world));
-            }
-            if (cfg.contains(base + "defuse_point.x")) {
-                mc.setDefusePoint(this.loadLoc(cfg, base + "defuse_point.", world));
-            }
             if ((modeStr = cfg.getString(base + "supported_modes", null)) != null && !modeStr.isEmpty()) {
                 ArrayList<GameMode> modes = new ArrayList<GameMode>();
                 for (String s : modeStr.split(",")) {
@@ -99,16 +93,6 @@ public class MapManager {
                 }
                 if (!modes.isEmpty()) {
                     mc.setSupportedModes(modes);
-                }
-            }
-            if (cfg.contains(base + "dom_points")) {
-                mc.clearDomPoints();
-                Set<String> indices = cfg.getConfigurationSection(base + "dom_points").getKeys(false);
-                for (String idx : indices) {
-                    String dp = base + "dom_points." + idx + ".";
-                    Location c = this.loadLoc(cfg, dp + "center.", world);
-                    double r = cfg.getDouble(dp + "radius", 5.0);
-                    mc.addDomPoint(new MapConfig.DomPoint(c, r));
                 }
             }
             if (cfg.contains(base + "red_flag_location.x")) {
@@ -162,25 +146,7 @@ public class MapManager {
             this.saveLoc(cfg, base + "oob.min.", mc.getOobMin());
             this.saveLoc(cfg, base + "oob.max.", mc.getOobMax());
         }
-        if (mc.getBombSite() != null) {
-            this.saveLoc(cfg, base + "bomb_site.", mc.getBombSite());
-        } else {
-            cfg.set(base + "bomb_site", null);
-        }
-        if (mc.getDefusePoint() != null) {
-            this.saveLoc(cfg, base + "defuse_point.", mc.getDefusePoint());
-        } else {
-            cfg.set(base + "defuse_point", null);
-        }
         cfg.set(base + "supported_modes", (Object)mc.getSupportedModes().stream().map(Enum::name).reduce((a, b) -> a + "," + b).orElse(""));
-        cfg.set(base + "dom_points", null);
-        int idx = 0;
-        for (MapConfig.DomPoint dp : mc.getDominationPoints()) {
-            String dpBase = base + "dom_points." + idx + ".";
-            this.saveLoc(cfg, dpBase + "center.", dp.getCenter());
-            cfg.set(dpBase + "radius", (Object)dp.getRadius());
-            ++idx;
-        }
         if (mc.getRedFlagLocation() != null) {
             this.saveLoc(cfg, base + "red_flag_location.", mc.getRedFlagLocation());
         } else {

@@ -23,16 +23,12 @@ import com.bloxarena.lobby.LobbyManager;
 import com.bloxarena.map.MapManager;
 import com.bloxarena.scoreboard.ScoreboardManager;
 import com.bloxarena.skill.SkillManager;
-import com.bloxarena.song.NbsPlayer;
 import com.bloxarena.stats.StatsManager;
 import com.bloxarena.test.TestFieldManager;
 import com.bloxarena.tutorial.TutorialManager;
 import com.bloxarena.ultimate.UltimateManager;
 import com.bloxarena.util.SelectionTool;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.bukkit.command.CommandExecutor;
@@ -59,11 +55,26 @@ extends JavaPlugin {
     private TestFieldManager testFieldManager;
     private TutorialManager tutorialManager;
     private final Set<UUID> oobImmunePlayers = new HashSet<UUID>();
-    private final List<NbsPlayer> songs = new ArrayList<NbsPlayer>();
-    private NbsPlayer currentBgm;
+    private final Set<String> labFeatures = new HashSet<String>();
+
+    public boolean isLabEnabled(String feature) {
+        return this.labFeatures.contains(feature);
+    }
+
+    public boolean toggleLab(String feature) {
+        if (this.labFeatures.contains(feature)) {
+            this.labFeatures.remove(feature);
+            return false;
+        }
+        this.labFeatures.add(feature);
+        return true;
+    }
+
+    public Set<String> getLabFeatures() {
+        return this.labFeatures;
+    }
 
     public void onEnable() {
-        File[] nbsFiles;
         this.saveDefaultConfig();
         this.selectionTool = new SelectionTool();
         this.kitEditorGUI = new KitEditorGUI(this);
@@ -89,21 +100,6 @@ extends JavaPlugin {
             cmd.setTabCompleter((TabCompleter)handler);
         }
         this.getLogger().info("BAII WoNG v" + this.getDescription().getVersion() + " \u6709\u52b9\u5316\u5b8c\u4e86");
-        File songsDir = new File(this.getDataFolder(), "songs");
-        if (!songsDir.exists()) {
-            songsDir.mkdirs();
-        }
-        if ((nbsFiles = songsDir.listFiles((d, n) -> n.toLowerCase().endsWith(".nbs"))) != null) {
-            for (File f : nbsFiles) {
-                try {
-                    this.songs.add(new NbsPlayer(f.getName().replace(".nbs", ""), f, (Plugin)this));
-                    this.getLogger().info("BGM loaded: " + f.getName());
-                }
-                catch (Exception e) {
-                    this.getLogger().warning("Failed to load NBS: " + f.getName() + " - " + e.getMessage());
-                }
-            }
-        }
     }
 
     public void onDisable() {
@@ -177,18 +173,6 @@ extends JavaPlugin {
 
     public Set<UUID> getOobImmunePlayers() {
         return this.oobImmunePlayers;
-    }
-
-    public List<NbsPlayer> getSongs() {
-        return this.songs;
-    }
-
-    public NbsPlayer getCurrentBgm() {
-        return this.currentBgm;
-    }
-
-    public void setCurrentBgm(NbsPlayer bgm) {
-        this.currentBgm = bgm;
     }
 }
 

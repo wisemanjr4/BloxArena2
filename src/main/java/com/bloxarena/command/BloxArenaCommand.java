@@ -23,7 +23,6 @@ import com.bloxarena.command.SetupWizard;
 import com.bloxarena.game.GameMode;
 import com.bloxarena.game.GameState;
 import com.bloxarena.map.MapConfig;
-import com.bloxarena.song.NbsPlayer;
 import com.bloxarena.stats.PlayerStats;
 import com.bloxarena.stats.StatsManager;
 import com.bloxarena.util.SelectionTool;
@@ -268,7 +267,7 @@ TabCompleter {
                         String centerStr = mc.getCenter() != null ? " \u00a77(" + mc.getCenter().getBlockX() + ", " + mc.getCenter().getBlockY() + ", " + mc.getCenter().getBlockZ() + ")" : "";
                         sender.sendMessage(ready + " \u00a7e" + mc.getId() + " \u00a77[" + mc.getWorldName() + "]" + centerStr + " " + modes);
                     }
-                    sender.sendMessage("\u00a77\u51e1\u4f8b: \u00a7fBA=\u30a2\u30ea\u30fc\u30ca TDM=\u30c7\u30b9\u30de\u30c3\u30c1 \u00a7cB=\u7206\u7834\u89e3\u4f53 \u00a7eD=\u5360\u9818 \u00a79CTF=\u65d7\u53d6\u308a");
+                    sender.sendMessage("\u00a77\u51e1\u4f8b: \u00a7fBA=\u30a2\u30ea\u30fc\u30ca TDM=\u30c7\u30b9\u30de\u30c3\u30c1 \u00a79CTF=\u65d7\u53d6\u308a");
                     return true;
                 }
                 MapConfig mc = this.plugin.getMapManager().getById(args[1]);
@@ -288,8 +287,6 @@ TabCompleter {
                 sender.sendMessage("\u00a79CTF\u65d7:");
                 sender.sendMessage("  \u00a7c\u8d64\u65d7: \u00a7f" + this.fmtNull(mc.getRedFlagLocation()) + "  \u00a77\u5e30\u9084: \u00a7f" + this.fmtNull(mc.getRedReturnLocation()));
                 sender.sendMessage("  \u00a79\u9752\u65d7: \u00a7f" + this.fmtNull(mc.getBlueFlagLocation()) + "  \u00a77\u5e30\u9084: \u00a7f" + this.fmtNull(mc.getBlueReturnLocation()));
-                sender.sendMessage("\u00a7c\u7206\u7834:");
-                sender.sendMessage("  \u00a77\u8a2d\u7f6e: \u00a7f" + this.fmtNull(mc.getBombSite()) + "  \u00a77\u89e3\u9664: \u00a7f" + this.fmtNull(mc.getDefusePoint()));
                 sender.sendMessage("\u00a77\u5bfe\u5fdc\u30e2\u30fc\u30c9: " + this.modeFlags(mc));
                 break;
             }
@@ -777,42 +774,6 @@ TabCompleter {
                 this.plugin.getMapManager().saveMap(fc);
                 break;
             }
-            case "setbombplant": 
-            case "setbombdefuse": {
-                if (!this.isAdmin(sender)) {
-                    return true;
-                }
-                if (!(sender instanceof Player)) {
-                    sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
-                    return true;
-                }
-                Player p = (Player)sender;
-                if (args.length < 2) {
-                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba " + sub + " <mapId>");
-                    sender.sendMessage("\u00a77  setbombplant \u2192 \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-                    sender.sendMessage("\u00a77  setbombdefuse\u2192 \u7206\u5f3e\u89e3\u9664\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-                    return true;
-                }
-                MapConfig mc2 = this.plugin.getMapManager().getById(args[1].toLowerCase());
-                if (mc2 == null) {
-                    sender.sendMessage("\u00a7c\u30de\u30c3\u30d7 '" + args[1] + "' \u00a78\u00bb \u00a77\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
-                    return true;
-                }
-                Location bl = p.getLocation().getBlock().getLocation().add(0.5, 0.0, 0.5);
-                switch (sub) {
-                    case "setbombplant": {
-                        mc2.setBombSite(bl);
-                        sender.sendMessage("\u00a7a\u2714 \u7206\u5f3e\u8a2d\u7f6e\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
-                        break;
-                    }
-                    case "setbombdefuse": {
-                        mc2.setDefusePoint(bl);
-                        sender.sendMessage("\u00a7a\u2714 \u7206\u5f3e\u89e3\u9664\u5730\u70b9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
-                    }
-                }
-                this.plugin.getMapManager().saveMap(mc2);
-                break;
-            }
             case "bot": {
                 if (!this.isAdmin(sender)) {
                     return true;
@@ -881,25 +842,12 @@ TabCompleter {
                     sender.sendMessage("\u00a77\u65e7BloxArena\u306econfig\u304b\u3089 \u00a7e" + merged + "\u00a77\u30bb\u30af\u30b7\u30e7\u30f3\u3092\u5f15\u304d\u7d99\u304e\u307e\u3057\u305f\u3002");
                 }
                 if (!cfg.isConfigurationSection("game_modes")) {
-                    cfg.set("game_modes.enabled", List.of("BATTLE_ARENA", "TEAM_DEATHMATCH", "BOMB_MISSION", "DOMINATION", "CAPTURE_THE_FLAG"));
+                    cfg.set("game_modes.enabled", List.of("BATTLE_ARENA", "TEAM_DEATHMATCH", "CAPTURE_THE_FLAG"));
                     ++added;
                 }
                 if (!cfg.isConfigurationSection("team_deathmatch")) {
                     cfg.set("team_deathmatch.time_limit_seconds", (Object)300);
                     cfg.set("team_deathmatch.target_kills", (Object)30);
-                    ++added;
-                }
-                if (!cfg.isConfigurationSection("bomb_mission")) {
-                    cfg.set("bomb_mission.time_limit_seconds", (Object)180);
-                    cfg.set("bomb_mission.plant_time_seconds", (Object)5);
-                    cfg.set("bomb_mission.defuse_time_seconds", (Object)7);
-                    cfg.set("bomb_mission.bomb_fuse_seconds", (Object)45);
-                    ++added;
-                }
-                if (!cfg.isConfigurationSection("domination")) {
-                    cfg.set("domination.time_limit_seconds", (Object)120);
-                    cfg.set("domination.target_points", (Object)100);
-                    cfg.set("domination.points_per_second", (Object)2);
                     ++added;
                 }
                 if (!cfg.isConfigurationSection("capture_the_flag")) {
@@ -1027,6 +975,20 @@ TabCompleter {
                 this.plugin.getTutorialManager().start(p);
                 break;
             }
+            case "lab": {
+                if (!this.isAdmin(sender)) {
+                    return true;
+                }
+                if (args.length < 2) {
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba lab <fall_damage|puppet_target>");
+                    sender.sendMessage("\u00a77\u73fe\u5728\u306e\u72b6\u614b: \u00a7f" + String.join(", ", this.plugin.getLabFeatures()));
+                    return true;
+                }
+                String feature = args[1].toLowerCase();
+                boolean on = this.plugin.toggleLab(feature);
+                sender.sendMessage("\u00a7a\u2726 \u5b9f\u9a13\u6a5f\u80fd \u00a7e" + feature + " \u00a77: " + (on ? "\u00a7aON" : "\u00a7cOFF"));
+                return true;
+            }
             case "oob": {
                 if (!this.isAdmin(sender)) {
                     return true;
@@ -1043,50 +1005,6 @@ TabCompleter {
                 }
                 this.plugin.getOobImmunePlayers().add(p.getUniqueId());
                 sender.sendMessage("\u00a7a\u5834\u5916\u5224\u5b9a: \u7121\u52b9\uff08\u5834\u5916\u3067\u3082\u8131\u843d\u3057\u307e\u305b\u3093\uff09");
-                break;
-            }
-            case "bgm": {
-                if (args.length < 2 || "gui".equalsIgnoreCase(args[1])) {
-                    if (sender instanceof Player) {
-                        Player p = (Player)sender;
-                        this.plugin.getKitInfoGUI().openBgmList(p);
-                    } else {
-                        sender.sendMessage("\u00a77\u30b3\u30f3\u30bd\u30fc\u30eb\u304b\u3089\u306f /ba bgm list \u3067\u4e00\u89a7\u8868\u793a\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
-                    }
-                    return true;
-                }
-                String action = args[1].toLowerCase();
-                if ("list".equals(action)) {
-                    List<NbsPlayer> list = this.plugin.getSongs();
-                    if (list.isEmpty()) {
-                        sender.sendMessage("\u00a77BGM\u304c\u767b\u9332\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002songs\u30d5\u30a9\u30eb\u30c0\u306b.nbs\u30d5\u30a1\u30a4\u30eb\u3092\u914d\u7f6e\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
-                    } else {
-                        sender.sendMessage("\u00a76\u00a7l\u2605 BGM\u4e00\u89a7 \u00a78\u00bb \u00a7e" + list.size() + "\u66f2");
-                        for (int i = 0; i < list.size(); ++i) {
-                            String sel = list.get(i) == this.plugin.getGameManager().getSelectedBgm() ? " \u00a7a\u25c0 \u9078\u629e\u4e2d" : "";
-                            sender.sendMessage("\u00a7e  " + (i + 1) + ". \u00a7f" + list.get(i).getName() + sel);
-                        }
-                    }
-                    sender.sendMessage("\u00a77\u9078\u629e: \u00a7f/ba bgm <\u66f2\u540d>  \u00a77\u89e3\u9664: \u00a7f/ba bgm off");
-                    return true;
-                }
-                if ("off".equals(action)) {
-                    NbsPlayer cur = this.plugin.getGameManager().getSelectedBgm();
-                    if (cur != null) {
-                        cur.stop();
-                    }
-                    this.plugin.getGameManager().setSelectedBgm(null);
-                    sender.sendMessage("\u00a7a\u2726 BGM\u3092\u7121\u52b9\u5316");
-                    return true;
-                }
-                String searchName = String.join((CharSequence)" ", Arrays.copyOfRange(args, 1, args.length));
-                for (NbsPlayer song : this.plugin.getSongs()) {
-                    if (!song.getName().equalsIgnoreCase(searchName)) continue;
-                    this.plugin.getGameManager().setSelectedBgm(song);
-                    sender.sendMessage("\u00a7a\u2726 \u6b21\u8a66\u5408\u306eBGM \u00a78\u00bb \u00a7e" + song.getName());
-                    return true;
-                }
-                sender.sendMessage("\u00a7c\u26a0 \u66f2\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + searchName + " \u00a78\u00bb \u00a77/ba bgm list \u3067\u4e00\u89a7\u8868\u793a");
                 break;
             }
             case "vote": {
@@ -1118,7 +1036,7 @@ TabCompleter {
     }
 
     private String modeFlags(MapConfig mc) {
-        return (mc.isReadyFor(GameMode.BATTLE_ARENA) ? "\u00a7fBA " : "\u00a78BA ") + (mc.isReadyFor(GameMode.TEAM_DEATHMATCH) ? "\u00a7fTDM " : "\u00a78TDM ") + (mc.isReadyFor(GameMode.BOMB_MISSION) ? "\u00a7cB " : "\u00a78B ") + (mc.isReadyFor(GameMode.DOMINATION) ? "\u00a7eD " : "\u00a78D ") + (mc.isReadyFor(GameMode.CAPTURE_THE_FLAG) ? "\u00a79CTF" : "\u00a78CTF");
+        return (mc.isReadyFor(GameMode.BATTLE_ARENA) ? "\u00a7fBA " : "\u00a78BA ") + (mc.isReadyFor(GameMode.TEAM_DEATHMATCH) ? "\u00a7fTDM " : "\u00a78TDM ") + (mc.isReadyFor(GameMode.CAPTURE_THE_FLAG) ? "\u00a79CTF" : "\u00a78CTF");
     }
 
     private String fmtNull(Location l) {
@@ -1189,8 +1107,6 @@ TabCompleter {
         s.sendMessage("\u00a78\u00bb \u00a7e/ba setblueflag <mapId> \u00a77- CTF\u9752\u65d7\u521d\u671f\u4f4d\u7f6e\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a\uff08\u81ea\u9663\u5074\uff09");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba setredreturn <mapId> \u00a77- CTF\u8d64\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba setbluereturn <mapId> \u00a77- CTF\u9752\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a78\u00bb \u00a7e/ba setbombplant <mapId> \u00a77- \u7206\u7834\u8a2d\u7f6e\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
-        s.sendMessage("\u00a78\u00bb \u00a7e/ba setbombdefuse <mapId> \u00a77- \u7206\u7834\u89e3\u9664\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba test [leave] \u00a77- \u30c6\u30b9\u30c8\u5834\u306b\u5165\u308b/\u9000\u51fa");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba kits \u00a77- \u30ad\u30c3\u30c8\u4e00\u89a7\u3092\u8868\u793a\uff08\u8ab0\u3067\u3082\u4f7f\u7528\u53ef\u80fd\uff09");
         s.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
@@ -1198,7 +1114,7 @@ TabCompleter {
 
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("start", "stop", "wand", "setwaitingarea", "setlobby", "addmap", "info", "setspawnzone", "setcenter", "setmaplobby", "setmap", "setmapname", "kitedit", "kits", "bot", "stats", "mastery", "title", "top", "continuous", "setgate", "gatematl", "setoob", "spectate", "reload", "status", "admin", "upgrade", "convert", "test", "debug", "tutorial", "oob", "bgm", "vote", "version");
+            return Arrays.asList("start", "stop", "wand", "setwaitingarea", "setlobby", "addmap", "info", "setspawnzone", "setcenter", "setmaplobby", "setmap", "setmapname", "kitedit", "kits", "bot", "stats", "mastery", "title", "top", "continuous", "setgate", "gatematl", "setoob", "spectate", "reload", "status", "admin", "upgrade", "convert", "test", "debug", "tutorial", "oob", "lab", "vote", "version");
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase()) {
@@ -1211,13 +1127,7 @@ TabCompleter {
                 case "tutorial" -> Arrays.asList("setup", "stop", "leave", "next");
                 case "oob" -> Collections.emptyList();
                 case "setgate" -> Arrays.asList("red", "blue");
-                case "bgm" -> {
-                    ArrayList<String> names = new ArrayList<String>(Arrays.asList("list", "off", "gui"));
-                    for (NbsPlayer song : this.plugin.getSongs()) {
-                        names.add(song.getName());
-                    }
-                    yield names;
-                }
+                case "lab" -> Arrays.asList("fall_damage", "puppet_target");
                 case "setoob" -> {
                     List ids = this.plugin.getMapManager().getMaps().stream().map(MapConfig::getId).collect(Collectors.toList());
                     ids.add("lobby");

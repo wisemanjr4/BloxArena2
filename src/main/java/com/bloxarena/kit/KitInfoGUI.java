@@ -21,7 +21,6 @@ import com.bloxarena.game.TeamColor;
 import com.bloxarena.kit.KitBuilder;
 import com.bloxarena.kit.KitEditorGUI;
 import com.bloxarena.kit.KitType;
-import com.bloxarena.song.NbsPlayer;
 import java.lang.invoke.CallSite;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,8 +46,6 @@ public class KitInfoGUI {
     private final NamespacedKey tutorialPrevKey;
     private final NamespacedKey tutorialNextKey;
     private final NamespacedKey tutorialStartKey;
-    private final NamespacedKey bgmSelectKey;
-    private final NamespacedKey bgmSongKey;
 
     public KitInfoGUI(BloxArenaPlugin plugin) {
         this.plugin = plugin;
@@ -57,8 +54,6 @@ public class KitInfoGUI {
         this.tutorialPrevKey = new NamespacedKey((Plugin)plugin, "tutorial_prev");
         this.tutorialNextKey = new NamespacedKey((Plugin)plugin, "tutorial_next");
         this.tutorialStartKey = new NamespacedKey((Plugin)plugin, "tutorial_start");
-        this.bgmSelectKey = new NamespacedKey((Plugin)plugin, "bgm_select");
-        this.bgmSongKey = new NamespacedKey((Plugin)plugin, "bgm_song");
     }
 
     public ItemStack makeGuideItem() {
@@ -87,21 +82,9 @@ public class KitInfoGUI {
         KitType[] kits = KitType.values();
         for (int i = 0; i < kits.length && i < 45; ++i) {
             if (kits[i] == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) continue;
+            if (kits[i] == KitType.TRINGID) continue;
             inv.setItem(i, this.makeKitIcon(kits[i]));
         }
-        ItemStack bgmBtn = new ItemStack(Material.JUKEBOX);
-        ItemMeta bgmMeta = bgmBtn.getItemMeta();
-        if (bgmMeta != null) {
-            bgmMeta.setDisplayName("\u00a7d\u00a7lBGM\u9078\u629e \u00a77(\u30af\u30ea\u30c3\u30af)");
-            ArrayList<String> bgmLore = new ArrayList<String>();
-            bgmLore.add("\u00a77\u8a66\u5408\u4e2d\u306eBGM\u3092\u9078\u3076");
-            NbsPlayer curBgm = this.plugin.getGameManager().getSelectedBgm();
-            bgmLore.add(curBgm != null ? "\u00a7a\u9078\u629e\u4e2d: \u00a7f" + curBgm.getName() : "\u00a77\u9078\u629e\u4e2d: \u306a\u3057");
-            bgmMeta.setLore(bgmLore);
-            bgmMeta.getPersistentDataContainer().set(this.bgmSelectKey, PersistentDataType.BYTE, (byte)1);
-            bgmBtn.setItemMeta(bgmMeta);
-        }
-        inv.setItem(48, bgmBtn);
         ItemStack tutorial = new ItemStack(Material.KNOWLEDGE_BOOK);
         ItemMeta tm = tutorial.getItemMeta();
         if (tm != null) {
@@ -259,9 +242,12 @@ public class KitInfoGUI {
                 lore.add("\u00a77S2: HP20 \u00a77\u30c7\u30d0\u30d5\u89e3\u9664(\u30b2\u30fc\u30b825~)");
                 lore.add("\u00a74S3: HP26 \u00a74\u30d6\u30e9\u30c3\u30c9\u6642 \u653b\u6483\u529bI(\u30b2\u30fc\u30b840~)");
                 lore.add("\u00a74S4: HP40 \u00a74\u30d6\u30e9\u30c3\u30c9\u6642 \u653b\u6483\u529bIII+\u518d\u751fIII+\u901f\u5ea6II(\u30b2\u30fc\u30b855~)");
+                lore.add("\u00a74S5: HP44 \u00a74\u30d6\u30e9\u30c3\u30c9\u6642 \u653b\u6483\u529bIII+\u518d\u751fIV+\u901f\u5ea6II(\u30b2\u30fc\u30b870~)");
+                lore.add("\u00a74S6: HP48 \u00a74\u30d6\u30e9\u30c3\u30c9\u6642 \u653b\u6483\u529bIII+\u518d\u751fV+\u901f\u5ea6II(\u30b2\u30fc\u30b885~)");
                 lore.add("");
                 lore.add("\u00a77\u30c9\u30ec\u30a4\u30f3\u30e2\u30fc\u30c9: \u30c0\u30e1\u3067\u30b2\u30fc\u30b8\u6e9c\u3081/\u88ab\u30c0\u30e1\u3067\u6e1b\u5c11");
-                lore.add("\u00a77\u30d6\u30e9\u30c3\u30c9\u30e2\u30fc\u30c9: \u30b2\u30fc\u30b8\u6d88\u8cbb\u3067\u5f37\u5316\u72b6\u614b");
+                lore.add("\u00a77\u30d6\u30e9\u30c3\u30c9\u30e2\u30fc\u30c9: \u30b2\u30fc\u30b8\u6d88\u8cab\u3067\u5f37\u5316\u72b6\u614b");
+                lore.add("\u00a77ULT\u6e07\u671b: S5/S6\u89e3\u653e+\u30b2\u30fc\u30b8\u6700\u5927\u5024100");
                 lore.add("\u00a77\u661f\u53f3\u30af\u30ea\u2192\u30e2\u30fc\u30c9\u5207\u66ff | \u5263\u53f3\u30af\u30ea\u2192\u885d\u6483\u6ce2");
                 break;
             }
@@ -321,10 +307,6 @@ public class KitInfoGUI {
                 if (clicked.getItemMeta() == null) {
                     return;
                 }
-                if (clicked.getItemMeta().getPersistentDataContainer().has(this.bgmSelectKey, PersistentDataType.BYTE)) {
-                    this.openBgmList(p);
-                    return;
-                }
                 if (clicked.getItemMeta().getPersistentDataContainer().has(this.tutorialKey, PersistentDataType.BYTE)) {
                     this.openTutorial(p, 0);
                     return;
@@ -371,26 +353,6 @@ public class KitInfoGUI {
                     this.openTutorial(p, nextPage + 1);
                     return;
                 }
-            } else if (title.equals("\u00a7d\u00a7lBGM\u9078\u629e")) {
-                if (clicked.getItemMeta() == null) {
-                    return;
-                }
-                if (clicked.getType() == Material.ARROW) {
-                    this.openList(p);
-                    return;
-                }
-                if (clicked.getType() == Material.BARRIER) {
-                    this.plugin.getGameManager().setSelectedBgm(null);
-                    p.sendMessage("\u00a7aBGM\u3092\u7121\u52b9\u306b\u3057\u307e\u3057\u305f\u3002");
-                    p.closeInventory();
-                    return;
-                }
-                String songName = (String)clicked.getItemMeta().getPersistentDataContainer().getOrDefault(this.bgmSongKey, PersistentDataType.STRING, "");
-                if (!songName.isEmpty()) {
-                    this.plugin.getGameManager().setSelectedBgmByName(songName);
-                    p.sendMessage("\u00a7aBGM\u3092 \u00a7e" + songName + " \u00a7a\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
-                    p.closeInventory();
-                }
             }
         }
     }
@@ -399,7 +361,7 @@ public class KitInfoGUI {
         ItemStack close;
         ItemMeta cm;
         Inventory inv = Bukkit.createInventory(null, (int)54, (String)TUTORIAL_TITLE);
-        String[] pages = new String[]{"\u00a76\u00a7l=== \u3088\u3046\u3053\u305d ===\n\u00a77BloxArena II WoNG \u3078\u3088\u3046\u3053\u305d\uff01\n\u00a775v5\u306e\u30c1\u30fc\u30e0\u6226\u95d8\u30b2\u30fc\u30e0\u3067\u3059\n\u00a7734\u7a2e\u985e\u306e\u30ad\u30c3\u30c8\u304b\u3089\u9078\u629e\u3057\n\u00a77\u30c1\u30fc\u30e0\u3067\u5354\u529b\u3057\u3066\u52dd\u5229\u3092\u76ee\u6307\u305b\uff01\n\u00a77\u25b6 \u6b21\u306e\u30da\u30fc\u30b8\u304b\u3089\u5404\u30e2\u30fc\u30c9\u8aac\u660e\n\u00a77\u25b6 \u5de6\u306e\u77e2\u5370\u3067\u623b\u308b / \u53f3\u3067\u9032\u3080", "\u00a76\u00a7l=== \u30b2\u30fc\u30e0\u30e2\u30fc\u30c9\u8aac\u660e ===\n\u00a7c\u30d0\u30c8\u30eb\u30a2\u30ea\u30fc\u30ca: \u00a77\u6bb2\u6ec5or\u5236\u5727 3\u5148\u53d6\n\u00a7eTDM: \u00a77\u30ad\u30eb\u6570\u52dd\u8ca0 \u5373\u30ea\u30b9\u30dd\u30fc\u30f3\n\u00a74\u7206\u7834\u30df\u30c3\u30b7\u30e7\u30f3: \u00a77\u7206\u5f3e\u8a2d\u7f6e/\u89e3\u9664\n\u00a79\u5360\u9818\u6226: \u00a77\u62e0\u70b9\u5236\u5727 100pts\u5148\u53d6\n\u00a7bCTF: \u00a77\u6575\u65d7\u596a\u53d6 3\u56de\u5148\u53d6\n\u00a77\u25b6 \u6b21\u306e\u30da\u30fc\u30b8\u304b\u3089\u5404\u30e2\u30fc\u30c9\u8a73\u7d30", "\u00a7c\u00a7l=== \u30d0\u30c8\u30eb\u30a2\u30ea\u30fc\u30ca ===\n\u00a77\u30fb3\u30e9\u30a6\u30f3\u30c9\u5148\u53d6\u3067\u52dd\u5229\n\u00a77\u30fb\u6575\u6bb2\u6ec5\u3067\u30e9\u30a6\u30f3\u30c9\u52dd\u5229\n\u00a77\u30fb\u30ea\u30b9\u30dd\u30fc\u30f3\u306a\u3057\n\u00a77\u30fb\u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c825\u679a\u5236\u5727+15\u79d2\n\u00a77  \u30db\u30fc\u30eb\u30c9\u3067\u3082\u52dd\u5229\n\u00a77\u30fb\u30c1\u30fc\u30e0\u5354\u529b\u304c\u30ab\u30ae\uff01\n\u00a77\u30fb1\u30e9\u30a6\u30f3\u30c9\u306b1\u56de\u30d0\u30fc\u30b9\u30c8\u767a\u52d5\u53ef\u80fd", "\u00a7e\u00a7l=== TDM ===\n\u00a77\u30fb\u5236\u9650\u6642\u95935\u5206\u9593\n\u00a77\u30fb\u30ad\u30eb\u6570\u3067\u52dd\u8ca0\n\u00a77\u30fb\u6b7b\u4ea1\u3057\u3066\u3082\u30ea\u30b9\u30dd\u30fc\u30f3\u3042\u308a\n\u00a77\u30fb30\u30ad\u30eb\u5148\u53d6\u3067\u3082\u52dd\u5229\n\u00a77\u30fb\u7a4d\u6975\u7684\u306b\u653b\u3081\u308d\uff01\u30c7\u30b9\u3092\u6e1b\u3089\u305b\uff01", "\u00a74\u00a7l=== \u7206\u7834\u30df\u30c3\u30b7\u30e7\u30f3 ===\n\u00a77\u30fb\u653b\u6483\u5074\u306f\u7206\u5f3e\u3092\u8a2d\u7f6e(\u30af\u30ea\u30c3\u30af)\n\u00a77\u30fb\u8a2d\u7f6e\u5f8c45\u79d2\u8010\u3048\u308c\u3070\u8d77\u7206\n\u00a77\u30fb\u5b88\u5099\u5074\u306f\u7206\u5f3e\u89e3\u9664(7\u79d2)\u3067\u52dd\u5229\n\u00a77\u30fb\u6bb2\u6ec5\u3067\u3082\u52dd\u5229\u53ef\u80fd\n\u00a77\u30fb\u30e9\u30a6\u30f3\u30c9\u6bce\u306b\u653b\u5b88\u4ea4\u4ee3\n\u00a77\u30fb\u30ea\u30b9\u30dd\u30fc\u30f3\u306a\u3057", "\u00a79\u00a7l=== \u5360\u9818\u6226 ===\n\u00a77\u30fb\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u3092\u5360\u9818\u305b\u3088\n\u00a77\u30fb\u62e0\u70b9\u306b\u8fd1\u304f\u306b\u7559\u307e\u308a\u7d9a\u3051\u308b\n\u00a77\u30fb\u5360\u9818\u62e0\u70b9\u304b\u3089\u6bce\u79d2\u30dd\u30a4\u30f3\u30c8\u7372\u5f97\n\u00a77\u30fb100pts\u5148\u53d6\u3067\u52dd\u5229\n\u00a77\u30fb\u30ea\u30b9\u30dd\u30fc\u30f3\u3042\u308a\n\u00a77\u30fb\u5473\u65b9\u3068\u9023\u643a\u3057\u3066\u596a\u53d6\u305b\u3088\uff01", "\u00a7b\u00a7l=== CTF ===\n\u00a77\u30fb\u6575\u9663\u306e\u65d7\u3092\u596a\u53d6\u305b\u3088\n\u00a77\u30fb\u81ea\u9663\u306b\u6301\u3061\u5e30\u308b\u30681\u30dd\u30a4\u30f3\u30c8\n\u00a77\u30fb3\u56de\u5148\u53d6\u3067\u52dd\u5229\n\u00a77\u30fb\u65d7\u306b\u8fd1\u3065\u3044\u3066\u30af\u30ea\u30c3\u30af\u3067\u53d6\u5f97\n\u00a77\u30fb\u6b7b\u4ea1\u6642\u306b\u65d7\u30c9\u30ed\u30c3\u30d7\n\u00a77\u30fb\u843d\u3061\u305f\u65d7\u306f\u62fe\u5f97\u53ef\u80fd(5\u79d2\u9593\u9694)\n\u00a77\u30fb\u5236\u9650\u6642\u959310\u5206/\u540c\u6570\u3067\u5f15\u304d\u5206\u3051", "\u00a76\u00a7l=== \u30ad\u30c3\u30c8\u30b7\u30b9\u30c6\u30e0 ===\n\u00a77\u30fb\u516834\u7a2e\u985e\u306e\u30ad\u30c3\u30c8\n\u00a7cDuelist: \u00a77\u524d\u7dda\u3067\u306e\u6226\u95d8\u7279\u5316\n\u00a7eInitiator: \u00a77\u6226\u95d8\u306e\u8d77\u70b9\u3092\u4f5c\u308b\n\u00a79Controller: \u00a77\u30a8\u30ea\u30a2\u5236\u5727/\u59a8\u5bb3\n\u00a72Sentinel: \u00a77\u5473\u65b9\u652f\u63f4/\u9632\u885b\n\u00a77\u30fb\u5404\u30ad\u30c3\u30c8\u56fa\u6709\u306e\u30b9\u30ad\u30eb\u3092\u6301\u3064\n\u00a77\u30fb\u5f79\u5272\u3092\u7406\u89e3\u3057\u3066\u9023\u643a\u305b\u3088\uff01", "\u00a76\u00a7l=== \u30b9\u30ad\u30eb\u767a\u52d5\u65b9\u6cd5 ===\n\u00a77\u30fb\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u5185\u306e\u00a7f\u30b9\u30ad\u30eb\u661f\n\u00a77  (\u30cd\u30b6\u30fc\u30b9\u30bf\u30fc)\u3092\u53f3\u30af\u30ea\u30c3\u30af\n\u00a77\u30fb\u4e00\u90e8\u30ad\u30c3\u30c8\u306f\u5263/\u65a7/\u5f13\u3092\n\u00a77  \u6301\u3063\u3066\u3057\u3083\u304c\u307f\u53f3\u30af\u30ea\u30c3\u30af\n\u00a77\u30fb\u30b9\u30ad\u30eb\u306b\u306fCT(\u30af\u30fc\u30eb\u30bf\u30a4\u30e0)\u3042\u308a\n\u00a77\u30fbCT\u306f\u7d4c\u9a13\u5024\u30d0\u30fc\u306b\u8868\u793a\n\u00a77\u30fbCT\u4e2d\u306f\u30b9\u30ad\u30eb\u4f7f\u7528\u4e0d\u53ef", "\u00a7c\u00a7l=== \u30d0\u30fc\u30b9\u30c8 ===\n\u00a77\u30fb\u30b9\u30ed\u30c3\u30c89\u306e\u30cf\u30fc\u30c8\u30aa\u30d6\u30b6\u30b7\u30fc\n\u00a77\u30fb\u53f3\u30af\u30ea\u30c3\u30af\u3067\u767a\u52d5\n\u00a77\u30fb\u5468\u56f2\u5927\u7206\u767a+\u5439\u304d\u98db\u3070\u3057+\u5f31\u4f53\u5316\n\u00a77\u30fb1\u30e9\u30a6\u30f3\u30c9\u306b1\u56de\u306e\u307f\u4f7f\u7528\u53ef\u80fd\n\u00a77\u30fb\u4f7f\u7528\u5f8c\u30a2\u30a4\u30c6\u30e0\u306f\u6d88\u6ec5\n\u00a77\u30fb\u3053\u3053\u305e\u3068\u3044\u3046\u5834\u9762\u3067\u4f7f\u3048\uff01", "\u00a76\u00a7l=== \u7279\u6b8a\u6761\u4ef6 ===\n\u00a77\u30fb\u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8\u5236\u5727(5x5)\n\u00a77  \u767d\u2192\u81ea\u8272\u306b\u5857\u308a\u66ff\u3048\u308d\n\u00a77  25\u679a\u5168\u3066\u81ea\u8272\u306715\u79d2\u30db\u30fc\u30eb\u30c9\n\u00a77\u30fb\u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\n\u00a77  1\u79d2\u9593\u30b9\u30cb\u30fc\u30af\u3092\u6e9c\u3081\u3066\u653b\u6483\n\u00a77\u30fb\u98a8\u7a74\u30de\u30fc\u30af\n\u00a77  \u30cb\u30eb\u30ae\u30ea\u30bf\u30fc\u30eb\u306e\u7279\u6b8a\u653b\u6483"};
+        String[] pages = new String[]{"\u00a76\u00a7l=== \u3088\u3046\u3053\u305d ===\n\u00a77BloxArena II WoNG \u3078\u3088\u3046\u3053\u305d\uff01\n\u00a775v5\u306e\u30c1\u30fc\u30e0\u6226\u95d8\u30b2\u30fc\u30e0\u3067\u3059\n\u00a7734\u7a2e\u985e\u306e\u30ad\u30c3\u30c8\u304b\u3089\u9078\u629e\u3057\n\u00a77\u30c1\u30fc\u30e0\u3067\u5354\u529b\u3057\u3066\u52dd\u5229\u3092\u76ee\u6307\u305b\uff01\n\u00a77\u25b6 \u6b21\u306e\u30da\u30fc\u30b8\u304b\u3089\u5404\u30e2\u30fc\u30c9\u8aac\u660e\n\u00a77\u25b6 \u5de6\u306e\u77e2\u5370\u3067\u623b\u308b / \u53f3\u3067\u9032\u3080", "\u00a76\u00a7l=== \u30b2\u30fc\u30e0\u30e2\u30fc\u30c9\u8aac\u660e ===\n\u00a7c\u30d0\u30c8\u30eb\u30a2\u30ea\u30fc\u30ca: \u00a77\u6bb2\u6ec5or\u5236\u5727 3\u5148\u53d6\n\u00a7eTDM: \u00a77\u30ad\u30eb\u6570\u52dd\u8ca0 \u5373\u30ea\u30b9\u30dd\u30fc\u30f3\n\u00a7bCTF: \u00a77\u6575\u65d7\u596a\u53d6 3\u56de\u5148\u53d6\n\u00a77\u25b6 \u6b21\u306e\u30da\u30fc\u30b8\u304b\u3089\u5404\u30e2\u30fc\u30c9\u8a73\u7d30", "\u00a7c\u00a7l=== \u30d0\u30c8\u30eb\u30a2\u30ea\u30fc\u30ca ===\n\u00a77\u30fb3\u30e9\u30a6\u30f3\u30c9\u5148\u53d6\u3067\u52dd\u5229\n\u00a77\u30fb\u6575\u6bb2\u6ec5\u3067\u30e9\u30a6\u30f3\u30c9\u52dd\u5229\n\u00a77\u30fb\u30ea\u30b9\u30dd\u30fc\u30f3\u306a\u3057\n\u00a77\u30fb\u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c825\u679a\u5236\u5727+15\u79d2\n\u00a77  \u30db\u30fc\u30eb\u30c9\u3067\u3082\u52dd\u5229\n\u00a77\u30fb\u30c1\u30fc\u30e0\u5354\u529b\u304c\u30ab\u30ae\uff01\n\u00a77\u30fb1\u30e9\u30a6\u30f3\u30c9\u306b1\u56de\u30d0\u30fc\u30b9\u30c8\u767a\u52d5\u53ef\u80fd", "\u00a7e\u00a7l=== TDM ===\n\u00a77\u30fb\u5236\u9650\u6642\u95935\u5206\u9593\n\u00a77\u30fb\u30ad\u30eb\u6570\u3067\u52dd\u8ca0\n\u00a77\u30fb\u6b7b\u4ea1\u3057\u3066\u3082\u30ea\u30b9\u30dd\u30fc\u30f3\u3042\u308a\n\u00a77\u30fb30\u30ad\u30eb\u5148\u53d6\u3067\u3082\u52dd\u5229\n\u00a77\u30fb\u7a4d\u6975\u7684\u306b\u653b\u3081\u308d\uff01\u30c7\u30b9\u3092\u6e1b\u3089\u305b\uff01", "\u00a7b\u00a7l=== CTF ===\n\u00a77\u30fb\u6575\u9663\u306e\u65d7\u3092\u596a\u53d6\u305b\u3088\n\u00a77\u30fb\u81ea\u9663\u306b\u6301\u3061\u5e30\u308b\u30681\u30dd\u30a4\u30f3\u30c8\n\u00a77\u30fb3\u56de\u5148\u53d6\u3067\u52dd\u5229\n\u00a77\u30fb\u65d7\u306b\u8fd1\u3065\u3044\u3066\u30af\u30ea\u30c3\u30af\u3067\u53d6\u5f97\n\u00a77\u30fb\u6b7b\u4ea1\u6642\u306b\u65d7\u30c9\u30ed\u30c3\u30d7\n\u00a77\u30fb\u843d\u3061\u305f\u65d7\u306f\u62fe\u5f97\u53ef\u80fd(5\u79d2\u9593\u9694)\n\u00a77\u30fb\u5236\u9650\u6642\u959310\u5206/\u540c\u6570\u3067\u5f15\u304d\u5206\u3051", "\u00a76\u00a7l=== \u30ad\u30c3\u30c8\u30b7\u30b9\u30c6\u30e0 ===\n\u00a77\u30fb\u516834\u7a2e\u985e\u306e\u30ad\u30c3\u30c8\n\u00a7cDuelist: \u00a77\u524d\u7dda\u3067\u306e\u6226\u95d8\u7279\u5316\n\u00a7eInitiator: \u00a77\u6226\u95d8\u306e\u8d77\u70b9\u3092\u4f5c\u308b\n\u00a79Controller: \u00a77\u30a8\u30ea\u30a2\u5236\u5727/\u59a8\u5bb3\n\u00a72Sentinel: \u00a77\u5473\u65b9\u652f\u63f4/\u9632\u885b\n\u00a77\u30fb\u5404\u30ad\u30c3\u30c8\u56fa\u6709\u306e\u30b9\u30ad\u30eb\u3092\u6301\u3064\n\u00a77\u30fb\u5f79\u5272\u3092\u7406\u89e3\u3057\u3066\u9023\u643a\u305b\u3088\uff01", "\u00a76\u00a7l=== \u30b9\u30ad\u30eb\u767a\u52d5\u65b9\u6cd5 ===\n\u00a77\u30fb\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u5185\u306e\u00a7f\u30b9\u30ad\u30eb\u661f\n\u00a77  (\u30cd\u30b6\u30fc\u30b9\u30bf\u30fc)\u3092\u53f3\u30af\u30ea\u30c3\u30af\n\u00a77\u30fb\u4e00\u90e8\u30ad\u30c3\u30c8\u306f\u5263/\u65a7/\u5f13\u3092\n\u00a77  \u6301\u3063\u3066\u3057\u3083\u304c\u307f\u53f3\u30af\u30ea\u30c3\u30af\n\u00a77\u30fb\u30b9\u30ad\u30eb\u306b\u306fCT(\u30af\u30fc\u30eb\u30bf\u30a4\u30e0)\u3042\u308a\n\u00a77\u30fbCT\u306f\u7d4c\u9a13\u5024\u30d0\u30fc\u306b\u8868\u793a\n\u00a77\u30fbCT\u4e2d\u306f\u30b9\u30ad\u30eb\u4f7f\u7528\u4e0d\u53ef", "\u00a7c\u00a7l=== \u30d0\u30fc\u30b9\u30c8 ===\n\u00a77\u30fb\u30b9\u30ed\u30c3\u30c89\u306e\u30cf\u30fc\u30c8\u30aa\u30d6\u30b6\u30b7\u30fc\n\u00a77\u30fb\u53f3\u30af\u30ea\u30c3\u30af\u3067\u767a\u52d5\n\u00a77\u30fb\u5468\u56f2\u5927\u7206\u767a+\u5439\u304d\u98db\u3070\u3057+\u5f31\u4f53\u5316\n\u00a77\u30fb1\u30e9\u30a6\u30f3\u30c9\u306b1\u56de\u306e\u307f\u4f7f\u7528\u53ef\u80fd\n\u00a77\u30fb\u4f7f\u7528\u5f8c\u30a2\u30a4\u30c6\u30e0\u306f\u6d88\u6ec5\n\u00a77\u30fb\u3053\u3053\u305e\u3068\u3044\u3046\u5834\u9762\u3067\u4f7f\u3048\uff01", "\u00a76\u00a7l=== \u7279\u6b8a\u6761\u4ef6 ===\n\u00a77\u30fb\u4e2d\u592e\u30b3\u30f3\u30af\u30ea\u30fc\u30c8\u5236\u5727(5x5)\n\u00a77  \u767d\u2192\u81ea\u8272\u306b\u5857\u308a\u66ff\u3048\u308d\n\u00a77  25\u679a\u5168\u3066\u81ea\u8272\u306715\u79d2\u30db\u30fc\u30eb\u30c9\n\u00a77\u30fb\u30ac\u30fc\u30c9\u30d6\u30ec\u30a4\u30af\n\u00a77  1\u79d2\u9593\u30b9\u30cb\u30fc\u30af\u3092\u6e9c\u3081\u3066\u653b\u6483\n\u00a77\u30fb\u98a8\u7a74\u30de\u30fc\u30af\n\u00a77  \u30cb\u30eb\u30ae\u30ea\u30bf\u30fc\u30eb\u306e\u7279\u6b8a\u653b\u6483"};
         ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta paneMeta = pane.getItemMeta();
         if (paneMeta != null) {
@@ -453,52 +415,6 @@ public class KitInfoGUI {
             close.setItemMeta(cm);
         }
         inv.setItem(49, close);
-        p.openInventory(inv);
-    }
-
-    public void openBgmList(Player p) {
-        ItemStack offBtn;
-        ItemMeta offMeta;
-        Inventory inv = Bukkit.createInventory(null, (int)27, (String)"\u00a7d\u00a7lBGM\u9078\u629e");
-        NbsPlayer cur = this.plugin.getGameManager().getSelectedBgm();
-        ItemStack info = new ItemStack(Material.NOTE_BLOCK);
-        ItemMeta infoMeta = info.getItemMeta();
-        if (infoMeta != null) {
-            infoMeta.setDisplayName("\u00a7d\u00a7l\u73fe\u5728\u306eBGM");
-            List<String> infoLore = new ArrayList<String>();
-            infoLore.add(cur != null ? "\u00a7a" + cur.getName() : "\u00a77\u306a\u3057");
-            infoMeta.setLore(infoLore);
-            info.setItemMeta(infoMeta);
-        }
-        inv.setItem(13, info);
-        List<NbsPlayer> songs = this.plugin.getSongs();
-        int songSlot = 11;
-        for (NbsPlayer song : songs) {
-            if (songSlot > 15) break;
-            ItemStack songItem = new ItemStack(Material.MUSIC_DISC_CAT);
-            ItemMeta songMeta = songItem.getItemMeta();
-            if (songMeta != null) {
-                songMeta.setDisplayName("\u00a7e" + song.getName());
-                ArrayList<String> songLore = new ArrayList<String>();
-                songLore.add("\u00a77\u30af\u30ea\u30c3\u30af\u3067\u9078\u629e");
-                songMeta.setLore(songLore);
-                songMeta.getPersistentDataContainer().set(this.bgmSongKey, PersistentDataType.STRING, song.getName());
-                songItem.setItemMeta(songMeta);
-            }
-            inv.setItem(songSlot++, songItem);
-        }
-        if ((offMeta = (offBtn = new ItemStack(Material.BARRIER)).getItemMeta()) != null) {
-            offMeta.setDisplayName("\u00a7cBGM OFF");
-            offBtn.setItemMeta(offMeta);
-        }
-        inv.setItem(22, offBtn);
-        ItemStack back = new ItemStack(Material.ARROW);
-        ItemMeta backMeta = back.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName("\u00a77\u00a7l\u2190 \u623b\u308b");
-            back.setItemMeta(backMeta);
-        }
-        inv.setItem(26, back);
         p.openInventory(inv);
     }
 

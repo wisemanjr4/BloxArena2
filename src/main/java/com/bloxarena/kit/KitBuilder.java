@@ -69,15 +69,16 @@ public class KitBuilder {
         switch (kit) {
             case BLADE: {
                 ItemStack sword = new ItemStack(Material.DIAMOND_SWORD);
-                sword.addEnchantment(Enchantment.DAMAGE_ALL, 2);
+                sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+                sword.addEnchantment(Enchantment.KNOCKBACK, 1);
                 list.add(sword);
-                list.add(new ItemStack(Material.SHIELD));
                 list.add(new ItemStack(Material.NETHER_STAR));
                 break;
             }
             case BREAKER: {
                 ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
                 axe.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+                axe.addUnsafeEnchantment(Enchantment.KNOCKBACK, 2);
                 list.add(axe);
                 list.add(new ItemStack(Material.NETHER_STAR));
                 break;
@@ -139,7 +140,7 @@ public class KitBuilder {
                 ItemStack axe = new ItemStack(Material.GOLDEN_AXE);
                 axe.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
                 axe.addEnchantment(Enchantment.DAMAGE_ALL, 2);
-                axe.addEnchantment(Enchantment.DURABILITY, 5);
+                axe.addEnchantment(Enchantment.DURABILITY, 3);
                 list.add(axe);
                 list.add(new ItemStack(Material.ENDER_PEARL, 3));
                 list.add(new ItemStack(Material.NETHER_STAR));
@@ -480,6 +481,10 @@ public class KitBuilder {
                 KitBuilder.giveMistral(player, plugin);
                 break;
             }
+            case TRINGID: {
+                KitBuilder.giveTringid(player, plugin);
+                break;
+            }
             case SUPERIOR_MISTRAL: {
                 KitBuilder.giveSuperiorMistral(player, plugin);
                 break;
@@ -610,17 +615,17 @@ public class KitBuilder {
 
     private static void giveBlade(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.DIAMOND_SWORD);
-        sword.addEnchantment(Enchantment.DAMAGE_ALL, 2);
+        sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+        sword.addEnchantment(Enchantment.KNOCKBACK, 1);
         ItemMeta sm = sword.getItemMeta();
         if (sm != null) {
-            sm.setLore(List.of("\u00a77\u00a7o\u53f3\u30af\u30ea\u30c3\u30af: \u8987\u65ac - \u5468\u56f2\u6253\u3061\u4e0a\u3052\uff0b\u5f31\u4f53"));
+            sm.setLore(List.of("\u00a77\u00a7o\u53f3\u30af\u30ea\u30c3\u30af: \u8987\u65ac - \u524d\u65b9\u8df3\u8e8d\u30fb\u7740\u5730\u3067\u5468\u56f2\u6253\u3061\u4e0a\u3052\uff0b\u5f31\u4f53"));
             sm.getPersistentDataContainer().set(new NamespacedKey((Plugin)plugin, "kit_skill"), PersistentDataType.STRING, "BLADE");
             sword.setItemMeta(sm);
         }
         player.getInventory().setItem(0, sword);
-        player.getInventory().setItem(1, new ItemStack(Material.SHIELD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BLADE, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u8987\u65ac"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BLADE, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u8987\u65a9"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -628,6 +633,7 @@ public class KitBuilder {
     private static void giveBreaker(Player player, BloxArenaPlugin plugin) {
         ItemStack axe = new ItemStack(Material.DIAMOND_AXE);
         axe.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+        axe.addUnsafeEnchantment(Enchantment.KNOCKBACK, 2);
         ItemMeta am = axe.getItemMeta();
         if (am != null) {
             am.setLore(List.of("\u00a77\u00a7o\u53f3\u30af\u30ea\u30c3\u30af: \u70c8\u7a81 - \u9ad8\u901f\u7a81\u9032\uff0b\u63a5\u89e6\u30c0\u30e1\u30fc\u30b8"));
@@ -638,7 +644,7 @@ public class KitBuilder {
         if (plugin != null) {
             player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BREAKER, "\u00a7c\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u70c8\u7a81"));
         }
-        KitBuilder.giveIronArmor(player);
+        KitBuilder.giveChainArmor(player);
     }
 
     private static void giveNinja(Player player, BloxArenaPlugin plugin) {
@@ -688,6 +694,7 @@ public class KitBuilder {
 
     private static void giveCounter(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        sword.addEnchantment(Enchantment.KNOCKBACK, 1);
         ItemStack shield = new ItemStack(Material.SHIELD);
         ItemMeta sm = shield.getItemMeta();
         ArrayList<String> sl = new ArrayList<String>();
@@ -744,7 +751,7 @@ sm.setLore(sl);
         ItemStack axe = new ItemStack(Material.GOLDEN_AXE);
         axe.addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
         axe.addEnchantment(Enchantment.DAMAGE_ALL, 2);
-        axe.addEnchantment(Enchantment.DURABILITY, 5);
+        axe.addEnchantment(Enchantment.DURABILITY, 3);
         player.getInventory().setItem(0, axe);
         player.getInventory().setItem(2, new ItemStack(Material.ENDER_PEARL, 3));
         if (plugin != null) {
@@ -1035,6 +1042,15 @@ gsm.setLore(gsl);
         KitBuilder.giveChainArmor(player);
     }
 
+    private static void giveTringid(Player player, BloxArenaPlugin plugin) {
+        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        player.getInventory().setItem(0, sword);
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TRINGID, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30a8\u30d5\u30a7\u30af\u30c6\u30a3\u30d6\u30dd\u30fc\u30eb"));
+        }
+        KitBuilder.giveChainArmor(player);
+    }
+
     private static void giveSuperiorMistral(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.DIAMOND_SWORD);
         sword.addEnchantment(Enchantment.DAMAGE_ALL, 5);
@@ -1232,7 +1248,7 @@ gsm.setLore(gsl);
             return item;
         }
         try {
-            meta.setBasePotionData(new PotionData(type, false, true));
+            meta.setBasePotionData(new PotionData(type, false, type != PotionType.POISON));
         }
         catch (Exception e) {
             meta.setBasePotionData(new PotionData(type, false, false));
@@ -1501,12 +1517,12 @@ gsm.setLore(gsl);
 
     private static String getSkillInfo(KitType kit) {
         return switch (kit) {
-            case BLADE -> "CT10秒 / スニークで発動 周囲3mの敵を打ち上げ3ダメ+弱体化+スロウ+敵スキルCT+5秒";
+            case BLADE -> "CT12秒 / スニークで前方跳躍 着地地点の周囲3mの敵を打ち上げ3ダメ+弱体化+スロウ+敵スキルCT+5秒";
             case BREAKER -> "CT10秒 / 前方に突進し接触4ダメ+弱体化";
             case NINJA -> "CT18秒 / 8秒間透明化+耐性I+SpeedII";
             case BERSERKER -> "CT14秒 / 前方に連続爆発 接触6ダメ+吹き飛ばし";
             case SNIPER -> "CT7秒 / 地上でしゃがみ照準7秒→マーク マーク中は次の一撃で即死";
-            case COUNTER -> "CT10秒 / 盾構え+スニークでパリィ2秒 成功で相手を弱体化+スロウ";
+            case COUNTER -> "CT12秒 / 発動で自らガードブレイク+衝撃吸収II(3秒) 被弾で炸裂(4ダメ+鈍足III+跳躍封じ) 近接被弾は反射+弱体化X+ガーブレ2秒+敵CT+5秒";
             case PYRO -> "CT15秒 / 周囲5m 燃焼中の敵に12ダメ 未燃焼は着火";
             case LANCER -> "CT2秒 / 前方5m突き刺し 直撃9ダメ/盾越し5ダメ+盾破壊 命中でCT-1秒";
             case JESTER -> "CT12秒 / 7秒間SpeedII+採掘速度上昇";
@@ -1516,29 +1532,30 @@ gsm.setLore(gsl);
             case SCOUT -> "リコン(30秒索敵+範囲ダメ)/パルスボルト(30秒範囲ダメ)";
             case WHIRLWIND -> "CT6秒 / 気流砲(前方押し出し)+左クリックで旋風弾(追尾打上,CT5秒)";
             case NILGIRITAR -> "CT15秒 / 周囲9mの敵を感知し風穴マーク マーク中は盾貫通+追加ダメ";
-            case MISTRAL -> "CT12秒 / 前方に烈風砲 敵を大きく吹き飛ばす";
+            case MISTRAL -> "CT10秒 / 前方に烈風砲 敵を大きく吹き飛ばす";
+            case TRINGID -> "CT30秒 / 右クリで設置したポールの領域内の味方に選択バフを常時付与 シフト+右クリでバフ変更";
             case SUPERIOR_MISTRAL -> "CT5秒 / 前方に超強力な風砲 4ダメ+弱体化+スロウ+吹き飛ばし";
             case FLASHER -> "CT10秒 / 閃光弾を投擲 着弾半径6mで盲目+鈍足+発光";
             case MARKSMAN -> "CT12秒 / ヘヴィーボルト 命中で敵のHP上限-3(最大-12)";
             case SUNDANCE -> "CT7秒 / リボルビングクロスボウ5発自動装填";
             case ROCKETER -> "スニークでメガロケット(大爆発,CT25秒) 通常で誘導ロケット(CT8秒)";
             case RELEASER -> "バースト特化 / 超解放(1ラウンド1回)+小爆発(CT制)";
-            case ALCHEMIST -> "CT15秒 / 全ポーションを補充";
+            case ALCHEMIST -> "CT22秒 / 全ポーションを使い切ると補充";
             case ENGINEER -> "CT15秒 / レーザータレット設置 90秒間自動攻撃";
             case TRAPPER -> "CT8秒 / 不可視の罠を設置(最大2個) 発動で爆発+盲目+弱体化";
             case GUARDIAN -> "CT30秒 / 7秒間完全無敵+鈍足";
             case MEDIC -> "CT20秒 / 半径10mの味方HP+5+吸収+再生III";
             case SUPPORTER -> "CT12秒 / 全バフポーションを補充";
-            case RESTRICTIONER -> "CT20秒 / 5m内の敵と中間地点にTP 相互に強力デバフ+行動不能5秒";
+            case RESTRICTIONER -> "CT18秒 / 5m内の敵と中間地点にTP 相互に強力デバフ+行動不能4秒(敵は発光)";
             case TRANSPORTER -> "CT15秒 / 左クリックで入口A 右クリックで出口B 双方向ポータル";
             case KREUTZ -> "CT2秒 / スニークでカードをドロー 右クリックで詠唱 15種の効果";
-            case SWAPPER -> "CT18秒 / 15m以内の敵と位置を即時交換+弱体化";
-            case STICKER -> "CT12秒 / グラップルを射出 命中で敵を打ち上げ引き寄せ+弱体化";
+            case SWAPPER -> "CT18秒 / 雪玉を飛ばして命中した敵と入れ替わる しゃがみ+右クリで7m以内の敵と即時スワップ";
+            case STICKER -> "CT5秒 / グラップルを射出 命中で敵を打ち上げ引き寄せ(引き寄せでCT+6秒)";
             case DECOY -> "CT10秒 / 分身8体を生成し自分は透明化6秒";
             case PHANTOM -> "CT18秒 / 6秒間透明+無敵+攻撃力上昇";
             case ANCHOR -> "CT20秒 / 半径8mの磁場を15秒展開 敵を減速+弱体化+継続ダメ";
             case GRANG -> "盾+スニークでチャージ(最大7秒)→離すと突進 接触7ダメ フルチャージで爆発";
-            case NECRO -> "スケルトン3体を召喚 / 右クリックで移動指示 シフト右クリックで呼び戻し";
+            case NECRO -> "CT60秒 / スケルトン3体を召喚(近接のみ 召喚主から20mで消滅 召喚中は本体が弱体) 右クリックで移動指示 シフト右クリックで呼び戻し";
             case BULWARK -> "CT20秒 / 壁を展開して味方を守る シフトで平面展開 再使用で解除";
             case TIMEKEEPER -> "リワインド(位置+HP復元,CT30秒)/クロックストップ(6mの弾を停止,CT15秒)";
             case AEGIS -> "CT22秒 / 15m内の味方とボンド 受けたダメの50%を肩代わり";
@@ -1551,8 +1568,10 @@ gsm.setLore(gsl);
 
     private static String getGearSummary(KitType kit) {
         return switch (kit) {
-            case BLADE, BREAKER, COUNTER, PYRO, BOMBER, COOK, NILGIRITAR, RELEASER, FLASHER, ROCKETER, ALCHEMIST, TRAPPER, GUARDIAN, MEDIC, SWAPPER, STICKER, ANCHOR -> "\u9244\u88c5\u5099";
+            case BLADE, COUNTER, PYRO, BOMBER, COOK, NILGIRITAR, RELEASER, FLASHER, ROCKETER, ALCHEMIST, TRAPPER, GUARDIAN, MEDIC, SWAPPER, STICKER, ANCHOR -> "\u9244\u88c5\u5099";
+            case BREAKER -> "\u30c1\u30a7\u30fc\u30f3\u88c5\u5099";
             case NINJA, LANCER, WHIRLWIND, MISTRAL, SCOUT, ENGINEER, RESTRICTIONER, TRANSPORTER, DECOY, PHANTOM -> "\u9396\u88c5\u5099";
+            case TRINGID -> "\u30c1\u30a7\u30fc\u30f3\u88c5\u5099";
             case SUPERIOR_MISTRAL -> "\u30c0\u30a4\u30e4\u88c5\u5099\uff0b\u76fe";
             case BERSERKER, SNIPER, JESTER, MARKSMAN, SUNDANCE, KREUTZ, NECRO -> "\u76ae\u88c5\u5099";
             case GRANG -> "\u76ae\u88c5\u5099\uff0b\u76fe";
