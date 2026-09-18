@@ -56,6 +56,7 @@ import com.bloxarena.stats.StatsManager;
 import com.bloxarena.util.AnimatedText;
 import com.bloxarena.util.Effects;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -93,6 +94,7 @@ import org.bukkit.entity.SpectralArrow;
 import org.bukkit.entity.ThrownPotion;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
@@ -155,6 +157,10 @@ public class GameManager {
     private final Set<UUID> underdogPlayers = new HashSet<UUID>();
     private final Map<UUID, Long> underdogCooldown = new HashMap<UUID, Long>();
     private final Map<UUID, ItemStack[]> inventoryMemory = new HashMap<UUID, ItemStack[]>();
+    private boolean paused = false;
+    private long pauseStartedAt = 0L;
+    private List<UUID> presetRed = null;
+    private List<UUID> presetBlue = null;
 
     public int getCtfRedTeamSize() {
         return this.ctfRedTeamSize;
@@ -166,6 +172,14 @@ public class GameManager {
 
     public GameManager(BloxArenaPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    public void startGame(MapConfig map, GameMode mode, List<UUID> red, List<UUID> blue) {
+        this.presetRed = new ArrayList<UUID>(red);
+        this.presetBlue = new ArrayList<UUID>(blue);
+        ArrayList<UUID> all = new ArrayList<UUID>(red);
+        all.addAll(blue);
+        this.startGame(map, mode, all);
     }
 
     public void startGame(MapConfig map, GameMode mode, List<UUID> participants) {
@@ -205,7 +219,14 @@ public class GameManager {
         this.underdogPlayers.clear();
         this.plugin.getUltimateManager().clearRoundCarry();
         this.underdogCooldown.clear();
-        this.assignTeams(participants);
+        if (this.presetRed != null && this.presetBlue != null) {
+            this.redTeam.addAll(this.presetRed);
+            this.blueTeam.addAll(this.presetBlue);
+            this.presetRed = null;
+            this.presetBlue = null;
+        } else {
+            this.assignTeams(participants);
+        }
         for (UUID uid : participants) {
             Player pp = Bukkit.getPlayer((UUID)uid);
             if (pp == null) continue;
@@ -213,6 +234,14 @@ public class GameManager {
         }
         Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2605 MAP \u00a78\u00bb \u00a7e" + map.getDisplayName()));
         this.broadcastTeamAnnouncement();
+        for (String lab : Arrays.asList("fall_damage", "puppet_target", "class_underdog", "ult_fever")) {
+            if (!this.plugin.isLabEnabled(lab)) continue;
+            for (UUID uid : participants) {
+                Player pl = Bukkit.getPlayer((UUID)uid);
+                if (pl == null) continue;
+                pl.sendMessage("\u00a76\u00a7l\u25c6 \u8a66\u9a13\u7684\u6a5f\u80fd \u00a78\u00bb \u00a7e" + lab + " \u00a77\u6709\u52b9\u4e2d");
+            }
+        }
         Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
             for (UUID uid : participants) {
                 Player pl = Bukkit.getPlayer((UUID)uid);
@@ -327,8 +356,26 @@ public class GameManager {
         }
     }
 
-    private void applyUnderdogBonus() {
-        this.underdogPlayers.clear();
+    public boolean isTeamUnderdog(TeamColor team) {
+        if (team == null) {
+            return false;
+        }
+        boolean respawnMode = this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.CAPTURE_THE_FLAG;
+        int red;
+        int blue;
+        if (respawnMode) {
+            red = this.ctfRedTeamSize;
+            blue = this.ctfBlueTeamSize;
+        } else {
+            red = this.getAliveCount(TeamColor.RED);
+            blue = this.getAliveCount(TeamColor.BLUE);
+        }
+        if (red <= 0 || blue <= 0 || red == blue) {
+            return false;
+        }
+        return (red < blue) == (team == TeamColor.RED);
+    }
+    private void applyUnderdogBonus() {        this.underdogPlayers.clear();
         this.underdogCooldown.clear();
         int red = this.redTeam.size();
         int blue = this.blueTeam.size();
@@ -372,12 +419,74 @@ public class GameManager {
         this.underdogCooldown.put(uid, System.currentTimeMillis() + 10000L);
     }
 
+    public boolean isPaused() {
+        return this.paused;
+    }
+
+    public void pauseGame() {
+        if (this.state != GameState.IN_GAME || this.paused) {
+            return;
+        }
+        this.paused = true;
+        this.pauseStartedAt = System.currentTimeMillis();
+        for (UUID uid : this.getAllParticipants()) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null || !p.isOnline() || this.isSpectator(p)) continue;
+            p.setWalkSpeed(0.0f);
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 1000000, 10, false, false));
+            p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 1000000, 200, false, false));
+        }
+        Bukkit.broadcastMessage((String)"\u00a7c\u23f8 \u8a66\u5408\u3092\u4e00\u6642\u505c\u6b62\u3057\u307e\u3057\u305f");
+    }
+
+    public void resumeGame() {
+        if (!this.paused) {
+            return;
+        }
+        long pausedMs = System.currentTimeMillis() - this.pauseStartedAt;
+        this.paused = false;
+        this.tdmStartTime += pausedMs;
+        this.inGameStartTime += pausedMs;
+        if (this.redFlagDropTime > 0L) {
+            this.redFlagDropTime += pausedMs;
+        }
+        if (this.blueFlagDropTime > 0L) {
+            this.blueFlagDropTime += pausedMs;
+        }
+        this.plugin.getScoreboardManager().shiftStartTime(pausedMs);
+        this.plugin.getUltimateManager().resetTickTimes();
+        for (UUID uid : this.getAllParticipants()) {
+            Player p = Bukkit.getPlayer((UUID)uid);
+            if (p == null || !p.isOnline() || this.isSpectator(p)) continue;
+            p.setWalkSpeed(0.2f);
+            p.removePotionEffect(PotionEffectType.SLOW);
+            p.removePotionEffect(PotionEffectType.JUMP);
+        }
+        Bukkit.broadcastMessage((String)"\u00a7a\u25b6 \u8a66\u5408\u3092\u518d\u958b\u3057\u307e\u3057\u305f");
+    }
+
+    public String getMatchTimeInfo() {
+        if (this.state != GameState.IN_GAME) {
+            return "\u00a77\u8a66\u5408\u306f\u9032\u884c\u4e2d\u3067\u306f\u3042\u308a\u307e\u305b\u3093";
+        }
+        long elapsed = (System.currentTimeMillis() - this.inGameStartTime) / 1000L;
+        if (this.currentGameMode == GameMode.TEAM_DEATHMATCH) {
+            long tdmElapsed = (System.currentTimeMillis() - this.tdmStartTime) / 1000L;
+            int limit = this.plugin.getConfig().getInt("team_deathmatch.time_limit_seconds", 300);
+            return "\u00a7eTDM \u6b8b\u308a " + Math.max(0L, (long)limit - tdmElapsed) + "\u79d2 \u00a78(\u7d4c\u904e" + elapsed + "\u79d2)";
+        }
+        return "\u00a7e" + this.currentGameMode.getDisplayName() + " \u00a78\u00bb \u00a77\u7d4c\u904e" + elapsed + "\u79d2";
+    }
+
     private boolean isRespawnMode() {
         return this.currentGameMode == GameMode.TEAM_DEATHMATCH || this.currentGameMode == GameMode.CAPTURE_THE_FLAG;
     }
 
     private void gameTickUpdate() {
         if (this.state != GameState.IN_GAME) {
+            return;
+        }
+        if (this.paused) {
             return;
         }
         this.plugin.getSkillManager().fastUpdate();
@@ -535,11 +644,18 @@ public class GameManager {
     }
 
     private void finishFightStart(final String mapName) {
-        this.broadcastTitle("\u00a7c\u00a7l\u2694  FIGHT!!  \u2694", "\u00a7e" + mapName + " \u00a78\u00bb \u00a7f\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u3092\u5236\u5727\u305b\u3088\uff01", 3, 50, 12);
+        String objSub = switch (this.currentGameMode) {
+            case TEAM_DEATHMATCH -> "\u00a7e" + mapName + " \u00a78\u00bb \u00a7f\u6575\u3092\u5012\u305b\uff01";
+            case CAPTURE_THE_FLAG -> "\u00a7e" + mapName + " \u00a78\u00bb \u00a7f\u65d7\u3092\u596a\u53d6\u305b\u3088\uff01";
+            default -> "\u00a7e" + mapName + " \u00a78\u00bb \u00a7f\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u3092\u5236\u5727\u305b\u3088\uff01";
+        };
+        this.broadcastTitle("\u00a7c\u00a7l\u2694  FIGHT!!  \u2694", objSub, 3, 50, 12);
         this.broadcastSound(Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 1.0f);
         this.broadcastSound(Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 1.3f);
         this.broadcastSound(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-        this.broadcastActionBar("\u00a7c\u00a7l\u2694 FIGHT!! \u00a78\u00bb \u00a7e2\u5206\u5f8c\u306b\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u89e3\u653e\uff01");
+        if (this.currentGameMode == GameMode.BATTLE_ARENA) {
+            this.broadcastActionBar("\u00a7c\u00a7l\u2694 FIGHT!! \u00a78\u00bb \u00a7e2\u5206\u5f8c\u306b\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u89e3\u653e\uff01");
+        }
         for (UUID uid : this.getAllParticipants()) {
             Player pl = Bukkit.getPlayer((UUID)uid);
             if (pl == null || !pl.isOnline()) continue;
@@ -821,6 +937,9 @@ public class GameManager {
                     this.cancel();
                     return;
                 }
+                if (GameManager.this.paused) {
+                    return;
+                }
                 if (this.rem <= 0) {
                     this.cancel();
                     GameManager.this.endGame(fw, WinCondition.OBJECTIVE);
@@ -988,6 +1107,10 @@ public class GameManager {
         List<UUID> loseTeam;
         List<UUID> winTeam = winner == TeamColor.RED ? this.redTeam : this.blueTeam;
         List<UUID> list = loseTeam = winner == TeamColor.RED ? this.blueTeam : this.redTeam;
+        String compResult = this.plugin.getCompManager().onMatchEnd(winner);
+        if (compResult != null) {
+            Bukkit.broadcastMessage((String)compResult);
+        }
         if (winner != null) {
             for (UUID uid : winTeam) {
                 sm.addWin(uid);
@@ -1164,30 +1287,11 @@ public class GameManager {
             return;
         }
         PlayerInventory inv = p.getInventory();
-        ArrayList<ItemStack> supply = new ArrayList<ItemStack>();
-        for (int i = 0; i < 41; ++i) {
-            ItemStack it = inv.getItem(i);
-            if (it != null && it.getType() != Material.AIR) {
-                supply.add(it.clone());
-            }
-        }
-        for (int i = 0; i < 41; ++i) {
+        for (int i = 0; i < 36; ++i) {
             inv.setItem(i, slots[i] != null ? slots[i].clone() : null);
         }
-        for (ItemStack s : supply) {
-            int have = 0;
-            for (int i = 0; i < 41; ++i) {
-                ItemStack it = inv.getItem(i);
-                if (it != null && it.getType() == s.getType()) {
-                    have += it.getAmount();
-                }
-            }
-            int deficit = s.getAmount() - have;
-            if (deficit > 0) {
-                ItemStack add = s.clone();
-                add.setAmount(deficit);
-                inv.addItem(add);
-            }
+        if (slots[40] != null) {
+            inv.setItemInOffHand(slots[40].clone());
         }
     }
 
@@ -1378,7 +1482,7 @@ public class GameManager {
             case 3 -> "\u00a76\u00a7l\u2726 TRIPLE KILL \u2726";
             case 4 -> "\u00a7c\u00a7l\u26a1 QUADRA KILL";
             case 5 -> "\u00a74\u00a7l\u2605 PENTA KILL \u2605";
-            default -> "\u00a74\u00a7l\ud83d\udc80 RAMPAGE \ud83d\udc80";
+            default -> "\u00a74\u00a7l\u2620 RAMPAGE \u2620";
         };
     }
 
@@ -1585,16 +1689,16 @@ public class GameManager {
         Player carrier;
         if (!this.redFlagTaken && this.redFlagDropTime > 0L && System.currentTimeMillis() - this.redFlagDropTime > 30000L) {
             this.resetRedFlag();
-            Bukkit.broadcastMessage((String)"\u00a7c\ud83c\udff4 \u8d64\u306e\u65d7 \u00a78\u00bb \u00a77\u81ea\u52d5\u56de\u53ce\u3055\u308c\u305f");
+            Bukkit.broadcastMessage((String)"\u00a7c\u2691 \u8d64\u306e\u65d7 \u00a78\u00bb \u00a77\u81ea\u52d5\u56de\u53ce\u3055\u308c\u305f");
         }
         if (!this.blueFlagTaken && this.blueFlagDropTime > 0L && System.currentTimeMillis() - this.blueFlagDropTime > 30000L) {
             this.resetBlueFlag();
-            Bukkit.broadcastMessage((String)"\u00a79\ud83c\udff4 \u9752\u306e\u65d7 \u00a78\u00bb \u00a77\u81ea\u52d5\u56de\u53ce\u3055\u308c\u305f");
+            Bukkit.broadcastMessage((String)"\u00a79\u2691 \u9752\u306e\u65d7 \u00a78\u00bb \u00a77\u81ea\u52d5\u56de\u53ce\u3055\u308c\u305f");
         }
         this.ctfCarrierOnGround.keySet().removeIf(uuid -> !uuid.equals(this.redFlagCarrier) && !uuid.equals(this.blueFlagCarrier));
         if (this.redFlagCarrier != null && (carrier = Bukkit.getPlayer((UUID)this.redFlagCarrier)) != null && carrier.isOnline()) {
             carrier.getWorld().spawnParticle(Particle.REDSTONE, carrier.getLocation().add(0.0, 2.5, 0.0), 5, 0.3, 0.5, 0.3, (Object)new Particle.DustOptions(Color.BLUE, 1.5f));
-            carrier.sendActionBar((Component)Component.text((String)"\u00a79\ud83c\udff4 \u9752\u65d7\u6240\u6301 \u00a78\u00bb \u00a7f\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
+            carrier.sendActionBar((Component)Component.text((String)"\u00a79\u2691 \u9752\u65d7\u6240\u6301 \u00a78\u00bb \u00a7f\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
             prevOnGround = this.ctfCarrierOnGround.get(this.redFlagCarrier);
             if (prevOnGround != null && prevOnGround.booleanValue() && !carrier.isOnGround()) {
                 v = carrier.getVelocity();
@@ -1610,7 +1714,7 @@ public class GameManager {
         }
         if (this.blueFlagCarrier != null && (carrier = Bukkit.getPlayer((UUID)this.blueFlagCarrier)) != null && carrier.isOnline()) {
             carrier.getWorld().spawnParticle(Particle.REDSTONE, carrier.getLocation().add(0.0, 2.5, 0.0), 5, 0.3, 0.5, 0.3, (Object)new Particle.DustOptions(Color.RED, 1.5f));
-            carrier.sendActionBar((Component)Component.text((String)"\u00a7c\ud83c\udff4 \u8d64\u65d7\u6240\u6301 \u00a78\u00bb \u00a7f\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
+            carrier.sendActionBar((Component)Component.text((String)"\u00a7c\u2691 \u8d64\u65d7\u6240\u6301 \u00a78\u00bb \u00a7f\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01"));
             prevOnGround = this.ctfCarrierOnGround.get(this.blueFlagCarrier);
             if (prevOnGround != null && prevOnGround.booleanValue() && !carrier.isOnGround()) {
                 v = carrier.getVelocity();
@@ -1654,7 +1758,7 @@ public class GameManager {
             if (this.currentMap.getRedFlagLocation().getBlock().getType() == Material.RED_BANNER) {
                 this.currentMap.getRedFlagLocation().getBlock().setType(Material.AIR);
             }
-            p.sendMessage("\u00a7c\ud83c\udff4 \u8d64\u65d7\u596a\u53d6\uff01 \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.sendMessage("\u00a7c\u2691 \u8d64\u65d7\u596a\u53d6\uff01 \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
             p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
         }
         if (team == TeamColor.BLUE && !this.blueFlagTaken && this.currentMap.getBlueFlagLocation() != null && p.getLocation().distance(this.currentMap.getBlueFlagLocation()) < 2.0) {
@@ -1664,7 +1768,7 @@ public class GameManager {
             if (this.currentMap.getBlueFlagLocation().getBlock().getType() == Material.CYAN_BANNER) {
                 this.currentMap.getBlueFlagLocation().getBlock().setType(Material.AIR);
             }
-            p.sendMessage("\u00a79\ud83c\udff4 \u9752\u65d7\u596a\u53d6\uff01 \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.sendMessage("\u00a79\u2691 \u9752\u65d7\u596a\u53d6\uff01 \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
             p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
         }
         if (team == TeamColor.RED && this.redFlagCarrier != null && this.redFlagCarrier.equals(p.getUniqueId()) && this.currentMap.getRedReturnLocation() != null && p.getLocation().distance(this.currentMap.getRedReturnLocation()) < 3.0) {
@@ -1697,7 +1801,7 @@ public class GameManager {
                 this.redFlagDropLoc.getBlock().setType(Material.AIR);
                 this.redFlagDropLoc = null;
             }
-            p.sendMessage("\u00a7c\ud83c\udff4 \u8d64\u65d7\u56de\u53ce \u00a78\u00bb \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.sendMessage("\u00a7c\u2691 \u8d64\u65d7\u56de\u53ce \u00a78\u00bb \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
         }
         if (team == TeamColor.BLUE && !this.blueFlagTaken && this.blueFlagDropTime > 0L && this.blueFlagDropLoc != null && loc.distance(this.blueFlagDropLoc) < 2.0) {
             this.blueFlagCarrier = p.getUniqueId();
@@ -1707,7 +1811,7 @@ public class GameManager {
                 this.blueFlagDropLoc.getBlock().setType(Material.AIR);
                 this.blueFlagDropLoc = null;
             }
-            p.sendMessage("\u00a79\ud83c\udff4 \u9752\u65d7\u56de\u53ce \u00a78\u00bb \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
+            p.sendMessage("\u00a79\u2691 \u9752\u65d7\u56de\u53ce \u00a78\u00bb \u00a77\u81ea\u9663\u306b\u6301\u3061\u5e30\u308c\uff01");
         }
     }
 
@@ -1723,11 +1827,11 @@ public class GameManager {
             if (this.blueFlagCarrier != null) {
                 Player bc = Bukkit.getPlayer((UUID)this.blueFlagCarrier);
                 if (bc != null) {
-                    bc.sendMessage("\u00a79\ud83c\udff4 \u76f8\u624b\u304c\u65d7\u596a\u53d6 \u00a78\u00bb \u00a77\u9752\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u305f");
+                    bc.sendMessage("\u00a79\u2691 \u76f8\u624b\u304c\u65d7\u596a\u53d6 \u00a78\u00bb \u00a77\u9752\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u305f");
                 }
                 this.resetBlueFlag();
             }
-            Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\ud83d\udea9 \u8d64\u30c1\u30fc\u30e0\u304c\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfRedCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
+            Bukkit.broadcastMessage((String)("\u00a7c\u00a7l\u2691 \u8d64\u30c1\u30fc\u30e0\u304c\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfRedCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
         } else {
             ++this.ctfBlueCaptures;
             if (this.blueFlagCarrier != null) {
@@ -1739,11 +1843,11 @@ public class GameManager {
             if (this.redFlagCarrier != null) {
                 Player rc = Bukkit.getPlayer((UUID)this.redFlagCarrier);
                 if (rc != null) {
-                    rc.sendMessage("\u00a7c\ud83c\udff4 \u76f8\u624b\u304c\u65d7\u596a\u53d6 \u00a78\u00bb \u00a77\u8d64\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u305f");
+                    rc.sendMessage("\u00a7c\u2691 \u76f8\u624b\u304c\u65d7\u596a\u53d6 \u00a78\u00bb \u00a77\u8d64\u65d7\u304c\u30ea\u30bb\u30c3\u30c8\u3055\u308c\u305f");
                 }
                 this.resetRedFlag();
             }
-            Bukkit.broadcastMessage((String)("\u00a79\u00a7l\ud83d\udea9 \u9752\u30c1\u30fc\u30e0\u304c\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfBlueCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
+            Bukkit.broadcastMessage((String)("\u00a79\u00a7l\u2691 \u9752\u30c1\u30fc\u30e0\u304c\u65d7\u3092\u596a\u53d6\uff01 \u00a78(" + this.ctfBlueCaptures + "/" + this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3) + ")"));
         }
         int toWin = this.plugin.getConfig().getInt("capture_the_flag.captures_to_win", 3);
         if (this.ctfRedCaptures >= toWin) {
@@ -1768,7 +1872,7 @@ public class GameManager {
                 dropLoc = this.findAirAbove(p.getLocation());
                 dropLoc.getBlock().setType(Material.RED_BANNER);
                 this.redFlagDropLoc = dropLoc.clone();
-                p.sendMessage("\u00a7c\ud83c\udff4 \u8d64\u65d7\u843d\u4e0b \u00a78\u00bb \u00a77\u65d7\u304c\u6226\u5834\u306b\u843d\u3061\u3066\u3044\u308b\uff01");
+                p.sendMessage("\u00a7c\u2691 \u8d64\u65d7\u843d\u4e0b \u00a78\u00bb \u00a77\u65d7\u304c\u6226\u5834\u306b\u843d\u3061\u3066\u3044\u308b\uff01");
             }
         }
         if (carrierUuid.equals(this.blueFlagCarrier)) {
@@ -1780,7 +1884,7 @@ public class GameManager {
                 dropLoc = this.findAirAbove(p.getLocation());
                 dropLoc.getBlock().setType(Material.CYAN_BANNER);
                 this.blueFlagDropLoc = dropLoc.clone();
-                p.sendMessage("\u00a79\ud83c\udff4 \u9752\u65d7\u843d\u4e0b \u00a78\u00bb \u00a77\u65d7\u304c\u6226\u5834\u306b\u843d\u3061\u3066\u3044\u308b\uff01");
+                p.sendMessage("\u00a79\u2691 \u9752\u65d7\u843d\u4e0b \u00a78\u00bb \u00a77\u65d7\u304c\u6226\u5834\u306b\u843d\u3061\u3066\u3044\u308b\uff01");
             }
         }
     }

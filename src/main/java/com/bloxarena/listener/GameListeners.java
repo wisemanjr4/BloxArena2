@@ -497,7 +497,7 @@ implements Listener {
             if ((held = p.getInventory().getItemInMainHand()).getType() == Material.BOW || held.getType() == Material.CROSSBOW || held.getType() == Material.SHIELD || held.getType() == Material.ENDER_PEARL) {
                 return;
             }
-            if (held != null && held.getItemMeta() != null && (held.getItemMeta().getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "kit_skill"), PersistentDataType.STRING) || held.getItemMeta().getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "burst_skill"), PersistentDataType.BYTE))) {
+            if (held != null && held.getItemMeta() != null && (held.getItemMeta().getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "kit_skill"), PersistentDataType.STRING) || held.getItemMeta().getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "burst_skill"), PersistentDataType.BYTE) || held.getItemMeta().getPersistentDataContainer().has(new NamespacedKey((Plugin)this.plugin, "slayer_step"), PersistentDataType.BYTE))) {
                 this.plugin.getSkillManager().onRightClick(p, held);
             }
             e.setCancelled(true);
@@ -560,6 +560,13 @@ implements Listener {
             e.setCancelled(true);
             return;
         }
+        if (this.gm.isPaused()) {
+            e.setCancelled(true);
+            return;
+        }
+        if (e.getEntity() instanceof Player && this.plugin.getSkillManager().isSlayerMachActive((Player)e.getEntity())) {
+            e.setCancelled(true);
+        }
         Arrow arrow;
         Entity entity2;
         Player damager;
@@ -617,15 +624,13 @@ implements Listener {
             }
         }
         UUID killerUuid = null;
+        final double comboHpBefore = victim.getHealth();
         if (this.plugin.getGameManager().getPlayerKitType(victim.getUniqueId()) == KitType.MEDIC && (e.getDamager() instanceof Player || e.getDamager() instanceof Arrow) && victim.hasPotionEffect(PotionEffectType.REGENERATION)) {
             victim.removePotionEffect(PotionEffectType.REGENERATION);
             victim.sendMessage("\u00a7c\u653b\u6483\u3092\u53d7\u3051\u305f\u305f\u3081\u56de\u5fa9\u304c\u4e2d\u65ad\u3055\u308c\u307e\u3057\u305f");
         }
-        if ((botTeam = e.getDamager()) instanceof Player) {
-            attacker2 = (Player)botTeam;
-            if (victimTeam != null && this.gm.getTeamOf(attacker2) != victimTeam) {
-                this.plugin.getSkillManager().onComboHit(attacker2, victim, e.getFinalDamage());
-            }
+        if (e.getDamager() instanceof Player) {
+            this.plugin.getSkillManager().onComboHit((Player)e.getDamager(), victim, comboHpBefore - victim.getHealth());
         }
         if ((botTeam = e.getDamager()) instanceof Player) {
             damager2 = (Player)botTeam;
@@ -699,6 +704,21 @@ implements Listener {
         this.plugin.getUltimateManager().addDamageCharge(victim, e.getFinalDamage());
         if (e.getDamager() instanceof Player) {
             this.plugin.getUltimateManager().addDamageCharge((Player)e.getDamager(), e.getFinalDamage());
+            this.plugin.getSkillManager().applyClassUnderdogOnAttack((Player)e.getDamager(), victim);
+        }
+        this.plugin.getSkillManager().applyClassUnderdogOnDamaged(victim, e.getDamager() instanceof Player ? (Player)e.getDamager() : null);
+        if ((botTeam = e.getDamager()) instanceof Player) {
+            final Player fAtk = (Player)botTeam;
+            final Player fVic = victim;
+            final double fHpBefore = comboHpBefore;
+            if (victimTeam != null && this.gm.getTeamOf(fAtk) != victimTeam) {
+                Bukkit.getScheduler().runTask((Plugin)this.plugin, () -> {
+                    double actual = fHpBefore - fVic.getHealth();
+                    if (actual > 0.0) {
+                        this.plugin.getSkillManager().onComboHit(fAtk, fVic, actual);
+                    }
+                });
+            }
         }
         entity3 = e.getDamager();
         if (entity3 instanceof Player && this.gm.getPlayerKitType((damager = (Player)entity3).getUniqueId()) == KitType.VAMPIRE) {
@@ -807,6 +827,12 @@ implements Listener {
             e.setCancelled(true);
             ps.sendMessage("\u00a7c\u65d7\u3092\u6301\u3063\u3066\u3044\u308b\u9593\u306f\u30a8\u30f3\u30c0\u30fc\u30d1\u30fc\u30eb\u3092\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093\uff01");
             return;
+        }
+        if (projectile instanceof org.bukkit.entity.ThrownPotion && projectile.getShooter() instanceof Player) {
+            Player potionThrower = (Player)projectile.getShooter();
+            if (this.plugin.getSkillManager().isAlchemist(potionThrower)) {
+                this.plugin.getSkillManager().onAlchemistPotionThrow(potionThrower);
+            }
         }
         projectile = e.getEntity();
         if (!(projectile instanceof Arrow)) {
@@ -958,6 +984,22 @@ implements Listener {
         Player p = (Player)e.getEntity();
         if (p.isInvulnerable() && NEGATIVE_EFFECTS.contains(type)) {
             e.setCancelled(true);
+            return;
+        }
+        if (this.plugin.getSkillManager().hasBeetrootImmunity(p.getUniqueId()) && (type == PotionEffectType.POISON || type == PotionEffectType.WEAKNESS || type == PotionEffectType.SLOW)) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onBeetrootCombust(org.bukkit.event.entity.EntityCombustEvent e) {
+        if (!(e.getEntity() instanceof Player)) {
+            return;
+        }
+        Player p = (Player)e.getEntity();
+        if (this.plugin.getSkillManager().hasBeetrootImmunity(p.getUniqueId())) {
+            e.setCancelled(true);
+            p.setFireTicks(0);
         }
     }
 

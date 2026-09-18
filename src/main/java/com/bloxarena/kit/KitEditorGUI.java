@@ -354,6 +354,7 @@ public class KitEditorGUI {
             case REFLECTOR -> Material.LIGHT_BLUE_STAINED_GLASS;
             case GLACIES -> Material.PACKED_ICE;
             case TRINGID -> Material.END_ROD;
+            case SLAYER -> Material.LEATHER;
             case SUPERIOR_MISTRAL -> Material.DIAMOND_SWORD;
             default -> throw new IncompatibleClassChangeError();
         };

@@ -111,11 +111,11 @@ public class UltimateManager {
             case NECRO: return 130;
             case HEXER: return 120;
             case SUPPORTER: return 120;
-            case PHANTOM: return 130;
+            case PHANTOM: return 170;
             case BOMBER: return 110;
             case SCOUT: return 110;
             case BLADE: return 90;
-            case COOK: return 100;
+            case COOK: return 120;
             case FLASHER: return 100;
             case STICKER: return 100;
             case DECOY: return 100;
@@ -129,11 +129,12 @@ public class UltimateManager {
             case JESTER: return 90;
             case RESTRICTIONER: return 90;
             case TRINGID: return 150;
+            case SLAYER: return 160;
             case SUPERIOR_MISTRAL: return 90;
             case AEGIS: return 90;
             case COUNTER: return 110;
             case KREUTZ: return 110;
-            case NILGIRITAR: return 80;
+            case NILGIRITAR: return 100;
             case RELEASER: return 80;
             case BULWARK: return 80;
             case GRANG: return 70;
@@ -159,6 +160,18 @@ public class UltimateManager {
 
     public boolean canUltimate(UUID player) {
         return this.charge.getOrDefault(player, 0) >= this.requiredCharge(this.gm.getPlayerKitType(player));
+    }
+
+    public void resetTickTimes() {
+        this.lastTickTime.clear();
+        this.chargeFraction.clear();
+    }
+
+    public void refundFullCharge(Player p) {
+        KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
+        if (kit != null) {
+            this.charge.put(p.getUniqueId(), this.requiredCharge(kit));
+        }
     }
 
     public void resetAll() {
@@ -226,7 +239,7 @@ public class UltimateManager {
         if (elapsed <= 0L) {
             return;
         }
-        double rate = 2.0;
+        double rate = this.plugin.isLabEnabled("ult_fever") ? 15.0 : 2.0;
         double gained = elapsed / 1000.0 * rate + this.chargeFraction.getOrDefault(p.getUniqueId(), 0.0);
         int whole = (int)gained;
         this.chargeFraction.put(p.getUniqueId(), gained - (double)whole);
@@ -251,6 +264,13 @@ public class UltimateManager {
         KitType kit = this.gm.getPlayerKitType(p.getUniqueId());
         if (kit == null) {
             return;
+        }
+        if (kit == KitType.SLAYER) {
+            double dandy = this.skillManager.getDandy(p.getUniqueId());
+            if (dandy < 50.0) {
+                p.sendMessage("\u00a7c\u25c9 \u30c0\u30f3\u30c7\u30a3\u30dd\u30a4\u30f3\u30c8\u4e0d\u8db3 \u00a78\u00bb \u00a77\u5fc5\u8981:50 \u73fe\u5728:" + (int)dandy);
+                return;
+            }
         }
         this.charge.put(p.getUniqueId(), 0);
         this.chargeLockUntil.put(p.getUniqueId(), System.currentTimeMillis() + 5000L);
@@ -289,6 +309,7 @@ public class UltimateManager {
             case NILGIRITAR: this.nilgiritarUltimate(p); break;
             case MISTRAL: this.mistralUltimate(p); break;
             case TRINGID: this.skillManager.setTringidUltimate(p); break;
+            case SLAYER: this.skillManager.setSlayerUltimate(p); break;
             case SUPERIOR_MISTRAL: this.skillManager.setSuperiorMistralUltimate(p); break;
             case ROCKETER: this.rocketerUltimate(p); break;
             case ALCHEMIST: this.alchemistUltimate(p); break;
@@ -413,9 +434,9 @@ public class UltimateManager {
         p.sendMessage("\u00a77\u30a8\u30f3\u30c0\u30fc\u30d1\u30fc\u30eb\u3092\u88dc\u5145\u3057\u305f\uff01");
         this.skillManager.spawnDecoy(p, origin);
         this.skillManager.hideArmor(p);
-        p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100, 0, false, false));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 80, 0, false, false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 160, 1, false, false));
-        p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 160, 1, false, false));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 160, 0, false, false));
         p.getWorld().spawnParticle(Particle.PORTAL, origin.clone().add(0.0, 1.0, 0.0), 40, 0.4, 0.9, 0.4, 0.1);
         p.getWorld().playSound(origin, Sound.ENTITY_ENDERMAN_TELEPORT, 1.2f, 1.4f);
         Player aimer = this.findAimer(p, 15.0);
@@ -522,7 +543,7 @@ public class UltimateManager {
                     we.spawnParticle(Particle.LAVA, this.cur, 20, 1.5, 1.5, 1.5, 0.0);
                     for (Entity e : we.getNearbyEntities(this.cur, 4.0, 4.0, 4.0)) {
                         if (!(e instanceof Player) || !UltimateManager.this.isEnemy(p, (Player)e)) continue;
-                        ((Player)e).damage(10.0, (Entity)p);
+                        ((Player)e).damage(12.0, (Entity)p);
                     }
                     this.cancel();
                     return;
@@ -543,7 +564,7 @@ public class UltimateManager {
                     t2.setFireTicks(100);
                     Bukkit.getScheduler().runTaskLater((Plugin)UltimateManager.this.plugin, () -> {
                         if (t2.isOnline() && t2.getFireTicks() > 0) {
-                            t2.damage(12.0, (Entity)p);
+                            t2.damage(9.0, (Entity)p);
                         }
                     }, 20L);
                 }
@@ -583,7 +604,7 @@ public class UltimateManager {
                         return;
                     }
                     if (ally.isOnline()) {
-                        ally.sendActionBar(net.kyori.adventure.text.Component.text(("\u00a7c\u00a7l\ud83d\udca3 \u7206\u767a\u307e\u3067 " + this.t + "\u79d2")));
+                        ally.sendActionBar(net.kyori.adventure.text.Component.text(("\u00a7c\u00a7l\u2739 \u7206\u767a\u307e\u3067 " + this.t + "\u79d2")));
                         ally.playSound(ally.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.8f, 1.0f + (float)(5 - this.t) * 0.15f);
                     }
                     ally.getLocation().getWorld().spawnParticle(Particle.FLAME, ally.getLocation().add(0.0, 0.5, 0.0), 5, 0.3, 0.3, 0.3, 0.01);
@@ -836,7 +857,7 @@ public class UltimateManager {
     private void restrictionerUltimate(Player p) {
         Player target = this.skillManager.getTargetInSight(p, 5);
         if (target == null) {
-            p.sendMessage("\u00a7c\ud83c\udfaf \u5c04\u7a0b\u5185\u306b\u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
+            p.sendMessage("\u00a7c\u25ce \u5c04\u7a0b\u5185\u306b\u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
             return;
         }
         this.skillManager.setDeadlocked(target, 2500L);
@@ -849,7 +870,7 @@ public class UltimateManager {
     private void timekeeperUltimate(Player p) {
         Player target = this.skillManager.getTargetInSight(p, 20);
         if (target == null) {
-            p.sendMessage("\u00a7c\ud83c\udfaf \u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
+            p.sendMessage("\u00a7c\u25ce \u30bf\u30fc\u30b2\u30c3\u30c8\u306a\u3057");
             return;
         }
         final Location mark = target.getLocation().clone();
@@ -939,12 +960,12 @@ public class UltimateManager {
     }
 
     private void phantomUltimate(Player p) {
-        p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 1200, 0, false, false));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 800, 0, false, false));
         p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 1205, 254, false, false));
-        p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 1200, 1, false, false));
-        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 1200, 1, false, false));
-        p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 1200, 1, false, false));
-        p.sendMessage("\u00a77\u00a7l\u2726 \u30d5\u30a1\u30f3\u30c8\u30e0\u30da\u30a4\u30f3 \u00a78\u00bb \u00a7760\u79d2\u9593\u5f37\u5316\uff01");
+        p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 800, 0, false, false));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 800, 1, false, false));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 800, 1, false, false));
+        p.sendMessage("\u00a77\u00a7l\u2726 \u30d5\u30a1\u30f3\u30c8\u30e0\u30da\u30a4\u30f3 \u00a78\u00bb \u00a7740\u79d2\u9593\u5f37\u5316\uff01");
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PHANTOM_AMBIENT, 1.0f, 0.8f);
     }
 
@@ -976,7 +997,7 @@ public class UltimateManager {
         World w = p.getWorld();
         w.spawnParticle(Particle.EXPLOSION_HUGE, loc, 12, 4.0, 3.0, 4.0, 0.1);
         w.spawnParticle(Particle.LAVA, loc, 20, 3.0, 2.0, 3.0, 0.0);
-        this.areaExplosion(p, loc, 9.0, 9.0, 20.0, 2.5, 0.50, false);
+        this.areaExplosion(p, loc, 9.0, 9.0, 18.0, 2.5, 0.50, false);
         p.sendMessage("\u00a76\u00a7l\u2726 \u30ab\u30bf\u30b9\u30c8\u30ed\u30d5\uff01");
     }
 
@@ -1130,6 +1151,7 @@ public class UltimateManager {
             case NILGIRITAR: return "\u30d1\u30a4\u30eb\u30c9\u30e9\u30a4\u30d0\u30fc";
             case MISTRAL: return "A Stranger I Remain";
             case TRINGID: return "\u30ea\u30f3\u30ab\u30fc\u30cd\u30a4\u30b7\u30e7\u30f3\u30dd\u30fc\u30eb";
+            case SLAYER: return "\u8d85\u8d8a\uff01\u8d85\u7d76\uff01\u7a76\u6975\uff01\u30de\u30c3\u30cf\u30d1\u30f3\u30c1\u30fc\u30fc\u30fc\uff01\uff01";
             case SUPERIOR_MISTRAL: return "\u30d5\u30e9\u30f3\u30b9\u306e\u51b7\u305f\u3044\u7a81\u98a8";
             case ROCKETER: return "\u30e1\u30ac\u30df\u30b5\u30a4\u30eb";
             case ALCHEMIST: return "\u88fd\u85ac\u30d5\u30a3\u30fc\u30d0\u30fc";

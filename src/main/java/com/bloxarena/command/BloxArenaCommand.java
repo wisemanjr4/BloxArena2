@@ -20,8 +20,11 @@ package com.bloxarena.command;
 import com.bloxarena.BloxArenaPlugin;
 import com.bloxarena.command.MapWizard;
 import com.bloxarena.command.SetupWizard;
+import com.bloxarena.game.GameManager;
 import com.bloxarena.game.GameMode;
 import com.bloxarena.game.GameState;
+import com.bloxarena.game.TeamColor;
+import com.bloxarena.game.WinCondition;
 import com.bloxarena.map.MapConfig;
 import com.bloxarena.stats.PlayerStats;
 import com.bloxarena.stats.StatsManager;
@@ -980,14 +983,236 @@ TabCompleter {
                     return true;
                 }
                 if (args.length < 2) {
-                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba lab <fall_damage|puppet_target>");
-                    sender.sendMessage("\u00a77\u73fe\u5728\u306e\u72b6\u614b: \u00a7f" + String.join(", ", this.plugin.getLabFeatures()));
+                    sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba lab <status|fall_damage|puppet_target|class_underdog|ult_fever>");
+                    return true;
+                }
+                if ("status".equalsIgnoreCase(args[1])) {
+                    sender.sendMessage("\u00a76\u00a7l\u2605 \u5b9f\u9a13\u6a5f\u80fd\u4e00\u89a7");
+                    for (String f : Arrays.asList("fall_damage", "puppet_target", "class_underdog", "ult_fever")) {
+                        boolean on = this.plugin.isLabEnabled(f);
+                        sender.sendMessage((on ? "\u00a7a\u25cf " : "\u00a78\u25cb ") + "\u00a7f" + f + " \u00a78» " + (on ? "\u00a7a\u6709\u52b9" : "\u00a77\u7121\u52b9"));
+                    }
                     return true;
                 }
                 String feature = args[1].toLowerCase();
                 boolean on = this.plugin.toggleLab(feature);
                 sender.sendMessage("\u00a7a\u2726 \u5b9f\u9a13\u6a5f\u80fd \u00a7e" + feature + " \u00a77: " + (on ? "\u00a7aON" : "\u00a7cOFF"));
                 return true;
+            }
+            case "comp": {
+                com.bloxarena.comp.CompManager comp = this.plugin.getCompManager();
+                if (args.length >= 2 && "ready".equalsIgnoreCase(args[1])) {
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
+                        return true;
+                    }
+                    Player p = (Player)sender;
+                    if (comp.getTeam(p.getUniqueId()) == null) {
+                        sender.sendMessage("\u00a7c\u30b3\u30f3\u30da\u767b\u9332\u8005\u306e\u307f\u4f7f\u7528\u53ef\u80fd");
+                        return true;
+                    }
+                    boolean ready = comp.toggleReady(p.getUniqueId());
+                    sender.sendMessage(ready ? "\u00a7a\u6e96\u5099\u5b8c\u4e86\uff01" : "\u00a77\u6e96\u5099\u3092\u53d6\u308a\u6d88\u3057\u307e\u3057\u305f");
+                    Bukkit.broadcastMessage((String)("\u00a77\u6e96\u5099\u72b6\u6cc1 \u00a78\u00bb \u00a7e" + comp.readyCount() + "/" + comp.registeredOnlineCount()));
+                    if (ready && comp.registeredOnlineCount() > 0 && comp.isAllReady()) {
+                        Bukkit.broadcastMessage((String)"\u00a7a\u00a7l\u5168\u54e1\u6e96\u5099\u5b8c\u4e86\uff01");
+                    }
+                    return true;
+                }
+                if (!this.isAdmin(sender)) {
+                    return true;
+                }
+                if (args.length < 2) {
+                    sender.sendMessage("\u00a78\u00bb \u00a77/ba comp <red|blue|remove|clear|list|start|end|pause|resume|time|ready|readylist|readycheck|score|win|bo|scorereset|spec|info>");
+                    return true;
+                }
+                String csub = args[1].toLowerCase();
+                switch (csub) {
+                    case "red":
+                    case "blue": {
+                        if (args.length < 3) {
+                            sender.sendMessage("\u00a78\u00bb \u00a77/ba comp red|blue <player>");
+                            return true;
+                        }
+                        Player target = Bukkit.getPlayer(args[2]);
+                        if (target == null) {
+                            sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + args[2]);
+                            return true;
+                        }
+                        TeamColor t = "red".equals(csub) ? TeamColor.RED : TeamColor.BLUE;
+                        comp.setTeam(target, t);
+                        sender.sendMessage("\u00a7a" + target.getName() + " \u00a77\u3092" + t.getColorCode() + t.getDisplayName() + "\u00a77\u306b\u767b\u9332");
+                        return true;
+                    }
+                    case "remove": {
+                        if (args.length < 3) {
+                            sender.sendMessage("\u00a78\u00bb \u00a77/ba comp remove <player>");
+                            return true;
+                        }
+                        Player target = Bukkit.getPlayer(args[2]);
+                        if (target == null) {
+                            sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + args[2]);
+                            return true;
+                        }
+                        comp.remove(target.getUniqueId());
+                        sender.sendMessage("\u00a77\u767b\u9332\u89e3\u9664: \u00a7f" + target.getName());
+                        return true;
+                    }
+                    case "clear": {
+                        comp.clear();
+                        sender.sendMessage("\u00a77\u30b3\u30f3\u30da\u767b\u9332\u3092\u5168\u6d88\u53bb\u3057\u307e\u3057\u305f");
+                        return true;
+                    }
+                    case "list": {
+                        if (comp.view().isEmpty()) {
+                            sender.sendMessage("\u00a77\u767b\u9332\u306a\u3057");
+                            return true;
+                        }
+                        sender.sendMessage("\u00a76\u00a7l\u2605 \u30b3\u30f3\u30da\u767b\u9332");
+                        for (Map.Entry<UUID, TeamColor> e : comp.view().entrySet()) {
+                            Player pl = Bukkit.getPlayer(e.getKey());
+                            String name = pl != null ? pl.getName() : e.getKey().toString();
+                            sender.sendMessage(e.getValue().getColorCode() + e.getValue().getDisplayName() + " \u00a78\u00bb \u00a7f" + name);
+                        }
+                        return true;
+                    }
+                    case "start": {
+                        if (args.length < 3) {
+                            sender.sendMessage("\u00a78\u00bb \u00a77/ba comp start <battle_arena|tdm|ctf> [mapId]");
+                            return true;
+                        }
+                        GameMode mode = this.parseCompMode(args[2]);
+                        if (mode == null) {
+                            sender.sendMessage("\u00a7c\u30e2\u30fc\u30c9\u304c\u4e0d\u6b63: battle_arena|tdm|ctf");
+                            return true;
+                        }
+                        MapConfig map = args.length >= 4 ? this.plugin.getMapManager().getById(args[3].toLowerCase()) : this.plugin.getMapManager().selectMap(mode);
+                        String err = comp.start(mode, map);
+                        if (err != null) {
+                            sender.sendMessage(err);
+                            return true;
+                        }
+                        sender.sendMessage("\u00a7a\u2726 \u30b3\u30f3\u30da\u958b\u59cb \u00a78\u00bb \u00a7e" + mode.getDisplayName());
+                        return true;
+                    }
+                    case "end": {
+                        TeamColor winner = null;
+                        if (args.length >= 3) {
+                            String w = args[2].toLowerCase();
+                            if ("red".equals(w)) {
+                                winner = TeamColor.RED;
+                            } else if ("blue".equals(w)) {
+                                winner = TeamColor.BLUE;
+                            }
+                        }
+                        this.plugin.getGameManager().endGame(winner, WinCondition.ELIMINATION);
+                        sender.sendMessage("\u00a7c\u30b3\u30f3\u30da\u3092\u5f37\u5236\u7d42\u4e86\u3057\u307e\u3057\u305f");
+                        return true;
+                    }
+                    case "pause": {
+                        this.plugin.getGameManager().pauseGame();
+                        return true;
+                    }
+                    case "resume": {
+                        this.plugin.getGameManager().resumeGame();
+                        return true;
+                    }
+                    case "time": {
+                        sender.sendMessage(this.plugin.getGameManager().getMatchTimeInfo());
+                        return true;
+                    }
+                    case "ready": {
+                        sender.sendMessage("\u00a78\u00bb \u00a77/ba comp ready \u00a78\u00bb \u00a77\u6e96\u5099\u5b8c\u4e86\u3092\u901a\u77e5");
+                        return true;
+                    }
+                    case "readylist": {
+                        if (comp.view().isEmpty()) {
+                            sender.sendMessage("\u00a77\u767b\u9332\u306a\u3057");
+                            return true;
+                        }
+                        sender.sendMessage("\u00a76\u00a7l\u2605 \u30ec\u30c7\u30a3\u72b6\u6cc1");
+                        for (Map.Entry<UUID, TeamColor> e : comp.view().entrySet()) {
+                            Player pl = Bukkit.getPlayer(e.getKey());
+                            String name = pl != null ? pl.getName() : e.getKey().toString();
+                            boolean r = comp.isReady(e.getKey());
+                            sender.sendMessage(e.getValue().getColorCode() + e.getValue().getDisplayName() + " \u00a78\u00bb \u00a7f" + name + " " + (r ? "\u00a7a\u25cf" : "\u00a78\u25cb"));
+                        }
+                        return true;
+                    }
+                    case "readycheck": {
+                        comp.startReadyCheck();
+                        sender.sendMessage("\u00a7a\u30ec\u30c7\u30a3\u30c1\u30a7\u30c3\u30af\u3092\u958b\u59cb\u3057\u307e\u3057\u305f");
+                        return true;
+                    }
+                    case "score": {
+                        sender.sendMessage("\u00a76\u00a7l\u2605 \u30b3\u30f3\u30da\u30b9\u30b3\u30a2 \u00a78\u00bb \u00a7f" + comp.scoreLine());
+                        return true;
+                    }
+                    case "win": {
+                        if (args.length < 3) {
+                            sender.sendMessage("\u00a78\u00bb \u00a77/ba comp win <red|blue>");
+                            return true;
+                        }
+                        TeamColor w = "red".equalsIgnoreCase(args[2]) ? TeamColor.RED : ("blue".equalsIgnoreCase(args[2]) ? TeamColor.BLUE : null);
+                        if (w == null) {
+                            sender.sendMessage("\u00a7c red|blue \u3067\u6307\u5b9a");
+                            return true;
+                        }
+                        String res = comp.awardWin(w);
+                        if (res != null) {
+                            Bukkit.broadcastMessage((String)res);
+                        }
+                        return true;
+                    }
+                    case "bo": {
+                        if (args.length < 3) {
+                            sender.sendMessage("\u00a78\u00bb \u00a77/ba comp bo <1|3|5> \u00a78\u00bb \u00a77\u73fe\u5728BO" + comp.getBo());
+                            return true;
+                        }
+                        try {
+                            int bo = Integer.parseInt(args[2]);
+                            if (bo != 1 && bo != 3 && bo != 5) {
+                                throw new NumberFormatException();
+                            }
+                            comp.setBo(bo);
+                            sender.sendMessage("\u00a7aBO" + bo + "\u306b\u8a2d\u5b9a");
+                        }
+                        catch (NumberFormatException ex) {
+                            sender.sendMessage("\u00a7c 1|3|5 \u3067\u6307\u5b9a");
+                        }
+                        return true;
+                    }
+                    case "scorereset": {
+                        comp.resetScore();
+                        sender.sendMessage("\u00a77\u30b9\u30b3\u30a2\u3092\u30ea\u30bb\u30c3\u30c8\u3057\u307e\u3057\u305f");
+                        return true;
+                    }
+                    case "spec": {
+                        if (args.length < 3) {
+                            sender.sendMessage("\u00a78\u00bb \u00a77/ba comp spec <player>");
+                            return true;
+                        }
+                        Player target = Bukkit.getPlayer(args[2]);
+                        if (target == null) {
+                            sender.sendMessage("\u00a7c\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + args[2]);
+                            return true;
+                        }
+                        this.plugin.getGameManager().addSpectator(target);
+                        sender.sendMessage("\u00a77\u89b3\u6226\u306b\u79fb\u52d5: \u00a7f" + target.getName());
+                        return true;
+                    }
+                    case "info": {
+                        GameManager gm = this.plugin.getGameManager();
+                        Bukkit.broadcastMessage((String)("\u00a76\u00a7l\u2501\u2501\u2501 \u30b3\u30f3\u30da\u60c5\u5831 \u2501\u2501\u2501"));
+                        Bukkit.broadcastMessage((String)("\u00a77\u30b9\u30b3\u30a2 \u00a78\u00bb \u00a7f" + comp.scoreLine()));
+                        Bukkit.broadcastMessage((String)gm.getMatchTimeInfo());
+                        return true;
+                    }
+                    default: {
+                        sender.sendMessage("\u00a78\u00bb \u00a77/ba comp <red|blue|remove|clear|list|start|end|pause|resume|time|ready|readylist|readycheck|score|win|bo|scorereset|spec|info>");
+                        return true;
+                    }
+                }
             }
             case "oob": {
                 if (!this.isAdmin(sender)) {
@@ -1109,12 +1334,13 @@ TabCompleter {
         s.sendMessage("\u00a78\u00bb \u00a7e/ba setbluereturn <mapId> \u00a77- CTF\u9752\u6301\u3061\u5e30\u308a\u5730\u70b9\u3092\u73fe\u5728\u5730\u306b\u8a2d\u5b9a");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba test [leave] \u00a77- \u30c6\u30b9\u30c8\u5834\u306b\u5165\u308b/\u9000\u51fa");
         s.sendMessage("\u00a78\u00bb \u00a7e/ba kits \u00a77- \u30ad\u30c3\u30c8\u4e00\u89a7\u3092\u8868\u793a\uff08\u8ab0\u3067\u3082\u4f7f\u7528\u53ef\u80fd\uff09");
+        s.sendMessage("\u00a78\u00bb \u00a7e/ba comp \u00a77- \u30b3\u30f3\u30da\u904b\u55b6(red|blue|remove|clear|list|start|end|pause|resume|time)");
         s.sendMessage("\u00a76\u00a7l\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501");
     }
 
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("start", "stop", "wand", "setwaitingarea", "setlobby", "addmap", "info", "setspawnzone", "setcenter", "setmaplobby", "setmap", "setmapname", "kitedit", "kits", "bot", "stats", "mastery", "title", "top", "continuous", "setgate", "gatematl", "setoob", "spectate", "reload", "status", "admin", "upgrade", "convert", "test", "debug", "tutorial", "oob", "lab", "vote", "version");
+            return Arrays.asList("start", "stop", "wand", "setwaitingarea", "setlobby", "addmap", "info", "setspawnzone", "setcenter", "setmaplobby", "setmap", "setmapname", "kitedit", "kits", "bot", "stats", "mastery", "title", "top", "continuous", "setgate", "gatematl", "setoob", "spectate", "reload", "status", "admin", "upgrade", "convert", "test", "debug", "tutorial", "oob", "lab", "comp", "vote", "version");
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase()) {
@@ -1127,7 +1353,8 @@ TabCompleter {
                 case "tutorial" -> Arrays.asList("setup", "stop", "leave", "next");
                 case "oob" -> Collections.emptyList();
                 case "setgate" -> Arrays.asList("red", "blue");
-                case "lab" -> Arrays.asList("fall_damage", "puppet_target");
+                case "lab" -> Arrays.asList("status", "fall_damage", "puppet_target", "class_underdog", "ult_fever");
+                case "comp" -> Arrays.asList("red", "blue", "remove", "clear", "list", "start", "end", "pause", "resume", "time", "ready", "readylist", "readycheck", "score", "win", "bo", "scorereset", "spec", "info");
                 case "setoob" -> {
                     List ids = this.plugin.getMapManager().getMaps().stream().map(MapConfig::getId).collect(Collectors.toList());
                     ids.add("lobby");
@@ -1140,8 +1367,34 @@ TabCompleter {
             if ("top".equalsIgnoreCase(args[0]) && "kits".equalsIgnoreCase(args[1])) {
                 return Arrays.asList("asc", "desc");
             }
+            if ("comp".equalsIgnoreCase(args[0]) && "start".equalsIgnoreCase(args[1])) {
+                return Arrays.asList("battle_arena", "tdm", "ctf");
+            }
+            if ("comp".equalsIgnoreCase(args[0]) && "end".equalsIgnoreCase(args[1])) {
+                return Arrays.asList("red", "blue", "draw");
+            }
+            if ("comp".equalsIgnoreCase(args[0]) && "win".equalsIgnoreCase(args[1])) {
+                return Arrays.asList("red", "blue");
+            }
+            if ("comp".equalsIgnoreCase(args[0]) && "bo".equalsIgnoreCase(args[1])) {
+                return Arrays.asList("1", "3", "5");
+            }
         }
         return Collections.emptyList();
+    }
+
+    private GameMode parseCompMode(String name) {
+        String n = name.toLowerCase();
+        if ("battle_arena".equals(n) || "ba".equals(n) || "arena".equals(n)) {
+            return GameMode.BATTLE_ARENA;
+        }
+        if ("tdm".equals(n) || "team_deathmatch".equals(n)) {
+            return GameMode.TEAM_DEATHMATCH;
+        }
+        if ("ctf".equals(n) || "capture_the_flag".equals(n)) {
+            return GameMode.CAPTURE_THE_FLAG;
+        }
+        return null;
     }
 }
 

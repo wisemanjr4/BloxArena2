@@ -46,6 +46,7 @@ public class KitInfoGUI {
     private final NamespacedKey tutorialPrevKey;
     private final NamespacedKey tutorialNextKey;
     private final NamespacedKey tutorialStartKey;
+    private final NamespacedKey kitListPageKey;
 
     public KitInfoGUI(BloxArenaPlugin plugin) {
         this.plugin = plugin;
@@ -54,6 +55,7 @@ public class KitInfoGUI {
         this.tutorialPrevKey = new NamespacedKey((Plugin)plugin, "tutorial_prev");
         this.tutorialNextKey = new NamespacedKey((Plugin)plugin, "tutorial_next");
         this.tutorialStartKey = new NamespacedKey((Plugin)plugin, "tutorial_start");
+        this.kitListPageKey = new NamespacedKey((Plugin)plugin, "kit_list_page");
     }
 
     public ItemStack makeGuideItem() {
@@ -78,12 +80,41 @@ public class KitInfoGUI {
     }
 
     public void openList(Player p) {
-        Inventory inv = Bukkit.createInventory(null, (int)54, (String)LIST_TITLE);
+        this.openListPage(p, 0);
+    }
+
+    public void openListPage(Player p, int page) {
+        Inventory inv = Bukkit.createInventory(null, (int)54, (String)(LIST_TITLE + " \u00a77(" + (page + 1) + ")"));
         KitType[] kits = KitType.values();
-        for (int i = 0; i < kits.length && i < 45; ++i) {
-            if (kits[i] == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) continue;
-            if (kits[i] == KitType.TRINGID) continue;
-            inv.setItem(i, this.makeKitIcon(kits[i]));
+        ArrayList<KitType> visible = new ArrayList<KitType>();
+        for (KitType k : kits) {
+            if (k == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) continue;
+            visible.add(k);
+        }
+        int perPage = 45;
+        int start = page * perPage;
+        for (int i = 0; i < perPage && start + i < visible.size(); ++i) {
+            inv.setItem(i, this.makeKitIcon(visible.get(start + i)));
+        }
+        if (page > 0) {
+            ItemStack prev = new ItemStack(Material.ARROW);
+            ItemMeta pm = prev.getItemMeta();
+            if (pm != null) {
+                pm.setDisplayName("\u00a7e\u25c0 \u524d\u306e\u30da\u30fc\u30b8");
+                pm.getPersistentDataContainer().set(this.kitListPageKey, PersistentDataType.INTEGER, page - 1);
+                prev.setItemMeta(pm);
+            }
+            inv.setItem(45, prev);
+        }
+        if (start + perPage < visible.size()) {
+            ItemStack next = new ItemStack(Material.ARROW);
+            ItemMeta nm = next.getItemMeta();
+            if (nm != null) {
+                nm.setDisplayName("\u00a7e\u6b21\u306e\u30da\u30fc\u30b8 \u25b6");
+                nm.getPersistentDataContainer().set(this.kitListPageKey, PersistentDataType.INTEGER, page + 1);
+                next.setItemMeta(nm);
+            }
+            inv.setItem(53, next);
         }
         ItemStack tutorial = new ItemStack(Material.KNOWLEDGE_BOOK);
         ItemMeta tm = tutorial.getItemMeta();
@@ -113,7 +144,7 @@ public class KitInfoGUI {
             cm.setDisplayName("\u00a7c\u2716 \u9589\u3058\u308b");
             close.setItemMeta(cm);
         }
-        inv.setItem(53, close);
+        inv.setItem(53 - (start + perPage < visible.size() ? 1 : 0), close);
         p.openInventory(inv);
     }
 
@@ -299,12 +330,17 @@ public class KitInfoGUI {
                 return;
             }
             String title = e.getView().getTitle();
-            if (title.equals(LIST_TITLE)) {
+            if (title.startsWith(LIST_TITLE)) {
                 if (clicked.getType() == Material.BARRIER) {
                     p.closeInventory();
                     return;
                 }
                 if (clicked.getItemMeta() == null) {
+                    return;
+                }
+                Integer listPage = clicked.getItemMeta().getPersistentDataContainer().get(this.kitListPageKey, PersistentDataType.INTEGER);
+                if (listPage != null) {
+                    this.openListPage(p, listPage);
                     return;
                 }
                 if (clicked.getItemMeta().getPersistentDataContainer().has(this.tutorialKey, PersistentDataType.BYTE)) {

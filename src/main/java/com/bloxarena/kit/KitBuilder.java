@@ -485,6 +485,10 @@ public class KitBuilder {
                 KitBuilder.giveTringid(player, plugin);
                 break;
             }
+            case SLAYER: {
+                KitBuilder.giveSlayer(player, plugin);
+                break;
+            }
             case SUPERIOR_MISTRAL: {
                 KitBuilder.giveSuperiorMistral(player, plugin);
                 break;
@@ -625,7 +629,7 @@ public class KitBuilder {
         }
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BLADE, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u8987\u65a9"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BLADE, "\u00a76\u00a7l\u2691 \u30b9\u30ad\u30eb: \u8987\u65a9"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -642,18 +646,18 @@ public class KitBuilder {
         }
         player.getInventory().setItem(0, axe);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BREAKER, "\u00a7c\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u70c8\u7a81"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BREAKER, "\u00a7c\u00a7l\u2691 \u30b9\u30ad\u30eb: \u70c8\u7a81"));
         }
         KitBuilder.giveChainArmor(player);
     }
 
     private static void giveNinja(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
-        sword.addEnchantment(Enchantment.DAMAGE_ALL, 2);
+        sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().setItem(0, sword);
         player.getInventory().setItem(2, new ItemStack(Material.ENDER_PEARL, 4));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.NINJA, "\u00a72\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u96a0\u5f62"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.NINJA, "\u00a72\u00a7l\u2691 \u30b9\u30ad\u30eb: \u96a0\u5f62"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -669,7 +673,7 @@ public class KitBuilder {
         }
         player.getInventory().setItem(0, axe);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BERSERKER, "\u00a74\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u6012\u6d9b\u7206\u7815"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BERSERKER, "\u00a74\u00a7l\u2691 \u30b9\u30ad\u30eb: \u6012\u6d9b\u7206\u7815"));
         }
         KitBuilder.giveLeatherArmor(player);
     }
@@ -687,7 +691,7 @@ public class KitBuilder {
         player.getInventory().setItem(1, new ItemStack(Material.WOODEN_SWORD));
         player.getInventory().setItem(2, new ItemStack(Material.ARROW, 8));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SNIPER, "\u00a77\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u72d9\u6483\u773c"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SNIPER, "\u00a77\u00a7l\u2691 \u30b9\u30ad\u30eb: \u72d9\u6483\u773c"));
         }
         KitBuilder.giveLeatherArmor(player);
     }
@@ -704,7 +708,7 @@ sm.setLore(sl);
         player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, shield);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.COUNTER, "\u00a79\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d1\u30ea\u30a3"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.COUNTER, "\u00a79\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30d1\u30ea\u30a3"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -728,7 +732,7 @@ sm.setLore(sl);
         player.getInventory().setItem(1, bow);
         player.getInventory().setItem(2, new ItemStack(Material.ARROW, 16));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.PYRO, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u696d\u708e"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.PYRO, "\u00a76\u00a7l\u2691 \u30b9\u30ad\u30eb: \u696d\u708e"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -742,7 +746,7 @@ sm.setLore(sl);
         }
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.LANCER, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u523a\u7a81"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.LANCER, "\u00a7b\u00a7l\u2691 \u30b9\u30ad\u30eb: \u523a\u7a81"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -755,7 +759,7 @@ sm.setLore(sl);
         player.getInventory().setItem(0, axe);
         player.getInventory().setItem(2, new ItemStack(Material.ENDER_PEARL, 3));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.JESTER, "\u00a7e\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u9053\u5316\u306e\u75be\u8d70"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.JESTER, "\u00a7e\u00a7l\u2691 \u30b9\u30ad\u30eb: \u9053\u5316\u306e\u75be\u8d70"));
         }
         KitBuilder.giveLeatherArmor(player);
     }
@@ -771,7 +775,7 @@ sm.setLore(sl);
         }
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.VAMPIRE, "\u00a74\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d6\u30e9\u30c3\u30c9\u30e2\u30fc\u30c9"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.VAMPIRE, "\u00a74\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30d6\u30e9\u30c3\u30c9\u30e2\u30fc\u30c9"));
         }
         KitBuilder.giveIronArmor(player);
         player.setMaxHealth(14.0);
@@ -787,7 +791,7 @@ sm.setLore(sl);
         KitBuilder.addCanDestroy(pick);
         player.getInventory().setItem(1, pick);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BOMBER, "\u00a7c\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u5730\u96f7\u8a2d\u7f6e"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BOMBER, "\u00a7c\u00a7l\u2691 \u30b9\u30ad\u30eb: \u5730\u96f7\u8a2d\u7f6e"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -819,7 +823,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, gs);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.GRANG, "\u00a77\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30c1\u30e3\u30fc\u30b8\u7a81\u6483"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.GRANG, "\u00a77\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30c1\u30e3\u30fc\u30b8\u7a81\u6483"));
         }
         KitBuilder.giveLeatherArmor(player);
     }
@@ -830,7 +834,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(2, new ItemStack(Material.SPECTRAL_ARROW, 24));
         player.getInventory().setItem(3, new ItemStack(Material.ARROW, 8));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SCOUT, "\u00a7a\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ea\u30b3\u30f3\u30dc\u30eb\u30c8"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SCOUT, "\u00a7a\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30ea\u30b3\u30f3\u30dc\u30eb\u30c8"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -841,7 +845,7 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.KNOCKBACK, 1);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.FLASHER, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d5\u30e9\u30c3\u30b7\u30e5\u30d0\u30f3"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.FLASHER, "\u00a7b\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30d5\u30e9\u30c3\u30b7\u30e5\u30d0\u30f3"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -853,7 +857,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(1, new ItemStack(Material.STONE_SWORD));
         player.getInventory().setItem(2, new ItemStack(Material.ARROW, 12));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.MARKSMAN, "\u00a7c\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d8\u30f4\u30a3\u30fc\u30dc\u30eb\u30c8"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.MARKSMAN, "\u00a7c\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30d8\u30f4\u30a3\u30fc\u30dc\u30eb\u30c8"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -869,7 +873,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(1, new ItemStack(Material.WOODEN_SWORD));
         player.getInventory().setItem(2, new ItemStack(Material.ARROW, 16));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SUNDANCE, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ea\u30dc\u30eb\u30d3\u30f3\u30b0"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SUNDANCE, "\u00a7b\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30ea\u30dc\u30eb\u30d3\u30f3\u30b0"));
         }
         KitBuilder.giveLeatherArmor(player);
     }
@@ -879,7 +883,7 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SWAPPER, "\u00a75\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u77ac\u9593\u4ea4\u5dee"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SWAPPER, "\u00a75\u00a7l\u2691 \u30b9\u30ad\u30eb: \u77ac\u9593\u4ea4\u5dee"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -890,7 +894,7 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.STICKER, "\u00a73\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30b0\u30e9\u30c3\u30d7\u30eb"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.STICKER, "\u00a73\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30b0\u30e9\u30c3\u30d7\u30eb"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -898,7 +902,7 @@ gsm.setLore(gsl);
     private static void giveDecoy(Player player, BloxArenaPlugin plugin) {
         player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.DECOY, "\u00a78\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30c7\u30b3\u30a4\u5c55\u958b"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.DECOY, "\u00a78\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30c7\u30b3\u30a4\u30b9\u30bf\u30f3\u30b9"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -911,13 +915,15 @@ gsm.setLore(gsl);
         player.getInventory().setItem(1, new ItemStack(Material.IRON_SWORD));
         player.getInventory().setItem(2, new ItemStack(Material.ARROW, 16));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.ROCKETER, "\u00a7e\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30e1\u30ac\u30ed\u30b1\u30c3\u30c8"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.ROCKETER, "\u00a7e\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30e1\u30ac\u30ed\u30b1\u30c3\u30c8"));
         }
         KitBuilder.giveIronArmor(player);
     }
 
     private static void giveAlchemist(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
+        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        sword.addEnchantment(Enchantment.KNOCKBACK, 1);
+        player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, KitBuilder.makeSplash(PotionType.SLOWNESS));
         player.getInventory().setItem(2, KitBuilder.makeSplash(PotionType.INSTANT_DAMAGE));
         player.getInventory().setItem(3, KitBuilder.makeSplash(PotionType.POISON));
@@ -929,9 +935,9 @@ gsm.setLore(gsl);
         wp.setItemMeta((ItemMeta)wm);
         player.getInventory().setItem(4, wp);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.ALCHEMIST, "\u00a7d\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u518d\u8abf\u5408"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.ALCHEMIST, "\u00a7d\u00a7l\u2691 \u30b9\u30ad\u30eb: \u518d\u8abf\u5408"));
         }
-        KitBuilder.giveIronArmor(player);
+        KitBuilder.giveChainArmor(player);
     }
 
     private static void giveEngineer(Player player, BloxArenaPlugin plugin) {
@@ -941,7 +947,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(1, ip);
         player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.ENGINEER, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ec\u30fc\u30b6\u30fc\u30bf\u30ec\u30c3\u30c8"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.ENGINEER, "\u00a76\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30ec\u30fc\u30b6\u30fc\u30bf\u30ec\u30c3\u30c8"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -949,7 +955,7 @@ gsm.setLore(gsl);
     private static void giveRestrictioner(Player player, BloxArenaPlugin plugin) {
         player.getInventory().setItem(0, new ItemStack(Material.STONE_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.RESTRICTIONER, "\u00a78\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30c7\u30c3\u30c9\u30ed\u30c3\u30af"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.RESTRICTIONER, "\u00a78\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30c7\u30c3\u30c9\u30ed\u30c3\u30af"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -959,7 +965,7 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.DAMAGE_ALL, 2);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TRANSPORTER, "\u00a73\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ef\u30fc\u30d7\u30b2\u30fc\u30c8"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TRANSPORTER, "\u00a73\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30ef\u30fc\u30d7\u30b2\u30fc\u30c8"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -970,7 +976,7 @@ gsm.setLore(gsl);
         KitBuilder.addCanDestroy(ip2);
         player.getInventory().setItem(1, ip2);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.valueOf("MIMIC"), "\u00a75\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30b9\u30ad\u30eb\u30b3\u30d4\u30fc"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.valueOf("MIMIC"), "\u00a75\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30b9\u30ad\u30eb\u30b3\u30d4\u30fc"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -980,7 +986,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(0, sword);
         KitBuilder.giveLeatherArmor(player);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.NECRO, "\u00a78\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u5c4d\u4f53\u821e\u8e0f"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.NECRO, "\u00a78\u00a7l\u2691 \u30b9\u30ad\u30eb: \u5c4d\u4f53\u821e\u8e0f"));
         }
     }
 
@@ -988,10 +994,7 @@ gsm.setLore(gsl);
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.COOK, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u8abf\u7406"));
-        }
-        if (player.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
-            player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(26.0);
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.COOK, "\u00a76\u00a7l\u2691 \u30b9\u30ad\u30eb: \u8abf\u7406"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1001,7 +1004,7 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.KNOCKBACK, 1);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.WHIRLWIND, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u6c17\u6d41\u7832+\u65cb\u98a8\u5f3e"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.WHIRLWIND, "\u00a7f\u00a7l\u2691 \u30b9\u30ad\u30eb: \u6c17\u6d41\u7832+\u65cb\u98a8\u5f3e"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -1011,7 +1014,7 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.RELEASER, "\u00a7e\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u89e3\u653e(\u30ea\u30ea\u30fc\u30b9)"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.RELEASER, "\u00a7e\u00a7l\u2691 \u30b9\u30ad\u30eb: \u89e3\u653e(\u30ea\u30ea\u30fc\u30b9)"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1026,7 +1029,7 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().setItem(1, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.NILGIRITAR, "\u00a7f\ud83c\udf00 \u30b9\u30ad\u30eb: \u98a8\u7a74\u611f\u77e5"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.NILGIRITAR, "\u00a7f\u2731 \u30b9\u30ad\u30eb: \u98a8\u7a74\u611f\u77e5"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1037,16 +1040,38 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.MISTRAL, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u70c8\u98a8\u7832"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.MISTRAL, "\u00a7f\u00a7l\u2691 \u30b9\u30ad\u30eb: \u70c8\u98a8\u7832"));
         }
         KitBuilder.giveChainArmor(player);
+    }
+
+    private static void giveSlayer(Player player, BloxArenaPlugin plugin) {
+        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        player.getInventory().setItem(0, sword);
+        if (plugin != null) {
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SLAYER, "\u00a74\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30de\u30c3\u30cf\u30d1\u30f3\u30c1"));
+            ItemStack step = new ItemStack(Material.FEATHER);
+            ItemMeta stm = step.getItemMeta();
+            if (stm != null) {
+                stm.setDisplayName("\u00a74\u00a7l\u273f \u30b9\u30ad\u30eb: \u7304\u72ac\u306e\u30b9\u30c6\u30c3\u30d7");
+                stm.setLore(List.of("\u00a77\u00a7o\u53f3\u30af\u30ea\u30c3\u30af: \u4e00\u77ac\u900f\u660e+\u7206\u901f"));
+                stm.getPersistentDataContainer().set(new NamespacedKey((Plugin)plugin, "slayer_step"), PersistentDataType.BYTE, (byte)1);
+                step.setItemMeta(stm);
+            }
+            player.getInventory().setItem(6, step);
+        }
+        KitBuilder.giveLeatherArmor(player);
+        org.bukkit.attribute.AttributeInstance hp = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (hp != null) {
+            hp.setBaseValue(15.0);
+        }
     }
 
     private static void giveTringid(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.IRON_SWORD);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TRINGID, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30a8\u30d5\u30a7\u30af\u30c6\u30a3\u30d6\u30dd\u30fc\u30eb"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TRINGID, "\u00a7b\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30a8\u30d5\u30a7\u30af\u30c6\u30a3\u30d6\u30dd\u30fc\u30eb"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -1063,7 +1088,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(2, new ItemStack(Material.ARROW, 32));
         player.getInventory().setItem(3, new ItemStack(Material.SHIELD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SUPERIOR_MISTRAL, "\u00a76\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u7a76\u6975\u70c8\u98a8\u7832"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SUPERIOR_MISTRAL, "\u00a76\u00a7l\u2691 \u30b9\u30ad\u30eb: \u7a76\u6975\u70c8\u98a8\u7832"));
         }
         KitBuilder.giveDiamondArmor(player);
     }
@@ -1071,7 +1096,7 @@ gsm.setLore(gsl);
     private static void giveKreutz(Player player, BloxArenaPlugin plugin) {
         player.getInventory().setItem(0, new ItemStack(Material.STONE_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.KREUTZ, "\u00a75\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u9b54\u6cd5\u30ab\u30fc\u30c9"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.KREUTZ, "\u00a75\u00a7l\u2691 \u30b9\u30ad\u30eb: \u9b54\u6cd5\u30ab\u30fc\u30c9"));
         }
         KitBuilder.giveLeatherArmor(player);
     }
@@ -1084,7 +1109,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(1, new ItemStack(Material.SHIELD));
         player.getInventory().setItem(2, new ItemStack(Material.ENDER_PEARL));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TRAPPER, "\u00a73\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30c7\u30b9\u30c8\u30e9\u30c3\u30d7"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TRAPPER, "\u00a73\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30c7\u30b9\u30c8\u30e9\u30c3\u30d7"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1095,7 +1120,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(0, sword);
         player.getInventory().setItem(1, new ItemStack(Material.SHIELD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.GUARDIAN, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u9244\u58c1"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.GUARDIAN, "\u00a7f\u00a7l\u2691 \u30b9\u30ad\u30eb: \u9244\u58c1"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1103,18 +1128,20 @@ gsm.setLore(gsl);
     private static void giveMedic(Player player, BloxArenaPlugin plugin) {
         player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.MEDIC, "\u00a75\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d5\u30a3\u30fc\u30eb\u30c9\u30b1\u30a2"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.MEDIC, "\u00a75\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30d5\u30a3\u30fc\u30eb\u30c9\u30b1\u30a2"));
         }
         KitBuilder.giveIronArmor(player);
     }
 
     private static void giveSupporter(Player player, BloxArenaPlugin plugin) {
-        player.getInventory().setItem(0, new ItemStack(Material.STONE_SWORD));
+        player.getInventory().setItem(0, new ItemStack(Material.WOODEN_SWORD));
+        player.getInventory().getItem(0).addUnsafeEnchantment(Enchantment.KNOCKBACK, 1);
+        player.getInventory().getItem(0).addUnsafeEnchantment(Enchantment.DURABILITY, 3);
         player.getInventory().setItem(1, KitBuilder.makeSupportPotion(PotionEffectType.INCREASE_DAMAGE, 0, 300, Color.fromRGB((int)147, (int)38, (int)8), "\u00a7c\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u529b"));
         player.getInventory().setItem(2, KitBuilder.makeSupportPotion(PotionEffectType.REGENERATION, 1, 200, Color.fromRGB((int)255, (int)153, (int)204), "\u00a7d\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u518d\u751f"));
         player.getInventory().setItem(3, KitBuilder.makeSplash(PotionType.INSTANT_HEAL));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SUPPORTER, "\u00a7a\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u518d\u8abf\u9054"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.SUPPORTER, "\u00a7a\u00a7l\u2691 \u30b9\u30ad\u30eb: \u518d\u8abf\u9054"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1122,7 +1149,7 @@ gsm.setLore(gsl);
     private static void givePhantom(Player player, BloxArenaPlugin plugin) {
         player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.PHANTOM, "\u00a77\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u970a\u4f53\u5316"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.PHANTOM, "\u00a77\u00a7l\u2691 \u30b9\u30ad\u30eb: \u970a\u4f53\u5316"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -1132,7 +1159,7 @@ gsm.setLore(gsl);
         sword.addEnchantment(Enchantment.KNOCKBACK, 2);
         player.getInventory().setItem(0, sword);
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.ANCHOR, "\u00a79\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u78c1\u5834\u5c55\u958b"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.ANCHOR, "\u00a79\u00a7l\u2691 \u30b9\u30ad\u30eb: \u78c1\u5834\u5c55\u958b"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1141,7 +1168,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(0, new ItemStack(Material.DIAMOND_SWORD));
         player.getInventory().setItem(1, new ItemStack(Material.SHIELD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BULWARK, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30a6\u30a9\u30fc\u30eb\u5c55\u958b"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.BULWARK, "\u00a7f\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30a6\u30a9\u30fc\u30eb\u5c55\u958b"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1149,7 +1176,7 @@ gsm.setLore(gsl);
     private static void giveTimekeeper(Player player, BloxArenaPlugin plugin) {
         player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TIMEKEEPER, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ea\u30ef\u30a4\u30f3\u30c9+\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.TIMEKEEPER, "\u00a7b\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30ea\u30ef\u30a4\u30f3\u30c9+\u30af\u30ed\u30c3\u30af\u30b9\u30c8\u30c3\u30d7"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -1158,7 +1185,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(0, new ItemStack(Material.DIAMOND_SWORD));
         player.getInventory().setItem(1, new ItemStack(Material.SHIELD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.AEGIS, "\u00a7a\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.AEGIS, "\u00a7a\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1166,7 +1193,7 @@ gsm.setLore(gsl);
     private static void giveHexer(Player player, BloxArenaPlugin plugin) {
         player.getInventory().setItem(0, new ItemStack(Material.STONE_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.HEXER, "\u00a75\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u546a\u7e1b\u9818\u57df"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.HEXER, "\u00a75\u00a7l\u2691 \u30b9\u30ad\u30eb: \u546a\u7e1b\u9818\u57df"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -1175,7 +1202,7 @@ gsm.setLore(gsl);
         player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
         player.getInventory().setItem(1, new ItemStack(Material.SHIELD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.REFLECTOR, "\u00a7f\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.REFLECTOR, "\u00a7f\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30df\u30e9\u30fc\u30b9\u30bf\u30f3\u30b9"));
         }
         KitBuilder.giveIronArmor(player);
     }
@@ -1183,7 +1210,7 @@ gsm.setLore(gsl);
     private static void giveGlacies(Player player, BloxArenaPlugin plugin) {
         player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
         if (plugin != null) {
-            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.GLACIES, "\u00a7b\u00a7l\ud83c\udff7 \u30b9\u30ad\u30eb: \u30d5\u30ed\u30b9\u30c8\u30b9\u30c8\u30e9\u30a4\u30af"));
+            player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.GLACIES, "\u00a7b\u00a7l\u2691 \u30b9\u30ad\u30eb: \u30d5\u30ed\u30b9\u30c8\u30b9\u30c8\u30e9\u30a4\u30af"));
         }
         KitBuilder.giveChainArmor(player);
     }
@@ -1420,7 +1447,7 @@ gsm.setLore(gsl);
         ItemStack item = new ItemStack(BURST_MATERIAL);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("\u00a7c\u00a7l\ud83d\udca5 \u30d0\u30fc\u30b9\u30c8 \u00a77(\u53f3\u30af\u30ea\u30c3\u30af)");
+            meta.setDisplayName("\u00a7c\u00a7l\u2739 \u30d0\u30fc\u30b9\u30c8 \u00a77(\u53f3\u30af\u30ea\u30c3\u30af)");
             meta.setLore(List.of("\u00a77\u5468\u56f2\u306e\u6575\u3092\u5439\u304d\u98db\u3070\u3057\uff0b\u30c0\u30e1\u30fc\u30b8", "\u00a77\u81ea\u8eab\u306e\u72b6\u614b\u7570\u5e38\u3092\u89e3\u9664\uff0b\u77ed\u6642\u9593\u5f31\u4f53\u5316\u4ed8\u4e0e", "\u00a7c\u00a7l1\u30e9\u30a6\u30f3\u30c91\u56de\u9650\u308a \u00a77\u4f7f\u7528\u5f8c\u6d88\u6ec5"));
             meta.getPersistentDataContainer().set(new NamespacedKey((Plugin)plugin, "burst_skill"), PersistentDataType.BYTE, (byte)1);
             item.setItemMeta(meta);
@@ -1494,7 +1521,7 @@ gsm.setLore(gsl);
         if (useB) {
             p.sendMessage("\u00a72\u00a7l\u518d\u88dc\u7d66 [B] \u00a77\u30b9\u30d4\u30fc\u30c9+\u885d\u6483\u5438\u53ce");
             p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.SPEED, 1, 600, Color.fromRGB((int)124, (int)175, (int)198), "\u00a7b\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u30b9\u30d4\u30fc\u30c9")});
-            p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.ABSORPTION, 3, 500, Color.fromRGB((int)75, (int)75, (int)75), "\u00a77\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u5438\u53ce")});
+            p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.ABSORPTION, 4, 500, Color.fromRGB((int)75, (int)75, (int)75), "\u00a77\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u5438\u53ce")});
         } else {
             p.sendMessage("\u00a72\u00a7l\u518d\u88dc\u7d66 [A] \u00a77\u529b+\u518d\u751f+\u5373\u6642\u56de\u5fa9");
             p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.INCREASE_DAMAGE, 0, 300, Color.fromRGB((int)147, (int)38, (int)8), "\u00a7c\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u529b")});
@@ -1508,8 +1535,8 @@ gsm.setLore(gsl);
         ItemStack book = new ItemStack(Material.BOOK);
         ItemMeta meta = book.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("\u00a7e\u00a7l\ud83d\udcd6 " + kit.getName() + " \u89e3\u8aac");
-            meta.setLore(List.of("\u00a77" + kit.getDescription(), "", "\u00a76\u30b9\u30ad\u30eb: \u00a7f" + KitBuilder.getSkillInfo(kit), "\u00a7a\u88c5\u5099: \u00a7f" + KitBuilder.getGearSummary(kit), "", "\u00a7c\ud83d\udca5 \u30d0\u30fc\u30b9\u30c8: \u00a7f\u5468\u56f2\u7206\u767a+\u6575\u5439\u98db+\u72b6\u614b\u7570\u5e38\u89e3\u9664", "\u00a77  \u00a7o\u53f3\u30af\u30ea\u30c3\u30af / 1\u30e9\u30a6\u30f3\u30c91\u56de", "\u00a77  \u00a7o\u4f7f\u7528\u5f8c\u6d88\u6ec5", "", "\u00a77\u5de6\u30af\u30ea\u30c3\u30af\u3067\u8a73\u7d30\u3092\u898b\u308b"));
+            meta.setDisplayName("\u00a7e\u00a7l\u25a4 " + kit.getName() + " \u89e3\u8aac");
+            meta.setLore(List.of("\u00a77" + kit.getDescription(), "", "\u00a76\u30b9\u30ad\u30eb: \u00a7f" + KitBuilder.getSkillInfo(kit), "\u00a7a\u88c5\u5099: \u00a7f" + KitBuilder.getGearSummary(kit), "", "\u00a7c\u2739 \u30d0\u30fc\u30b9\u30c8: \u00a7f\u5468\u56f2\u7206\u767a+\u6575\u5439\u98db+\u72b6\u614b\u7570\u5e38\u89e3\u9664", "\u00a77  \u00a7o\u53f3\u30af\u30ea\u30c3\u30af / 1\u30e9\u30a6\u30f3\u30c91\u56de", "\u00a77  \u00a7o\u4f7f\u7528\u5f8c\u6d88\u6ec5", "", "\u00a77\u5de6\u30af\u30ea\u30c3\u30af\u3067\u8a73\u7d30\u3092\u898b\u308b"));
             book.setItemMeta(meta);
         }
         return book;
@@ -1528,19 +1555,20 @@ gsm.setLore(gsl);
             case JESTER -> "CT12秒 / 7秒間SpeedII+採掘速度上昇";
             case VAMPIRE -> "吸血ゲージで変身 / 吸収弾(CT7秒)+破壊光線(ゲージ5)";
             case BOMBER -> "地雷設置+任意起爆 / 範囲5m最大20ダメ(距離減衰) 起爆CT7秒";
-            case COOK -> "剣右クリックで食材生成 / 料理で自分にバフ 投擲で敵にデバフ";
+            case COOK -> "CT18秒 / 右クリ調理は自己バフ(+7秒) 投てきも可能";
             case SCOUT -> "リコン(30秒索敵+範囲ダメ)/パルスボルト(30秒範囲ダメ)";
             case WHIRLWIND -> "CT6秒 / 気流砲(前方押し出し)+左クリックで旋風弾(追尾打上,CT5秒)";
             case NILGIRITAR -> "CT15秒 / 周囲9mの敵を感知し風穴マーク マーク中は盾貫通+追加ダメ";
             case MISTRAL -> "CT10秒 / 前方に烈風砲 敵を大きく吹き飛ばす";
             case TRINGID -> "CT30秒 / 右クリで設置したポールの領域内の味方に選択バフを常時付与 シフト+右クリでバフ変更";
+            case SLAYER -> "CT20秒 / マッハパンチ15m突進(12ダメ) 猟犬のステップ:一瞬透明+爆速(各ダンディ10)";
             case SUPERIOR_MISTRAL -> "CT5秒 / 前方に超強力な風砲 4ダメ+弱体化+スロウ+吹き飛ばし";
             case FLASHER -> "CT10秒 / 閃光弾を投擲 着弾半径6mで盲目+鈍足+発光";
             case MARKSMAN -> "CT12秒 / ヘヴィーボルト 命中で敵のHP上限-3(最大-12)";
             case SUNDANCE -> "CT7秒 / リボルビングクロスボウ5発自動装填";
             case ROCKETER -> "スニークでメガロケット(大爆発,CT25秒) 通常で誘導ロケット(CT8秒)";
             case RELEASER -> "バースト特化 / 超解放(1ラウンド1回)+小爆発(CT制)";
-            case ALCHEMIST -> "CT22秒 / 全ポーションを使い切ると補充";
+            case ALCHEMIST -> "CT10秒 / 再調合(2秒遅延・調合中は鈍化+弱体) 投擲でCT+3秒";
             case ENGINEER -> "CT15秒 / レーザータレット設置 90秒間自動攻撃";
             case TRAPPER -> "CT8秒 / 不可視の罠を設置(最大2個) 発動で爆発+盲目+弱体化";
             case GUARDIAN -> "CT30秒 / 7秒間完全無敵+鈍足";
@@ -1568,10 +1596,11 @@ gsm.setLore(gsl);
 
     private static String getGearSummary(KitType kit) {
         return switch (kit) {
-            case BLADE, COUNTER, PYRO, BOMBER, COOK, NILGIRITAR, RELEASER, FLASHER, ROCKETER, ALCHEMIST, TRAPPER, GUARDIAN, MEDIC, SWAPPER, STICKER, ANCHOR -> "\u9244\u88c5\u5099";
-            case BREAKER -> "\u30c1\u30a7\u30fc\u30f3\u88c5\u5099";
+            case BLADE, COUNTER, PYRO, BOMBER, COOK, NILGIRITAR, RELEASER, FLASHER, ROCKETER, TRAPPER, GUARDIAN, MEDIC, SWAPPER, STICKER, ANCHOR -> "\u9244\u88c5\u5099";
+            case BREAKER, ALCHEMIST -> "\u30c1\u30a7\u30fc\u30f3\u88c5\u5099";
             case NINJA, LANCER, WHIRLWIND, MISTRAL, SCOUT, ENGINEER, RESTRICTIONER, TRANSPORTER, DECOY, PHANTOM -> "\u9396\u88c5\u5099";
             case TRINGID -> "\u30c1\u30a7\u30fc\u30f3\u88c5\u5099";
+            case SLAYER -> "\u76ae\u88c5\u5099(\u6700\u5927HP15)";
             case SUPERIOR_MISTRAL -> "\u30c0\u30a4\u30e4\u88c5\u5099\uff0b\u76fe";
             case BERSERKER, SNIPER, JESTER, MARKSMAN, SUNDANCE, KREUTZ, NECRO -> "\u76ae\u88c5\u5099";
             case GRANG -> "\u76ae\u88c5\u5099\uff0b\u76fe";

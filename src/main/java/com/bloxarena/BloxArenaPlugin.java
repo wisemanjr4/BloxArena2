@@ -13,6 +13,7 @@ package com.bloxarena;
 
 import com.bloxarena.bot.BotManager;
 import com.bloxarena.command.BloxArenaCommand;
+import com.bloxarena.comp.CompManager;
 import com.bloxarena.game.GameManager;
 import com.bloxarena.game.GameState;
 import com.bloxarena.kit.KitEditorGUI;
@@ -54,6 +55,7 @@ extends JavaPlugin {
     private UltimateManager ultimateManager;
     private TestFieldManager testFieldManager;
     private TutorialManager tutorialManager;
+    private CompManager compManager;
     private final Set<UUID> oobImmunePlayers = new HashSet<UUID>();
     private final Set<String> labFeatures = new HashSet<String>();
 
@@ -88,6 +90,7 @@ extends JavaPlugin {
         this.testFieldManager = new TestFieldManager(this);
         this.testFieldManager.reload();
         this.tutorialManager = new TutorialManager(this);
+        this.compManager = new CompManager(this);
         this.mapManager = new MapManager(this);
         this.lobbyManager = new LobbyManager(this);
         this.gameListeners = new GameListeners(this);
@@ -169,6 +172,10 @@ extends JavaPlugin {
 
     public TutorialManager getTutorialManager() {
         return this.tutorialManager;
+    }
+
+    public CompManager getCompManager() {
+        return this.compManager;
     }
 
     public Set<UUID> getOobImmunePlayers() {

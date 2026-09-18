@@ -48,6 +48,9 @@ public class ScoreboardManager {
         this.suddenDeathAnnounced = false;
         this.setupPlayerBoards(gm);
         this.logicTask = Bukkit.getScheduler().runTaskTimer((Plugin)this.plugin, () -> {
+            if (this.plugin.getGameManager().isPaused()) {
+                return;
+            }
             this.plugin.getSkillManager().update();
             this.plugin.getSkillManager().updateTurrets();
         }, 0L, 20L);
@@ -110,6 +113,10 @@ public class ScoreboardManager {
         }
     }
 
+    public void shiftStartTime(long ms) {
+        this.startTime += ms;
+    }
+
     public void stop() {
         if (this.task != null) {
             this.task.cancel();
@@ -129,6 +136,9 @@ public class ScoreboardManager {
         GameManager gm = this.plugin.getGameManager();
         if (gm.getState() != GameState.IN_GAME) {
             this.stop();
+            return;
+        }
+        if (gm.isPaused()) {
             return;
         }
         int redAlive = gm.getAliveCount(TeamColor.RED);
@@ -191,6 +201,9 @@ public class ScoreboardManager {
     }
 
     private void applyOutnumberedBuff(GameManager gm) {
+        if (this.plugin.isLabEnabled("class_underdog")) {
+            return;
+        }
         boolean respawnMode = gm.getCurrentGameMode() == GameMode.TEAM_DEATHMATCH || gm.getCurrentGameMode() == GameMode.CAPTURE_THE_FLAG;
         int red;
         int blue;

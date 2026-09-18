@@ -88,6 +88,9 @@ public class KitSelectGUI {
                 this.countdownTask.cancel();
                 return;
             }
+            if (this.gm.isPaused()) {
+                return;
+            }
             for (UUID uid : this.allPlayers) {
                 Player p;
                 if (this.confirmed.contains(uid) || (p = Bukkit.getPlayer((UUID)uid)) == null) continue;
@@ -158,10 +161,6 @@ public class KitSelectGUI {
         }
         KitType kit = this.findKit(kitName);
         if (kit == null) {
-            return;
-        }
-        if (kit == KitType.TRINGID) {
-            p.sendMessage("\u00a7c\u305d\u306e\u30ad\u30c3\u30c8\u306f\u73fe\u5728\u5229\u7528\u3067\u304d\u307e\u305b\u3093\u3002");
             return;
         }
         if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
@@ -279,7 +278,6 @@ public class KitSelectGUI {
         }
         for (KitType kit : KitType.values()) {
             if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) continue;
-            if (kit == KitType.TRINGID) continue;
             if (this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name())) continue;
             this.gm.setPlayerKit(p.getUniqueId(), kit.name());
             this.confirmed.add(p.getUniqueId());
@@ -295,7 +293,7 @@ public class KitSelectGUI {
     }
 
     private ItemStack kitItem(Player p, KitType kit) {
-        if (kit == KitType.TRINGID || kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
+        if (kit == KitType.SUPERIOR_MISTRAL && !p.getName().equals("Photon_wisemanjr")) {
             return null;
         }
         boolean taken = this.gm.isKitTakenInTeam(p.getUniqueId(), kit.name());
@@ -375,6 +373,7 @@ public class KitSelectGUI {
             case REFLECTOR -> Material.STONE;
             case GLACIES -> Material.PACKED_ICE;
             case TRINGID -> Material.END_ROD;
+            case SLAYER -> Material.LEATHER;
             case SUPERIOR_MISTRAL -> Material.NETHER_STAR;
             default -> throw new IncompatibleClassChangeError();
         };
