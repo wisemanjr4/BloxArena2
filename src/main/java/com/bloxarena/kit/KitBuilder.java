@@ -984,10 +984,10 @@ gsm.setLore(gsl);
     private static void giveNecro(Player player, BloxArenaPlugin plugin) {
         ItemStack sword = new ItemStack(Material.STONE_SWORD);
         player.getInventory().setItem(0, sword);
-        KitBuilder.giveLeatherArmor(player);
         if (plugin != null) {
             player.getInventory().setItem(7, KitBuilder.makeSkillItem(plugin, KitType.NECRO, "\u00a78\u00a7l\u2691 \u30b9\u30ad\u30eb: \u5c4d\u4f53\u821e\u8e0f"));
         }
+        KitBuilder.giveLeatherArmor(player);
     }
 
     private static void giveCook(Player player, BloxArenaPlugin plugin) {
@@ -1521,7 +1521,7 @@ gsm.setLore(gsl);
         if (useB) {
             p.sendMessage("\u00a72\u00a7l\u518d\u88dc\u7d66 [B] \u00a77\u30b9\u30d4\u30fc\u30c9+\u885d\u6483\u5438\u53ce");
             p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.SPEED, 1, 600, Color.fromRGB((int)124, (int)175, (int)198), "\u00a7b\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u30b9\u30d4\u30fc\u30c9")});
-            p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.ABSORPTION, 4, 500, Color.fromRGB((int)75, (int)75, (int)75), "\u00a77\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u5438\u53ce")});
+            p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.ABSORPTION, 2, 500, Color.fromRGB((int)75, (int)75, (int)75), "\u00a77\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u5438\u53ce")});
         } else {
             p.sendMessage("\u00a72\u00a7l\u518d\u88dc\u7d66 [A] \u00a77\u529b+\u518d\u751f+\u5373\u6642\u56de\u5fa9");
             p.getInventory().addItem(new ItemStack[]{KitBuilder.makeSupportPotion(PotionEffectType.INCREASE_DAMAGE, 0, 300, Color.fromRGB((int)147, (int)38, (int)8), "\u00a7c\u30b9\u30d7\u30e9\u30c3\u30b7\u30e5 \u00a7f\u529b")});

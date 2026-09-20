@@ -700,6 +700,9 @@ implements Listener {
             this.plugin.getSkillManager().onVampireDamageDealt(damager, e.getFinalDamage());
             this.plugin.getSkillManager().onVampireAttack(damager);
         }
+        if (this.gm.getPlayerKitType(victim.getUniqueId()) == KitType.TRAPPER) {
+            this.plugin.getSkillManager().interruptTrapPlacement(victim);
+        }
         this.plugin.getSkillManager().onVampireDamaged(victim, e.getFinalDamage());
         this.plugin.getUltimateManager().addDamageCharge(victim, e.getFinalDamage());
         if (e.getDamager() instanceof Player) {

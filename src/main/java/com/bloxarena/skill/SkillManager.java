@@ -325,7 +325,7 @@ public class SkillManager {
             long last = this.slayerDandyTick.getOrDefault(uid, 0L);
             if (now - last >= 1000L) {
                 this.slayerDandyTick.put(uid, now);
-                this.slayerDandy.put(uid, Math.min(100.0, this.slayerDandy.getOrDefault(uid, 0.0) + 1.0));
+                this.slayerDandy.put(uid, Math.min(100.0, this.slayerDandy.getOrDefault(uid, 0.0) + 2.0));
             }
             int dandy = (int)(double)this.slayerDandy.getOrDefault(uid, 0.0);
             Long cd = this.skillCooldowns.get(uid);
@@ -380,7 +380,7 @@ public class SkillManager {
                     Player t2 = (Player)e;
                     if (SkillManager.this.gm.getTeamOf(t2) == SkillManager.this.gm.getTeamOf(p) || !hit.add(t2.getUniqueId())) continue;
                     t2.setNoDamageTicks(0);
-                    t2.damage(12.0, (Entity)p);
+                    t2.damage(15.0, (Entity)p);
                     t2.setVelocity(dir.clone().multiply(2.2).setY(0.7));
                     t2.getWorld().playSound(t2.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.2f, 0.7f);
                 }
@@ -450,9 +450,9 @@ public class SkillManager {
                             if (!(e instanceof Player) || !SkillManager.this.gm.isParticipant((Player)e) || SkillManager.this.gm.isSpectator((Player)e)) continue;
                             Player t3 = (Player)e;
                             if (SkillManager.this.gm.getTeamOf(t3) == SkillManager.this.gm.getTeamOf(p) || !hit.add(t3.getUniqueId())) continue;
-                            t3.setNoDamageTicks(0);
-                            t3.damage(40.0, (Entity)p);
-                            t3.setVelocity(dir.clone().multiply(2.5).setY(0.8));
+                        t3.setNoDamageTicks(0);
+                        t3.damage(50.0, (Entity)p);
+                        t3.setVelocity(dir.clone().multiply(2.5).setY(0.8));
                         }
                     }
                 }.runTaskTimer((Plugin)SkillManager.this.plugin, 0L, 1L);
@@ -766,6 +766,12 @@ public class SkillManager {
             return;
         }
         if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.COUNTER && p.isSneaking() && (held.getType() == Material.SHIELD || p.getInventory().getItemInOffHand().getType() == Material.SHIELD)) {
+            if (this.isOnCooldown(p.getUniqueId())) {
+                Long cd = this.skillCooldowns.get(p.getUniqueId());
+                long remain = cd != null ? (cd - System.currentTimeMillis()) / 1000L : 0L;
+                p.sendMessage("\u00a7c\u26a0 \u30d1\u30ea\u30a3CT\u4e2d \u00a78\u00bb \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
+                return;
+            }
             this.counterParrySkill(p);
             return;
         }
@@ -1230,18 +1236,6 @@ public class SkillManager {
     }
 
     public void onVampireDamageDealt(Player p, double dmg) {
-        if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.VAMPIRE) {
-            return;
-        }
-        if (this.vampireBloodMode.getOrDefault(p.getUniqueId(), false).booleanValue()) {
-            return;
-        }
-        double g = this.vampireGauge.getOrDefault(p.getUniqueId(), 0.0) + dmg;
-        this.vampireGauge.put(p.getUniqueId(), Math.min(g, this.vampireGaugeMax(p.getUniqueId())));
-        this.updateVampireStage(p, g);
-    }
-
-    public void onVampireDamaged(Player p, double dmg) {
         if (this.phantomEnd.containsKey(p.getUniqueId()) && !this.phantomAttacked.contains(p.getUniqueId())) {
             this.phantomAttacked.add(p.getUniqueId());
             UUID fuid = p.getUniqueId();
@@ -1257,6 +1251,18 @@ public class SkillManager {
                 }
             }, 20L);
         }
+        if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.VAMPIRE) {
+            return;
+        }
+        if (this.vampireBloodMode.getOrDefault(p.getUniqueId(), false).booleanValue()) {
+            return;
+        }
+        double g = this.vampireGauge.getOrDefault(p.getUniqueId(), 0.0) + dmg;
+        this.vampireGauge.put(p.getUniqueId(), Math.min(g, this.vampireGaugeMax(p.getUniqueId())));
+        this.updateVampireStage(p, g);
+    }
+
+    public void onVampireDamaged(Player p, double dmg) {
         if (this.ninjaInvis.contains(p.getUniqueId())) {
             this.ninjaInvis.remove(p.getUniqueId());
             this.showArmor(p);
@@ -1480,12 +1486,12 @@ public class SkillManager {
         String ownerStr = decoy.getPersistentDataContainer().get(new NamespacedKey((Plugin)this.plugin, "decoy_owner"), PersistentDataType.STRING);
         UUID ownerUid = ownerStr != null ? UUID.fromString(ownerStr) : null;
         if (ownerUid != null && ownerUid.equals(attacker.getUniqueId())) {
+            Location loc = decoy.getLocation().clone();
             decoy.remove();
-            Location loc = decoy.getLocation();
             loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 3, 0.5, 0.5, 0.5, 0.05);
             loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.2f);
             for (Entity e : loc.getWorld().getNearbyEntities(loc, 3.5, 3.5, 3.5)) {
-                if (!(e instanceof Player) || !this.gm.isParticipant((Player)e) || this.gm.isSpectator((Player)e)) continue;
+                if (!(e instanceof Player)) continue;
                 Player t = (Player)e;
                 if (this.gm.getTeamOf(t) == this.gm.getTeamOf(attacker)) continue;
                 t.damage(4.0, (Entity)attacker);
@@ -1509,6 +1515,8 @@ public class SkillManager {
             return;
         }
         this.portalLastUsed.remove(p.getUniqueId());
+        float keepYaw = p.getLocation().getYaw();
+        float keepPitch = p.getLocation().getPitch();
         for (UUID uid : this.portalA.keySet()) {
             Location a = this.portalA.get(uid);
             Location b = this.portalB.get(uid);
@@ -1518,10 +1526,15 @@ public class SkillManager {
                     p.sendMessage("\u00a7c\u2691 \u65d7\u6240\u6301\u4e2d\u306f\u30dd\u30fc\u30bf\u30eb\u4e0d\u53ef\uff01");
                     return;
                 }
-                p.teleport(b.clone().add(0.0, 1.0, 0.0));
-                this.portalLastUsed.put(p.getUniqueId(), b.clone());
+                Location dest = b.clone().add(0.0, 1.0, 0.0);
+                dest.setYaw(keepYaw);
+                dest.setPitch(keepPitch);
+                p.teleport(dest);
+                this.portalLastUsed.put(p.getUniqueId(), dest.clone());
                 p.getWorld().playSound(b, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
-                if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.TRANSPORTER && uid.equals(p.getUniqueId())) {
+                if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.TRANSPORTER || !uid.equals(p.getUniqueId())) {
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20, 9, false, true));
+                } else {
                     p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, false, false));
                 }
                 return;
@@ -1531,10 +1544,15 @@ public class SkillManager {
                 p.sendMessage("\u00a7c\u2691 \u65d7\u6240\u6301\u4e2d\u306f\u30dd\u30fc\u30bf\u30eb\u4e0d\u53ef\uff01");
                 return;
             }
-            p.teleport(a.clone().add(0.0, 1.0, 0.0));
-            this.portalLastUsed.put(p.getUniqueId(), a.clone());
+            Location dest = a.clone().add(0.0, 1.0, 0.0);
+            dest.setYaw(keepYaw);
+            dest.setPitch(keepPitch);
+            p.teleport(dest);
+            this.portalLastUsed.put(p.getUniqueId(), dest.clone());
             p.getWorld().playSound(a, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
-            if (this.gm.getPlayerKitType(p.getUniqueId()) == KitType.TRANSPORTER && uid.equals(p.getUniqueId())) {
+            if (this.gm.getPlayerKitType(p.getUniqueId()) != KitType.TRANSPORTER || !uid.equals(p.getUniqueId())) {
+                p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20, 9, false, true));
+            } else {
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, false, false));
             }
             return;
@@ -1618,6 +1636,16 @@ public class SkillManager {
     }
 
     public void applyClassUnderdogOnAttack(Player attacker, Player victim) {
+        if (this.gm.getPlayerKitType(attacker.getUniqueId()) == KitType.WHIRLWIND && this.gm.getState() == GameState.IN_GAME && this.gm.isParticipant(attacker) && !this.gm.isSpectator(attacker)) {
+            if (victim.getLocation().distance(attacker.getLocation()) <= 5.0) {
+                String key = attacker.getUniqueId().toString() + ":aircrack";
+                if (this.classBuffReady(key, 8000L)) {
+                    victim.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 40, 0, false, true));
+                    victim.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 40, 1, false, true));
+                    attacker.sendMessage("\u00a7f\u26a1 \u6c17\u88c2\u50b7\uff01");
+                }
+            }
+        }
         KitType atkKit = this.gm.getPlayerKitType(attacker.getUniqueId());
         if (atkKit == null || !this.isClassUnderdog(attacker)) {
             return;
@@ -2094,15 +2122,15 @@ public class SkillManager {
     public void fastUpdate() {
         long nowMs = System.currentTimeMillis();
         for (Player pl : Bukkit.getOnlinePlayers()) {
-            if (!pl.isBlocking()) continue;
+            if (!pl.isBlocking() || this.gm.getPlayerKitType(pl.getUniqueId()) == null) continue;
             Long cd = this.skillCooldowns.get(pl.getUniqueId());
             if (cd != null && cd > nowMs) {
                 this.skillCooldowns.put(pl.getUniqueId(), cd + 100L);
             }
         }
         for (MineData m : this.activeMines) {
-            if (m.entity.isValid()) {
-                m.entity.getLocation().getWorld().spawnParticle(Particle.FLAME, m.entity.getLocation().add(0.0, 0.3, 0.0), 1, 0.1, 0.05, 0.1, 0.0);
+            if (m.entity.isValid() && this.tickCounter % 10 == 0) {
+                m.entity.getLocation().getWorld().spawnParticle(Particle.FLAME, m.entity.getLocation().add(0.0, 0.3, 0.0), 1, 0.0, 0.0, 0.0, 0.0);
             }
             Player owner = Bukkit.getPlayer(m.owner);
             if (owner == null || !m.entity.isValid()) continue;
@@ -2118,7 +2146,9 @@ public class SkillManager {
             }
         }
         block0: for (TrapData t : this.activeTraps) {
-            t.loc.getWorld().spawnParticle(Particle.ENCHANTMENT_TABLE, t.loc.clone().add(0.0, 0.3, 0.0), 2, 0.15, 0.05, 0.15, 0.0);
+            if (this.tickCounter % 10 == 0) {
+                t.loc.getWorld().spawnParticle(Particle.ENCHANTMENT_TABLE, t.loc.clone().add(0.0, 0.3, 0.0), 1, 0.1, 0.05, 0.1, 0.0);
+            }
             if (System.currentTimeMillis() - t.placeTime < 1000L) continue;
             TeamColor ownerTeam = this.gm.getTeam(t.owner);
             double triggerRange = this.hasTrapperUltimate(t.owner) ? 4.2 : 3.0;
@@ -2142,7 +2172,9 @@ public class SkillManager {
         }
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (!this.gm.isParticipant(p) || this.gm.isSpectator(p) || !this.plugin.getUltimateManager().canUltimate(p.getUniqueId())) continue;
-            p.getWorld().spawnParticle(Particle.CRIT_MAGIC, p.getLocation().add(0.0, 0.5, 0.0), 1, 0.3, 0.6, 0.3, 0.02);
+            if (this.tickCounter % 2 == 0) {
+                p.getWorld().spawnParticle(Particle.CRIT_MAGIC, p.getLocation().add(0.0, 0.5, 0.0), 1, 0.1, 0.3, 0.1, 0.0);
+            }
         }
     }
 
@@ -3138,7 +3170,7 @@ public class SkillManager {
             this.activeMines.remove(existing);
         }
         this.setCooldown(p.getUniqueId(), 2000L);
-        loc.getWorld().spawnParticle(Particle.FLAME, loc.clone().add(0.0, 0.1, 0.0), 3, 0.1, 0.1, 0.1, 0.01);
+        loc.getWorld().spawnParticle(Particle.FLAME, loc.clone().add(0.0, 0.1, 0.0), 5, 0.15, 0.1, 0.15, 0.01);
         loc.getWorld().playSound(loc, Sound.BLOCK_STONE_PLACE, 0.3f, 0.5f);
         ArmorStand as = (ArmorStand)loc.getWorld().spawn(loc, ArmorStand.class, a -> {
             a.setInvisible(true);
@@ -3423,8 +3455,33 @@ public class SkillManager {
             this.activeTraps.remove(oldest);
         }
         Location loc = p.getLocation().clone();
-        this.activeTraps.add(new TrapData(p.getUniqueId(), loc));
-        p.sendMessage("\u00a73\u00a7l\u7f60\u8a2d\u7f6e \u00a78\u00bb \u00a7f\u6700\u5927" + maxTraps + "\u500b");
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20, 2, false, false));
+        p.setShieldBlockingDelay(1000000);
+        p.sendMessage("\u00a73\u8a2d\u7f6e\u4e2d...");
+        final UUID ownerUid = p.getUniqueId();
+        Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> {
+            if (this.trapInterruptedSet.contains(ownerUid)) {
+                this.trapInterruptedSet.remove(ownerUid);
+                Player pl = Bukkit.getPlayer(ownerUid);
+                if (pl != null) pl.setShieldBlockingDelay(4);
+                return;
+            }
+            Player pl = Bukkit.getPlayer(ownerUid);
+            if (pl == null || !pl.isOnline()) return;
+            pl.setShieldBlockingDelay(4);
+            this.activeTraps.add(new TrapData(pl.getUniqueId(), loc.clone()));
+            pl.sendMessage("\u00a73\u00a7l\u7f60\u8a2d\u7f6e \u00a78\u00bb \u00a7f\u6700\u5927" + maxTraps + "\u500b");
+        }, 20L);
+    }
+
+    private final Set<UUID> trapInterruptedSet = new HashSet<UUID>();
+
+    public void interruptTrapPlacement(Player p) {
+        if (!this.trapInterruptedSet.contains(p.getUniqueId())) {
+            this.trapInterruptedSet.add(p.getUniqueId());
+            Bukkit.getScheduler().runTaskLater((Plugin)this.plugin, () -> this.trapInterruptedSet.remove(p.getUniqueId()), 25L);
+            p.sendMessage("\u00a7c\u26a0 \u8a2d\u7f6e\u304c\u4e2d\u65ad\u3055\u308c\u305f\uff01");
+        }
     }
 
     private void triggerTrap(TrapData t, Player victim) {
@@ -3506,13 +3563,7 @@ public class SkillManager {
             return;
         }
         Location mid = p.getLocation().add(target.getLocation()).multiply(0.5);
-        Location safe = this.findSafeGround(mid);
-        if (safe == null) {
-            p.sendMessage("\u00a7c\u26a0 \u62d8\u675f\u5730\u70b9\u304c\u5948\u843d\u4e0a\u306e\u305f\u3081\u4f7f\u7528\u3067\u304d\u307e\u305b\u3093");
-            return;
-        }
         this.setCooldown(p.getUniqueId(), 15000L);
-        mid = safe;
         p.teleport(mid);
         target.teleport(mid);
         Vector back = p.getLocation().getDirection().setY(0);
@@ -3869,6 +3920,7 @@ public class SkillManager {
                     this.cancel();
                     return;
                 }
+                loc.getWorld().spawnParticle(Particle.END_ROD, loc.clone().add(0.0, 1.5, 0.0), 3, 0.2, 0.8, 0.2, 0.0);
                 for (Player t : loc.getWorld().getPlayers()) {
                     if (!(t.getLocation().distance(loc) <= 8.0) || !SkillManager.this.gm.isParticipant(t) || SkillManager.this.gm.isSpectator(t) || SkillManager.this.gm.getTeamOf(t) == SkillManager.this.gm.getTeam(uid)) continue;
                     t.damage(1.5, (Entity)Bukkit.getPlayer((UUID)uid));
@@ -3888,6 +3940,7 @@ public class SkillManager {
         final Vector dir = p.getLocation().getDirection().normalize();
         final Location start = p.getEyeLocation().add(dir.clone().multiply(2));
         p.sendMessage("\u00a7f\u00a7l\u6c17\u6d41\u7832\uff01");
+        final UUID wuid = p.getUniqueId();
         new BukkitRunnable(){
             int ticks = 0;
             Location cur = start.clone();
@@ -3909,7 +3962,15 @@ public class SkillManager {
                         pr.setVelocity(pr.getVelocity().add(push));
                         continue;
                     }
-                    if (!(e instanceof LivingEntity) || !(le = (LivingEntity)e).isValid() || e instanceof Player && (!SkillManager.this.gm.isParticipant(tp = (Player)e) || SkillManager.this.gm.isSpectator(tp))) continue;
+                    if (!(e instanceof Player)) continue;
+                    Player ally = (Player)e;
+                    if (SkillManager.this.gm.isParticipant(ally) && !SkillManager.this.gm.isSpectator(ally) && SkillManager.this.gm.getTeamOf(ally) == SkillManager.this.gm.getTeamOf(Bukkit.getPlayer(wuid))) {
+                        if (this.ticks % 10 == 0) {
+                            ally.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20, 0, false, true));
+                        }
+                        continue;
+                    }
+                    if (!(e instanceof LivingEntity) || !(le = (LivingEntity)e).isValid()) continue;
                     push = dir.clone().multiply(0.22);
                     push.setY(Math.min(push.getY(), 0.1));
                     if (this.ticks % 2 != 0) continue;
@@ -4037,6 +4098,7 @@ public class SkillManager {
         this.setCooldown(p.getUniqueId(), 5000L);
         final Snowball ball = (Snowball)p.launchProjectile(Snowball.class);
         ball.setVelocity(p.getLocation().getDirection().normalize().multiply(0.8));
+        ball.setGravity(false);
         ball.setCustomName("whirlwindBall");
         ball.setGlowing(true);
         p.sendMessage("\u00a7f\u00a7l\u65cb\u98a8\u5f3e\uff01");
@@ -4046,10 +4108,20 @@ public class SkillManager {
             public void run() {
                 Vector toTarget;
                 if (this.ticks++ > 60 || !ball.isValid()) {
+                    if (ball.isValid()) {
+                        this.explode(ball.getLocation(), p);
+                        ball.remove();
+                    }
                     this.cancel();
                     return;
                 }
-                ball.getWorld().spawnParticle(Particle.SWEEP_ATTACK, ball.getLocation(), 5, 0.5, 0.5, 0.5, 0.0);
+                ball.getWorld().spawnParticle(Particle.SWEEP_ATTACK, ball.getLocation(), 3, 0.5, 0.5, 0.5, 0.0);
+                if (ball.isOnGround() || ball.getLocation().getBlock().getType().isSolid()) {
+                    this.explode(ball.getLocation(), p);
+                    ball.remove();
+                    this.cancel();
+                    return;
+                }
                 Player nearest = null;
                 double nd = 36.0;
                 for (Player t : ball.getWorld().getPlayers()) {
@@ -4060,16 +4132,27 @@ public class SkillManager {
                 }
                 if (nearest != null) {
                     nearest.setVelocity(new Vector(0.0, 1.5, 0.0));
-                    nearest.damage(4.0, (Entity)p);
-                    nearest.sendMessage("\u00a7f\u00a7l\u65cb\u98a8\u5f3e\u304c\u76f4\u6483\uff01");
+                    nearest.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, nearest.getLocation(), 2, 0.3, 0.3, 0.3, 0.0);
+                    nearest.getWorld().playSound(nearest.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.2f);
                     p.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, 60, 2, false, false));
                     ball.remove();
                     this.cancel();
                     return;
                 }
-                Vector vector = toTarget = nearest != null ? nearest.getLocation().toVector().subtract(ball.getLocation().toVector()).normalize().multiply(0.3) : new Vector();
+                Vector vector = toTarget = nearest != null ? nearest.getLocation().toVector().subtract(ball.getLocation().toVector()).normalize().multiply(0.27) : new Vector();
                 if (toTarget.lengthSquared() > 0.0) {
                     ball.setVelocity(ball.getVelocity().add(toTarget).normalize().multiply(0.8));
+                }
+            }
+
+            private void explode(Location loc, Player owner) {
+                loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 3, 0.5, 0.5, 0.5, 0.05);
+                loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.2f);
+                for (Entity e : loc.getWorld().getNearbyEntities(loc, 2.0, 2.0, 2.0)) {
+                    if (!(e instanceof Player) || !SkillManager.this.gm.isParticipant((Player)e) || SkillManager.this.gm.isSpectator((Player)e)) continue;
+                    Player t = (Player)e;
+                    if (SkillManager.this.gm.getTeamOf(t) == SkillManager.this.gm.getTeamOf(owner)) continue;
+                    t.setVelocity(t.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(0.9).setY(0.9));
                 }
             }
         }.runTaskTimer((Plugin)this.plugin, 0L, 2L);
