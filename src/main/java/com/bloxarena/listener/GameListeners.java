@@ -733,9 +733,6 @@ implements Listener {
         }
         if ((entity2 = e.getDamager()) instanceof Arrow && (arrow = (Arrow)entity2).getShooter() instanceof Player) {
             Player shooter = (Player)arrow.getShooter();
-            if (this.plugin.getSkillManager().isSundanceRevolving(shooter.getUniqueId()) && !this.plugin.getSkillManager().hasSundanceUltimate(shooter.getUniqueId())) {
-                e.setDamage(e.getDamage() * 0.75);
-            }
             if (this.plugin.getSkillManager().onSniperHit(shooter, victim)) {
                 this.lastDamager.put(victim.getUniqueId(), shooter.getUniqueId());
                 e.setCancelled(true);
@@ -834,6 +831,12 @@ implements Listener {
         if (projectile instanceof org.bukkit.entity.ThrownPotion && projectile.getShooter() instanceof Player) {
             Player potionThrower = (Player)projectile.getShooter();
             if (this.plugin.getSkillManager().isAlchemist(potionThrower)) {
+                if (this.plugin.getSkillManager().hasUniversalCharge(potionThrower)) {
+                    this.plugin.getSkillManager().consumeUniversalCharge(potionThrower);
+                    projectile.setGravity(false);
+                    projectile.setVelocity(projectile.getVelocity().multiply(1.15));
+                    potionThrower.sendMessage("\u00a7b\u00a7l\u2726 \u30dd\u30fc\u30b7\u30e7\u30f3\u9060\u6295\uff01");
+                }
                 this.plugin.getSkillManager().onAlchemistPotionThrow(potionThrower);
             }
         }

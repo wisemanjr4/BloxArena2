@@ -264,7 +264,9 @@ public class SkillManager {
         if (pole == null || !pole.entity.isValid()) {
             return false;
         }
-        Location loc = pole.entity.getLocation().clone();
+        Location poleLoc = pole.entity.getLocation().clone();
+        Location loc = poleLoc.clone().add(0.0, 1.0, 0.0);
+        loc.setY(poleLoc.getWorld().getHighestBlockYAt(poleLoc) + 1.0);
         double fullHp = pole.originalMaxHp;
         pole.destroy(true);
         p.teleport(loc);
@@ -2171,6 +2173,12 @@ public class SkillManager {
             }
         }
         for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!this.gm.isParticipant(p) || this.gm.isSpectator(p)) continue;
+            if (this.isClassUnderdog(p) && this.gm.getPlayerKitType(p.getUniqueId()) != null && this.gm.getPlayerKitType(p.getUniqueId()).getRole() == KitRole.DUELIST) {
+                p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 160, 0, false, true));
+            }
+        }
+        for (Player p : Bukkit.getOnlinePlayers()) {
             if (!this.gm.isParticipant(p) || this.gm.isSpectator(p) || !this.plugin.getUltimateManager().canUltimate(p.getUniqueId())) continue;
             if (this.tickCounter % 2 == 0) {
                 p.getWorld().spawnParticle(Particle.CRIT_MAGIC, p.getLocation().add(0.0, 0.5, 0.0), 1, 0.1, 0.3, 0.1, 0.0);
@@ -2914,6 +2922,21 @@ public class SkillManager {
         List<String> castHand = this.kreutzHand.get(p.getUniqueId());
         String card = castHand != null && !castHand.isEmpty() ? castHand.get(0) : null;
         if (card == null) {
+            if (this.getKreutzMana(p.getUniqueId()) >= 15.0 && this.activeTraps.stream().anyMatch(t -> t.owner.equals(p.getUniqueId()) && t.isTeleport && !t.triggered)) {
+                this.addKreutzMana(p.getUniqueId(), -15.0);
+                TrapData lastTp = this.activeTraps.stream().filter(t -> t.owner.equals(p.getUniqueId()) && t.isTeleport && !t.triggered).reduce((first, second) -> second).orElse(null);
+                if (lastTp != null) {
+                    Location tl2 = lastTp.loc.clone().add(0.0, 1.0, 0.0);
+                    tl2.setYaw(p.getLocation().getYaw());
+                    tl2.setPitch(p.getLocation().getPitch());
+                    p.teleport(tl2);
+                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+                    p.getWorld().spawnParticle(Particle.PORTAL, p.getLocation(), 20, 0.5, 0.5, 0.5, 0.1);
+                    lastTp.triggered = true;
+                    p.sendMessage("\u00a75\u00a7l\u30c6\u30ec\u30dd\u30fc\u30c8\u30c8\u30e9\u30c3\u30d7\u8ee2\u9001\uff01");
+                }
+                return;
+            }
             p.sendMessage("\u00a75\u00a7l\u2726 \u30de\u30ca\u30c1\u30e3\u30fc\u30b8\u306f\u5de6\u30af\u30ea\u30c3\u30af\uff01\u00a77\u30ab\u30fc\u30c9\u306f\u3057\u3083\u304c\u307f+\u53f3\u30af\u30ea\u30c3\u30af\u3067\u30c9\u30ed\u30fc");
             return;
         }
@@ -2982,7 +3005,7 @@ public class SkillManager {
                             for (Entity e2 : b.getLocation().getWorld().getNearbyEntities(b.getLocation(), 2.0, 1.5, 2.0)) {
                                 Player t2;
                                 if (!(e2 instanceof Player) || !SkillManager.this.gm.isParticipant(t2 = (Player)e2) || SkillManager.this.gm.isSpectator(t2) || SkillManager.this.gm.getTeamOf(t2) == SkillManager.this.gm.getTeamOf(p)) continue;
-                                t2.damage(4.0, (Entity)p);
+                                t2.damage(6.0, (Entity)p);
                                 t2.setFireTicks(40);
                             }
                             b.remove();
@@ -3062,7 +3085,7 @@ public class SkillManager {
                 for (Entity e2 : cl.getWorld().getNearbyEntities(cl, 5.0, 2.0, 5.0)) {
                     Player t2;
                     if (!(e2 instanceof Player) || !this.gm.isParticipant(t2 = (Player)e2) || this.gm.isSpectator(t2) || this.gm.getTeamOf(t2) == this.gm.getTeamOf(p)) continue;
-                    t2.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 120, 2, false, true));
+                    t2.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 120, 1, false, true));
                 }
                 cl.getWorld().spawnParticle(Particle.SPELL_MOB, cl, 40, 5.0, 1.0, 5.0, 0.02);
                 cl.getWorld().playSound(cl, Sound.ENTITY_SPIDER_DEATH, 0.5f, 0.5f);
@@ -3117,8 +3140,16 @@ public class SkillManager {
                 break;
             }
             case "\u30d5\u30a1\u30f3\u30b0": {
+                Player nearestEnemy = null;
+                double nd = 25.0;
+                for (Player t2 : p.getWorld().getPlayers()) {
+                    double d;
+                    if (!this.gm.isParticipant(t2) || this.gm.isSpectator(t2) || this.gm.getTeamOf(t2) == this.gm.getTeamOf(p) || !((d = t2.getLocation().distanceSquared(p.getLocation())) < nd)) continue;
+                    nd = d;
+                    nearestEnemy = t2;
+                }
+                final Vector dir = nearestEnemy != null ? nearestEnemy.getLocation().toVector().subtract(p.getLocation().toVector()).setY(0).normalize() : p.getLocation().getDirection().setY(0).normalize();
                 final Location start = p.getEyeLocation();
-                final Vector dir = p.getLocation().getDirection().normalize();
                 new BukkitRunnable(){
                     int t = 0;
 
@@ -3383,7 +3414,7 @@ public class SkillManager {
                 for (Entity e2 : rocket.getLocation().getWorld().getNearbyEntities(rocket.getLocation(), 3.0, 2.0, 3.0)) {
                     Player t;
                     if (!(e2 instanceof Player) || !this.gm.isParticipant(t = (Player)e2) || this.gm.isSpectator(t) || this.gm.getTeamOf(t) == this.gm.getTeamOf(p)) continue;
-                    t.damage((double)(power * 5.0f), (Entity)p);
+                    t.damage((double)Math.min(8.0f, power * 5.0f), (Entity)p);
                     t.setVelocity(t.getLocation().toVector().subtract(rocket.getLocation().toVector()).normalize().multiply(1.5).setY(0.3));
                 }
                 rocket.remove();
@@ -4194,13 +4225,7 @@ public class SkillManager {
     }
 
     private void releaseSkill(Player p) {
-        if (this.isOnCooldown(p.getUniqueId())) {
-            Long cd = this.skillCooldowns.get(p.getUniqueId());
-            long remain = cd != null ? (cd - System.currentTimeMillis()) / 1000L : 0L;
-            p.sendMessage("\u00a7c\u26a0 \u30ea\u30ea\u30fc\u30b9CT\u4e2d \u00a78\u00bb \u00a77\u6b8b\u308a\u00a7f" + remain + "\u00a77\u79d2");
-            return;
-        }
-        this.setCooldown(p.getUniqueId(), 8000L);
+        this.setCooldown(p.getUniqueId(), 10000L);
         Location loc = p.getLocation();
         World w = p.getWorld();
         w.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.7f);
@@ -4704,7 +4729,7 @@ public class SkillManager {
             p.sendMessage("\u00a7c\u25c8 \u98df\u6750\u306a\u3057 \u00a78\u00bb \u00a77\u5263\u53f3\u30af\u30ea\u30c3\u30af\u3067\u5165\u624b");
             return;
         }
-        this.setCooldown(p.getUniqueId(), 1500L);
+        this.setCooldown(p.getUniqueId(), 4000L);
         int count = foods.size();
         for (Material mat : foods) {
             Snowball ball = (Snowball)p.launchProjectile(Snowball.class);
@@ -5173,25 +5198,23 @@ public class SkillManager {
         if (this.isOnCooldown(p.getUniqueId())) {
             return;
         }
-        Player ally = null;
-        double best = 225.0;
+        this.setCooldown(p.getUniqueId(), 22000L);
+        long endTime = System.currentTimeMillis() + 8000L;
+        int linked = 0;
+        double totalSat = 0.0;
         for (Entity e : p.getNearbyEntities(15.0, 15.0, 15.0)) {
             Player t;
             if (!(e instanceof Player) || !this.gm.isParticipant(t = (Player)e) || t == p || this.gm.isSpectator(t) || this.gm.getTeamOf(t) != this.gm.getTeamOf(p)) continue;
-            double d = p.getLocation().distanceSquared(t.getLocation());
-            if (d > 225.0 || d >= best) continue;
-            best = d;
-            ally = t;
+            this.activeBonds.put(t.getUniqueId(), new Bond(p.getUniqueId(), endTime));
+            t.sendMessage("\u00a7f\u00a7l\u221e " + p.getName() + " \u00a77\u304c\u3042\u306a\u305f\u306b\u30dc\u30f3\u30c9\u3092\u7d50\u3093\u3060\uff088\u79d2\u9593\uff09");
+            ++linked;
+            totalSat += 6.0;
         }
-        if (ally == null) {
-            p.sendMessage("\u00a7c\u221e \u30dc\u30f3\u30c9\u53ef\u80fd\u306a\u5473\u65b9\u306a\u3057 \u00a78\u00bb \u00a77\u534a\u5f8415m\u5185");
-            return;
+        this.activeBonds.put(p.getUniqueId(), new Bond(p.getUniqueId(), endTime));
+        if (linked > 0) {
+            p.setSaturation(Math.min(20.0f, p.getSaturation() + (float)totalSat));
         }
-        this.setCooldown(p.getUniqueId(), 22000L);
-        long endTime = System.currentTimeMillis() + 8000L;
-        this.activeBonds.put(ally.getUniqueId(), new Bond(p.getUniqueId(), endTime));
-        p.sendMessage("\u00a7f\u00a7l\u221e \u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9 \u00a78\u00bb \u00a7f" + ally.getName() + " \u00a77\u306e\u88ab\u30c0\u30e1\u30fc\u30b850%\u3092\u80a9\u4ee3\u308f\u308a\uff088\u79d2\u9593\uff09");
-        ally.sendMessage("\u00a7f\u00a7l\u221e " + p.getName() + " \u00a77\u304c\u3042\u306a\u305f\u306b\u30dc\u30f3\u30c9\u3092\u7d50\u3093\u3060\uff088\u79d2\u9593\uff09");
+        p.sendMessage("\u00a7f\u00a7l\u221e \u30ac\u30fc\u30c7\u30a3\u30a2\u30f3\u30dc\u30f3\u30c9 \u00a78\u00bb \u00a7f" + linked + "\u4eba\u306e\u5473\u65b9\u3068\u30dc\u30f3\u30c9\uff088\u79d2\u9593\uff09");
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 1.5f);
     }
 
