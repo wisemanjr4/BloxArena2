@@ -276,6 +276,35 @@ public class GameManager {
         gui.openForAll(this.redTeam, this.blueTeam, timeoutSeconds);
     }
 
+    private void broadcastKitLineup() {
+        StatsManager sm = this.plugin.getStatsManager();
+        Bukkit.broadcastMessage("\u00a76\u00a7l\u2605 \u30ad\u30c3\u30c8\u7de8\u6210 \u00a78\u00bb");
+        for (TeamColor team : new TeamColor[]{TeamColor.RED, TeamColor.BLUE}) {
+            List<UUID> roster = team == TeamColor.RED ? this.redTeam : this.blueTeam;
+            for (UUID uid : roster) {
+                Player p = Bukkit.getPlayer((UUID)uid);
+                if (p == null) continue;
+                KitType kit = this.getPlayerKitType(uid);
+                if (kit == null) continue;
+                int lv = sm.getKitMasteryLevel(uid, kit.name());
+                String rank = sm.getKitMasteryRankName(lv);
+                String rankColor = sm.getKitMasteryColor(lv);
+                String roleColor = kit.getRole().getColorCode();
+                String titlePrefix = "";
+                if (this.plugin.getTitleManager() != null) {
+                    String sel = this.plugin.getTitleManager().selectedDisplay(uid);
+                    if (sel != null) {
+                        titlePrefix = "\u00a77[" + sel + "\u00a77] ";
+                    }
+                }
+                Bukkit.broadcastMessage(team.getColorCode() + "[" + (team == TeamColor.RED ? "RED" : "BLUE") + "] \u00a7f"
+                    + titlePrefix + p.getName() + " \u00a78>> "
+                    + roleColor + kit.getName() + " \u00a77/ " + roleColor + kit.getRole().getName()
+                    + " \u00a77\u719f\u7df4\u5ea6\u00a78: " + rankColor + "Lv." + lv + " " + rank);
+            }
+        }
+    }
+
     public void onKitSelectDone() {
         this.state = GameState.IN_GAME;
         this.inGameStartTime = System.currentTimeMillis();
@@ -295,6 +324,7 @@ public class GameManager {
             if (p == null) continue;
             this.plugin.getSkillManager().refreshBurst(p);
         }
+        this.broadcastKitLineup();
         this.startCountdownBeforeBarrierRemoval();
         if (this.currentGameMode == GameMode.TEAM_DEATHMATCH) {
             this.tdmKillsRed = 0;

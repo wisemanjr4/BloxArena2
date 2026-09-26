@@ -28,6 +28,8 @@ import com.bloxarena.game.WinCondition;
 import com.bloxarena.map.MapConfig;
 import com.bloxarena.stats.PlayerStats;
 import com.bloxarena.stats.StatsManager;
+import com.bloxarena.title.BATitle;
+import com.bloxarena.title.BATitleManager;
 import com.bloxarena.util.SelectionTool;
 import java.io.File;
 import java.lang.invoke.CallSite;
@@ -477,31 +479,92 @@ TabCompleter {
                     return true;
                 }
                 Player p = (Player)sender;
-                StatsManager sm = this.plugin.getStatsManager();
-                PlayerStats s = sm.getStats(p.getUniqueId());
-                String highest = sm.getHighestMasteryRank(p.getUniqueId());
-                if (highest == null) {
-                    sender.sendMessage("\u00a77\u307e\u3060\u30de\u30b9\u30bf\u30ea\u30fc\u696d\u3092\u53d6\u5f97\u3057\u3066\u3044\u307e\u305b\u3093\u3002");
-                    return true;
+                BATitleManager tm = this.plugin.getTitleManager();
+                if (args.length == 1) {
+                    tm.getGui().open(p, 0);
+                    break;
                 }
-                Map<String, Integer> levels = sm.getKitMasteryLevels(p.getUniqueId());
-                List<Map.Entry<String, Integer>> sorted = levels.entrySet().stream().sorted((e1, e2) -> {
-                    int c = Integer.compare(e2.getValue(), e1.getValue());
-                    if (c != 0) {
-                        return c;
+                String tsub = args[1].toLowerCase();
+                switch (tsub) {
+                    case "off" -> {
+                        tm.data(p).selected = null;
+                        tm.refreshTabName(p);
+                        tm.save(p);
+                        sender.sendMessage("\u00a7a\u2726 \u79f0\u53f7\u3092\u5916\u3057\u305f");
                     }
-                    return Integer.compare(s.kitCounts.getOrDefault(e2.getKey(), 0), s.kitCounts.getOrDefault(e1.getKey(), 0));
-                }).limit(3L).collect(Collectors.toList());
-                sender.sendMessage("\u00a76\u00a7l\u2605 \u79f0\u53f7");
-                sender.sendMessage("\u00a77\u6700\u9ad8\u79f0\u53f7: \u00a7e" + highest);
-                sender.sendMessage("\u00a76\u00a7l\u2605 Top 3 \u30de\u30b9\u30bf\u30ea\u30fc\u30ad\u30c3\u30c8");
-                int rank = 1;
-                for (Map.Entry<String, Integer> me : sorted) {
-                    int count = s.kitCounts.getOrDefault(me.getKey(), 0);
-                    sender.sendMessage("\u00a77#" + rank++ + " " + sm.getMasteryRankLine(me.getKey(), me.getValue()) + " \u00a77(" + count + "\u56ce)");
+                    case "select" -> {
+                        if (args.length < 3) {
+                            sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba title select <id>");
+                            return true;
+                        }
+                        BATitle t = tm.get(args[2]);
+                        if (t == null) {
+                            sender.sendMessage("\u00a7c\u26a0 \u305d\u306eID\u306e\u79f0\u53f7\u306f\u5b58\u5728\u3057\u307e\u305b\u3093");
+                            return true;
+                        }
+                        if (!tm.data(p).unlocked.contains(t.id)) {
+                            sender.sendMessage("\u00a7c\u26a0 \u307e\u3060\u89e3\u653e\u3055\u308c\u3066\u3044\u306a\u3044\u79f0\u53f7\u3067\u3059");
+                            return true;
+                        }
+                        tm.data(p).selected = t.id;
+                        tm.refreshTabName(p);
+                        tm.save(p);
+                        sender.sendMessage("\u00a7a\u2726 \u79f0\u53f7\u300c" + t.display + "\u00a7a\u300d\u3092\u88c5\u7740\u3057\u305f");
+                    }
+                    case "list" -> {
+                        sender.sendMessage("\u00a76\u00a7l\u2605 \u79f0\u53f7\u4e00\u89a7");
+                        for (BATitle t : tm.getTitles().values()) {
+                            if (t.isManualOnly()) {
+                                continue;
+                            }
+                            if (tm.data(p).unlocked.contains(t.id)) {
+                                sender.sendMessage((t.id.equals(tm.data(p).selected) ? "\u00a7e\u25b6 " : "\u00a7a\u2714 ") + t.display + " \u00a78[" + t.id + "]");
+                            } else {
+                                sender.sendMessage("\u00a78\u2718 " + (t.hidden ? "???" : t.description.isEmpty() ? t.id : t.description));
+                            }
+                        }
+                    }
+                    case "give", "revoke", "reload" -> {
+                        if (!this.isAdmin(sender)) {
+                            return true;
+                        }
+                        if (tsub.equals("reload")) {
+                            tm.loadTitles();
+                            sender.sendMessage("\u00a7a\u2726 titles.yml \u3092\u518d\u8aad\u307f\u8fbc\u307f\u3057\u305f (" + tm.getTitles().size() + " \u500b)");
+                            break;
+                        }
+                        if (args.length < 4) {
+                            sender.sendMessage("\u00a78\u00bb \u00a77\u4f7f\u7528\u6cd5: /ba title " + tsub + " <player> <id>");
+                            return true;
+                        }
+                        Player target = Bukkit.getPlayerExact(args[2]);
+                        BATitle t = tm.get(args[3]);
+                        if (t == null) {
+                            sender.sendMessage("\u00a7c\u26a0 \u305d\u306eID\u306e\u79f0\u53f7\u306f\u5b58\u5728\u3057\u307e\u305b\u3093");
+                            return true;
+                        }
+                        if (target == null) {
+                            sender.sendMessage("\u00a7c\u26a0 \u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u30aa\u30f3\u30e9\u30a4\u30f3\u3067\u306f\u3042\u308a\u307e\u305b\u3093");
+                            return true;
+                        }
+                        if (tsub.equals("give")) {
+                            tm.unlock(target, t);
+                            sender.sendMessage("\u00a7a\u2726 \u4ed8\u4e0e\u3057\u307e\u3057\u305f: " + target.getName() + " \u2192 " + t.display);
+                        } else {
+                            tm.data(target).unlocked.remove(t.id);
+                            if (t.id.equals(tm.data(target).selected)) {
+                                tm.data(target).selected = null;
+                                tm.refreshTabName(target);
+                            }
+                            for (int i = 0; i < t.conditions.size(); ++i) {
+                                tm.data(target).counters.remove(BATitle.key(i, t.id));
+                            }
+                            tm.save(target);
+                            sender.sendMessage("\u00a7a\u2726 \u5265\u593a\u3057\u307e\u3057\u305f: " + target.getName() + " \u306e " + t.id);
+                        }
+                    }
+                    default -> tm.getGui().open(p, 0);
                 }
-                boolean enabled = sm.toggleTitle(p.getUniqueId());
-                sender.sendMessage(enabled ? "\u00a7a\u79f0\u53f7\u8868\u793a: ON" : "\u00a7c\u79f0\u53f7\u8868\u793a: OFF");
                 break;
             }
             case "top": {
@@ -1348,6 +1411,7 @@ TabCompleter {
                 case "admin" -> Arrays.asList("imigration", "addmap", "next", "cancel", "skip");
                 case "top" -> Arrays.asList("kills", "wins", "kd", "damage", "kits");
                 case "bot" -> Arrays.asList("add", "clear", "list");
+                case "title" -> Arrays.asList("select", "off", "list", "give", "revoke", "reload");
                 case "continuous" -> Arrays.asList("on", "off");
                 case "vote" -> Arrays.asList("1", "2", "3");
                 case "tutorial" -> Arrays.asList("setup", "stop", "leave", "next");

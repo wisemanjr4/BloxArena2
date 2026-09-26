@@ -1,0 +1,110 @@
+# ============================================================
+#  BA2 称号定義ファイル
+#
+#  display:      称号の表示文字列。& ではなく § 直書き or \u00a7 は不可、§のみ有効
+#  description:  一覧に出る説明（省略可）
+#  hidden:       true にすると未解放時に ??? 表示（省略可）
+#  condition / conditions: 達成条件（conditions は複数条件 AND）
+#
+#  ---- type 一覧 ----
+#   MANUAL       運営が /ba title give で付与するのみ
+#   PLAYER_KILL  対人キル数 (count)
+#   DEATHS       死亡回数 (count)
+#   WIN          試合勝利数 (count)
+#   DAMAGE_DEAL  累計与ダメージ (count)
+#   KIT_USE      キット使用回数 (targets = キットID, 空 [] = 全キット)
+#   KIT_MASTERY  キット熟練度Lv到達 (targets = キットID, 空 [] = いずれか, count = Lv)
+#   FIRST_JOIN   サーバー初参加
+# ============================================================
+
+titles:
+  first_blood:
+    display: "§c初陣"
+    description: "初キルを達成"
+    condition:
+      type: PLAYER_KILL
+      count: 1
+
+  slayer_10:
+    display: "§4剣士"
+    description: "キル10回達成"
+    condition:
+      type: PLAYER_KILL
+      count: 10
+
+  slayer_50:
+    display: "§4歴戦の勇者"
+    description: "キル50回達成"
+    condition:
+      type: PLAYER_KILL
+      count: 50
+
+  slayer_100:
+    display: "§c§l百人斬り"
+    description: "キル100回達成"
+    condition:
+      type: PLAYER_KILL
+      count: 100
+
+  first_win:
+    display: "§6初勝利"
+    description: "初めて試合に勝利"
+    condition:
+      type: WIN
+      count: 1
+
+  winner_10:
+    display: "§e常勝"
+    description: "試合に10回勝利"
+    condition:
+      type: WIN
+      count: 10
+
+  winner_50:
+    display: "§6§l無敗将軍"
+    description: "試合に50回勝利"
+    condition:
+      type: WIN
+      count: 50
+
+  immortal:
+    display: "§8不死身…？"
+    description: "50回死亡する"
+    condition:
+      type: DEATHS
+      count: 50
+
+  brawler:
+    display: "§c喧嘩上等"
+    description: "累計10000ダメージを与える"
+    condition:
+      type: DAMAGE_DEAL
+      count: 10000
+
+  blade_master:
+    display: "§eブレードの達人"
+    description: "ブレードの熟練度Lv.5到達"
+    condition:
+      type: KIT_MASTERY
+      targets: [BLADE]
+      count: 5
+
+  legend_any:
+    display: "§5伝説の戦士"
+    description: "いずれかのキットで熟練度Lv.10到達"
+    condition:
+      type: KIT_MASTERY
+      count: 10
+
+  welcome:
+    display: "§aようこそ！"
+    description: "サーバーに初参加"
+    condition:
+      type: FIRST_JOIN
+      count: 1
+
+  vip:
+    display: "§c§lVIP"
+    description: "運営からの贈り物"
+    condition:
+      type: MANUAL

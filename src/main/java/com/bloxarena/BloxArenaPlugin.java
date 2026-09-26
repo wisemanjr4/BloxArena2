@@ -26,6 +26,7 @@ import com.bloxarena.scoreboard.ScoreboardManager;
 import com.bloxarena.skill.SkillManager;
 import com.bloxarena.stats.StatsManager;
 import com.bloxarena.test.TestFieldManager;
+import com.bloxarena.title.BATitleManager;
 import com.bloxarena.tutorial.TutorialManager;
 import com.bloxarena.ultimate.UltimateManager;
 import com.bloxarena.util.SelectionTool;
@@ -56,6 +57,7 @@ extends JavaPlugin {
     private TestFieldManager testFieldManager;
     private TutorialManager tutorialManager;
     private CompManager compManager;
+    private BATitleManager titleManager;
     private final Set<UUID> oobImmunePlayers = new HashSet<UUID>();
     private final Set<String> labFeatures = new HashSet<String>();
 
@@ -83,6 +85,7 @@ extends JavaPlugin {
         this.kitInfoGUI = new KitInfoGUI(this);
         this.botManager = new BotManager(this);
         this.statsManager = new StatsManager(this);
+        this.titleManager = new BATitleManager(this);
         this.scoreboardManager = new ScoreboardManager(this);
         this.gameManager = new GameManager(this);
         this.skillManager = new SkillManager(this);
@@ -114,6 +117,9 @@ extends JavaPlugin {
         }
         if (this.botManager != null) {
             this.botManager.clearAll();
+        }
+        if (this.titleManager != null) {
+            this.titleManager.saveAll();
         }
         this.getLogger().info("BAII WoNG \u7121\u52b9\u5316");
     }
@@ -176,6 +182,10 @@ extends JavaPlugin {
 
     public CompManager getCompManager() {
         return this.compManager;
+    }
+
+    public BATitleManager getTitleManager() {
+        return this.titleManager;
     }
 
     public Set<UUID> getOobImmunePlayers() {

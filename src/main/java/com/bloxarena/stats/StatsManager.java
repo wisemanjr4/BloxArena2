@@ -102,18 +102,30 @@ public class StatsManager {
     public void addKill(UUID uuid) {
         if (!this.debugPlayers.contains(uuid)) {
             ++this.get((UUID)uuid).kills;
+            Player p = Bukkit.getPlayer((UUID)uuid);
+            if (p != null && this.plugin.getTitleManager() != null) {
+                this.plugin.getTitleManager().onKill(p);
+            }
         }
     }
 
     public void addDeath(UUID uuid) {
         if (!this.debugPlayers.contains(uuid)) {
             ++this.get((UUID)uuid).deaths;
+            Player p = Bukkit.getPlayer((UUID)uuid);
+            if (p != null && this.plugin.getTitleManager() != null) {
+                this.plugin.getTitleManager().onDeath(p);
+            }
         }
     }
 
     public void addWin(UUID uuid) {
         if (!this.debugPlayers.contains(uuid)) {
             ++this.get((UUID)uuid).wins;
+            Player p = Bukkit.getPlayer((UUID)uuid);
+            if (p != null && this.plugin.getTitleManager() != null) {
+                this.plugin.getTitleManager().onWin(p);
+            }
         }
     }
 
@@ -126,6 +138,10 @@ public class StatsManager {
     public void addDamage(UUID uuid, double dmg) {
         if (!this.debugPlayers.contains(uuid)) {
             this.get((UUID)uuid).damage += dmg;
+            Player p = Bukkit.getPlayer((UUID)uuid);
+            if (p != null && this.plugin.getTitleManager() != null) {
+                this.plugin.getTitleManager().onDamage(p, dmg);
+            }
         }
     }
 
@@ -136,6 +152,10 @@ public class StatsManager {
         this.get((UUID)uuid).kitCounts.merge(kitName, 1, Integer::sum);
         this.playerKitUsage.computeIfAbsent(uuid, k -> new HashMap<String, Integer>()).merge(kitName, 1, Integer::sum);
         int level = this.getKitMasteryLevel(uuid, kitName);
+        Player kitUser = Bukkit.getPlayer((UUID)uuid);
+        if (kitUser != null && this.plugin.getTitleManager() != null) {
+            this.plugin.getTitleManager().onKitUse(kitUser, kitName, level);
+        }
         String announceKey = uuid + ":" + kitName + ":" + level;
         if (level >= 1 && this.announcedMastery.add(announceKey)) {
             Player p = Bukkit.getPlayer((UUID)uuid);

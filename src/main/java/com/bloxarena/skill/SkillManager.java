@@ -264,9 +264,7 @@ public class SkillManager {
         if (pole == null || !pole.entity.isValid()) {
             return false;
         }
-        Location poleLoc = pole.entity.getLocation().clone();
-        Location loc = poleLoc.clone().add(0.0, 1.0, 0.0);
-        loc.setY(poleLoc.getWorld().getHighestBlockYAt(poleLoc) + 1.0);
+        Location loc = pole.entity.getLocation().clone().add(0.0, 1.0, 0.0);
         double fullHp = pole.originalMaxHp;
         pole.destroy(true);
         p.teleport(loc);

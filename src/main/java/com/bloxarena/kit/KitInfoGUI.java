@@ -94,7 +94,7 @@ public class KitInfoGUI {
         int perPage = 45;
         int start = page * perPage;
         for (int i = 0; i < perPage && start + i < visible.size(); ++i) {
-            inv.setItem(i, this.makeKitIcon(visible.get(start + i)));
+            inv.setItem(i, this.makeKitIcon(p, visible.get(start + i)));
         }
         if (page > 0) {
             ItemStack prev = new ItemStack(Material.ARROW);
@@ -356,6 +356,14 @@ public class KitInfoGUI {
                 if (!kitName.isEmpty()) {
                     try {
                         KitType kit = KitType.valueOf(kitName);
+                        if (this.plugin.getTestFieldManager().isTester(p)) {
+                            if (e.isShiftClick()) {
+                                this.openDetail(p, kit);
+                                break block29;
+                            }
+                            this.plugin.getTestFieldManager().giveTestKit(p, kit);
+                            break block29;
+                        }
                         if (e.isShiftClick()) {
                             this.plugin.getTestFieldManager().giveTestKit(p, kit);
                             break block29;
@@ -454,7 +462,7 @@ public class KitInfoGUI {
         p.openInventory(inv);
     }
 
-    private ItemStack makeKitIcon(KitType kit) {
+    private ItemStack makeKitIcon(Player p, KitType kit) {
         ItemStack item = new ItemStack(KitEditorGUI.iconMaterial(kit));
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
@@ -462,7 +470,12 @@ public class KitInfoGUI {
             ArrayList<String> lore = new ArrayList<String>();
             lore.add("\u00a77" + kit.getDescription());
             lore.add("");
-            lore.add("\u00a7e\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u30a2\u30a4\u30c6\u30e0\u4e00\u89a7");
+            if (p != null && this.plugin.getTestFieldManager().isTester(p)) {
+                lore.add("\u00a7e\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u5373\u88c5\u5099");
+                lore.add("\u00a77Shift+\u30af\u30ea\u30c3\u30af\u3067\u4e2d\u8eab\u3092\u78ba\u8a8d");
+            } else {
+                lore.add("\u00a7e\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u30a2\u30a4\u30c6\u30e0\u4e00\u89a7");
+            }
             meta.setLore(lore);
             meta.getPersistentDataContainer().set(this.kitKey, PersistentDataType.STRING, kit.name());
             item.setItemMeta(meta);

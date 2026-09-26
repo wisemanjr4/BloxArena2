@@ -802,7 +802,13 @@ implements Listener {
         if (this.gm.getState() == GameState.IN_GAME && this.gm.isParticipant(sender)) {
             String msg = e.getMessage();
             TeamColor team = this.gm.getTeamOf(sender);
-            String titleTag = this.plugin.getStatsManager().isTitleEnabled(sender.getUniqueId()) ? this.plugin.getStatsManager().getTitleTag(sender.getUniqueId()) : null;
+            String titleTag;
+            String selectedTitle = this.plugin.getTitleManager() != null ? this.plugin.getTitleManager().selectedDisplay(sender.getUniqueId()) : null;
+            if (selectedTitle != null) {
+                titleTag = "\u00a77[" + selectedTitle + "\u00a77]";
+            } else {
+                titleTag = this.plugin.getStatsManager().isTitleEnabled(sender.getUniqueId()) ? this.plugin.getStatsManager().getTitleTag(sender.getUniqueId()) : null;
+            }
             String nameWithTitle = titleTag != null ? titleTag + " " + sender.getName() : sender.getName();
             if (msg.startsWith(".")) {
                 e.setMessage(msg.substring(1).trim());

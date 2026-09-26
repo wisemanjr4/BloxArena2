@@ -135,7 +135,7 @@ public class TestFieldManager {
             p.removePotionEffect(eff.getType());
         }
         p.sendMessage("\u00a7a\u00a7l\u30c6\u30b9\u30c8\u5834\u306b\u5165\u308a\u307e\u3057\u305f\uff01");
-        p.sendMessage("\u00a77\u00a7f/ba kits \u00a77\u3067\u30ad\u30c3\u30c8\u4e00\u89a7 \u2192 \u30af\u30ea\u30c3\u30af\u3067\u5373\u88c5\u5099");
+        p.sendMessage("\u00a77\u00a7f/ba kits \u00a77\u3067\u30ad\u30c3\u30c8\u4e00\u89a7 \u2192 \u30af\u30ea\u30c3\u30af\u3067\u5373\u88c5\u5099 / Shift+\u30af\u30ea\u30c3\u30af\u3067\u4e2d\u8eab\u78ba\u8a8d");
         p.sendMessage("\u00a77\u30c0\u30df\u30fc \u00a7f" + this.dummyCount + "\u4f53 \u00a77\u304c\u81ea\u52d5\u5fa9\u6d3b\u3057\u307e\u3059");
         p.sendMessage("\u00a77\u00a7f/ba test leave \u00a77\u3067\u9000\u51fa\uff08\u72b6\u614b\u30ea\u30bb\u30c3\u30c8\uff09");
         if (this.dummies.isEmpty()) {

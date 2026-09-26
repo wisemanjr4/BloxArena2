@@ -1,38 +1,45 @@
 # BloxArena II "Warriors of NextGen"
 
-5v5 PvPアリーナ Minecraft Paper プラグイン。34種類のキットから1つを選び、6つのゲームモードで戦う。
+5v5 PvPアリーナ Minecraft Paper プラグイン。**45種類のキット**から1つを選び、**3つのゲームモード**でラウンド制のチーム戦を戦う。
 
 - **プラットフォーム**: Paper 1.19.4
 - **Java**: 17+（ビルドはJDK 21）
-- **依存**: Citizens (soft-dep)
+- **依存**: なし（Citizens は soft-dep、なくても動作）
+- **現在バージョン**: 5.2.0
 
 ## ゲームモード
 
 | モード | 概要 |
 |--------|------|
-| **バトルアリーナ** | 殲滅＋中央コンクリート制圧の2勝利条件。3ラウンド先取 |
-| **チームデスマッチ** | 制限時間内キル数勝負。リスポーン有 |
-| **爆破ミッション** | CS風。爆弾設置/解除。ラウンド制 |
-| **占領戦** | 拠点の奪い合い。ポイント先取 |
-| **キャプチャーザフラッグ** | 敵陣の旗を奪い自陣へ。3回先取 |
-| **FFA** | チームなし個人戦。制限時間内最多キル |
+| **バトルアリーナ** | 殲滅＋中央コンクリート制圧の2勝利条件。**3ラウンド先取** |
+| **チームデスマッチ** | 制限時間内（既定300秒）キル数勝負。リスポーン有 |
+| **キャプチャーザフラッグ** | 敵陣の旗を奪い自陣へ。**3回先取**。10分経過で奪取数勝負 |
+
+試合は ロビー → マップ/モード投票 → キット選択 → ゲート開放カウントダウン → 戦闘 の流れ。ラウンド間はキットを変更可能。
 
 ## 主なシステム
 
-- **バースト** — 全キット共通の超必殺技（1ラウンド1回）
-- **コンボ** — 連続ヒットで演出が豪華に。コンボ中断でCOUNTER
-- **ガードブレイク** — 1秒しゃがみ→攻撃で盾を3秒無効化
-- **サドンデス** — 試合時間6分超過で全員超火力（CTFは10分時間制）
-- **BGM** — `.nbs` ファイルを `plugins/BloxArenaII/songs/` に配置して試合中に再生
+- **ULT** — 時間チャージ（2.0pt/秒）＋与ダメ/被ダメの30%で追加チャージ。キット毎に固有の大技。使用後はチャージが0に戻る
+- **バースト** — ハートオブザシー（右クリック）で発動。1ラウンド1回の浮遊→着地爆発。効果はロール別（Duelist: 力II / Initiator: 速度III・跳躍II / Controller: 鈍足付与 / Sentinel: 再生・衝撃吸収）
+- **コンボ** — 連続ヒットで「N COMBO!」表示。コンボ中の相手に攻撃すると「COUNTER」演出
+- **ガード/パリィ/ガードブレイク** — 盾での防御に加え、3秒しゃがみチャージで次の攻撃が盾を3秒無効化
+- **サドンデス** — 試合時間6分超過で全員超火力
+- **人数差補正** — 不利チームに攻撃上昇等のバフ。少人数開始時はリスポーン短縮
+- **キットマスタリー** — キット使用回数でLv1〜10（見習い→伝説）。Lv到達時に全体告知
+- **称号システム** — キル・勝利・熟練度などの実績で称号を獲得。`/ba title` で一覧GUIから装着。チャット・タブリストに表示
+- **マップ/モード投票** — ロビーで3択投票。最多票採用
+- **テスト場** — `/ba test` でダミー相手にスキル試射。キットの装備はクリック、中身確認はShift+クリック
+- **コンペ運営モード** — `/ba comp` でBO1/3/5、レディチェック、スコア管理、ポーズ/時間調整
 
-## キット（34種）
+## キット（45種＋隠し1種）
 
-- **Duelist**: BLADE / BREAKER / NINJA / BERSERKER / PYRO / JESTER / VAMPIRE / BOMBER / COOK / GRANG / LANCER
-- **Initiator**: SCOUT / FLASHER / WHIRLWIND / MISTRAL / NILGIRITAR / SWAPPER / STICKER / DECOY
-- **Controller**: MARKSMAN / SUNDANCE / ROCKETER / ALCHEMIST / ENGINEER / RESTRICTIONER / TRANSPORTER / KREUTZ / NECRO
-- **Sentinel**: TRAPPER / GUARDIAN / MEDIC / SUPPORTER / PHANTOM / ANCHOR / RELEASER
+- **Duelist（13種）**: ブレード / ブレイカー / ニンジャ / バーサーカー / スナイパー / カウンター / パイロ / ランサー / ジェスター / ヴァンパイア / ボマー / グラング / スレイヤー
+- **Initiator（10種）**: スカウト / フラッシャー / マークスマン / サンダンス / スワッパー / ステッカー / デコイ / ワールウィンド / ニルギリタール / ミストラル
+- **Controller（11種）**: ロケッティア / アルケミスト / エンジニア / リストリクショナー / トランスポーター / クロイツ / ネクロ / リリーサー / タイムキーパー / ヘクサー / グラキエス
+- **Sentinel（11種）**: 料理人 / トラッパー / ガーディアン / メディック / サポーター / ファントム / アンカー / ブルワーク / イージス / リフレクター / トリンギッド
 
-※詳細な仕様は [GAMEDESIGN.md](GAMEDESIGN.md) を参照
+※隠しキット「スーペリア・ミストラル」は管理者専用。
+※各キットのスキル/バースト/ULT詳細は [GAMEDESIGN.md](GAMEDESIGN.md) と [SPECIFICATION.md](SPECIFICATION.md) を参照
 
 ## ビルド
 
@@ -40,28 +47,30 @@
 mvn package -DskipTests
 ```
 
-生成物: `target/BloxArenaII-3.2.0.jar`
+生成物: `target/BloxArenaII-5.2.0.jar`
 
 ## セットアップ
 
 1. `plugins/BloxArenaII/` に jar を配置
-2. サーバーを起動して `/ba admin imigration` でマップ設定
-3. `/ba start` でゲーム開始
+2. サーバー起動で `config.yml` / `titles.yml` が自動生成
+3. `/ba admin imigration` でロビー＋マップを対話設定（または `/ba wand` で範囲指定 → `/ba setspawnzone` 等を個別設定）
+4. `/ba start` でゲーム開始
 
 ## コマンド
 
 | コマンド | 機能 |
 |----------|------|
-| `/ba start` / `/ba stop` | ゲーム開始/停止 |
-| `/ba join` | 参加 |
-| `/ba kits` | キット一覧 |
-| `/ba stats` | 個人統計 |
-| `/ba top kits` | サーバー統計 |
-| `/ba test` | テスト場 |
-| `/ba tutorial` | チュートリアル |
-| `/ba bgm` | BGM選択 |
+| `/ba start` / `/ba stop` | ゲーム開始/停止（運営） |
+| `/ba kits` | キット一覧GUI |
+| `/ba title` | 称号一覧GUI（select/off/list/give/revoke/reload） |
+| `/ba stats` / `/ba mastery` | 個人統計 / マスタリー |
+| `/ba top` | ランキング（kills/wins/kd/damage/kits） |
+| `/ba test` / `/ba tutorial` | テスト場 / チュートリアル |
+| `/ba spectate` | 進行中試合の観戦 |
+| `/ba comp` | コンペ運営（red/blue/ready/start/bo/win/pause等） |
+| `/ba vote 1〜3` | マップ/モード投票 |
+| `/ba bot add/clear` | テスト用BOT |
 | `/ba version` | バージョン確認 |
-| `/ba ffa addspawn` | FFAスポーン設定 |
 
 ## ライセンス
 
